@@ -37,11 +37,15 @@ export default function Home() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const chatBottomRef = useRef<HTMLDivElement>(null);
+  const recordingStartRef = useRef<number>(0); // 録音開始時刻（ms）
+  // stale closure 対策: processAudio の最新版を ref で保持
+  const processAudioRef = useRef<((blob: Blob) => Promise<void>) | null>(null);
 
-  // 新メッセージが来たら自動スクロール
+  // 新メッセージが来たら自動スクロール（件数が変わったときだけ実行）
+  // messages.length の変化でスクロールを意図的にトリガー
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages.length]);
 
   // ────────────────────────────────────────────────
   // 録音 開始
@@ -50,7 +54,17 @@ export default function Home() {
     setErrorMsg(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+
+      // ブラウザ対応の MIME タイプを自動選択（Safari は webm 非対応）
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : MediaRecorder.isTypeSupported("audio/mp4")
+        ? "audio/mp4"
+        : "audio/ogg";
+
+      const recorder = new MediaRecorder(stream, { mimeType });
       audioChunksRef.current = [];
 
       recorder.ondataavailable = (e) => {
@@ -58,32 +72,55 @@ export default function Home() {
       };
 
       recorder.onstop = () => {
-        // 録音終了後に処理パイプラインを起動
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(audioChunksRef.current, { type: mimeType });
         stream.getTracks().forEach((t) => t.stop());
-        processAudio(blob);
+        // デバッグ: blob サイズを確認（1KB以下なら音声が録れていない）
+        console.log("録音 blob size:", blob.size, "bytes");
+        if (blob.size < 1000) {
+          processAudioRef.current = null;
+          setErrorMsg("音声が短すぎます。もう少し長く話してください。");
+          setStatus("idle");
+          return;
+        }
+        // ref 経由で最新の processAudio を呼ぶ（stale closure 対策）
+        processAudioRef.current?.(blob);
       };
 
-      recorder.start();
+      // 100ms ごとにデータを収集（タイムスライス指定でデータ欠損を防ぐ）
+      recorder.start(100);
+      recordingStartRef.current = Date.now(); // 録音開始時刻を記録
       mediaRecorderRef.current = recorder;
       setStatus("recording");
     } catch {
       setErrorMsg("マイクへのアクセスが許可されていません");
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // ────────────────────────────────────────────────
   // 録音 停止
   // ────────────────────────────────────────────────
+  const MIN_RECORDING_MS = 1500; // 最小録音時間：1.5秒
+
   const stopRecording = useCallback(() => {
-    mediaRecorderRef.current?.stop();
-    setStatus("processing");
+    const elapsed = Date.now() - recordingStartRef.current;
+    if (elapsed < MIN_RECORDING_MS) {
+      // まだ短すぎる場合は残り時間後に自動停止
+      const remaining = MIN_RECORDING_MS - elapsed;
+      setTimeout(() => {
+        mediaRecorderRef.current?.stop();
+        setStatus("processing");
+      }, remaining);
+    } else {
+      mediaRecorderRef.current?.stop();
+      setStatus("processing");
+    }
   }, []);
 
   // ────────────────────────────────────────────────
   // パイプライン: 音声 → テキスト → Claude → ElevenLabs → 再生
   // ────────────────────────────────────────────────
   const processAudio = useCallback(
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     async (audioBlob: Blob) => {
       try {
         // 1. Whisper: 音声 → テキスト
@@ -117,6 +154,10 @@ export default function Home() {
         const aiMsg: Message = { id: uid(), role: "assistant", text: aiText };
         setMessages((prev) => [...prev, aiMsg]);
 
+        // 会話終了ワード検出（bye / goodbye）→ 音声再生後にリセット
+        const isGoodbye = /\b(bye|goodbye)\b/i.test(userText);
+
+
         // 3. ElevenLabs: テキスト → 音声
         const speakRes = await fetch("/api/speak", {
           method: "POST",
@@ -135,6 +176,10 @@ export default function Home() {
         const audio = new Audio(audioUrl);
         audio.onended = () => {
           URL.revokeObjectURL(audioUrl);
+          if (isGoodbye) {
+            // 3秒後に会話をリセット
+            setTimeout(() => setMessages([]), 3000);
+          }
           setStatus("idle");
         };
         audio.onerror = () => {
@@ -149,6 +194,11 @@ export default function Home() {
     },
     [messages]
   );
+
+  // processAudio が更新されるたびに ref を同期
+  useEffect(() => {
+    processAudioRef.current = processAudio;
+  }, [processAudio]);
 
   // ────────────────────────────────────────────────
   // ステータスラベル
@@ -238,6 +288,7 @@ export default function Home() {
         <div className="mb-3 px-4 py-2 bg-red-900/60 border border-red-700 rounded-lg text-red-300 text-sm flex items-center justify-between">
           <span>{errorMsg}</span>
           <button
+            type="button"
             onClick={() => setErrorMsg(null)}
             className="text-red-400 hover:text-red-200 ml-3 text-lg leading-none"
           >
@@ -252,11 +303,11 @@ export default function Home() {
 
         <button
           disabled={isButtonDisabled}
-          onMouseDown={startRecording}
-          onMouseUp={status === "recording" ? stopRecording : undefined}
-          onTouchStart={startRecording}
-          onTouchEnd={status === "recording" ? stopRecording : undefined}
-          onClick={status === "recording" ? stopRecording : undefined}
+          type="button"
+          onClick={() => {
+            if (status === "idle") startRecording();
+            else if (status === "recording") stopRecording();
+          }}
           className={`
             w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200
             focus:outline-none focus:ring-4 focus:ring-indigo-500/50
@@ -271,12 +322,12 @@ export default function Home() {
         >
           {status === "recording" ? (
             // 停止アイコン
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" aria-label="停止アイコン">
               <rect x="6" y="6" width="12" height="12" rx="2" />
             </svg>
           ) : (
             // マイクアイコン
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" aria-label="マイクアイコン">
               <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21H9v2h6v-2h-2v-2.07A8.001 8.001 0 0 0 20 11h-2a6 6 0 0 1-12 0H4a8.001 8.001 0 0 0 7 7.93z"/>
             </svg>
           )}

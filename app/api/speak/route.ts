@@ -29,6 +29,7 @@ export async function POST(req: Request) {
             style: 0.3,
             use_speaker_boost: true,
           },
+          speed: 0.75, // 1.0が標準、0.75でゆっくり（語学学習向け）
         }),
       }
     );
