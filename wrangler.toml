@@ -1,0 +1,11 @@
+name = "voice-lab"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Cloudflare Pages 向け設定
+# デプロイ: npm run pages:build && npm run pages:deploy
+
+pages_build_output_dir = ".vercel/output/static"
+
+# 環境変数は Cloudflare Dashboard → Settings → Environment variables で設定
+# ローカルでは .env.local を使用

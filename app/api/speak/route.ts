@@ -1,0 +1,54 @@
+export const runtime = "edge";
+
+// ElevenLabs の標準ボイス ID（Emma に近い自然なネイティブ英語女性）
+// ダッシュボードで確認・変更可能: https://elevenlabs.io/voice-lab
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? "EXAVITQu4vr4xnSDxMaL"; // "Bella"
+
+export async function POST(req: Request) {
+  try {
+    const { text } = (await req.json()) as { text: string };
+
+    if (!text) {
+      return Response.json({ error: "テキストが空です" }, { status: 400 });
+    }
+
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "xi-api-key": process.env.ELEVENLABS_API_KEY ?? "",
+        },
+        body: JSON.stringify({
+          text,
+          model_id: "eleven_turbo_v2_5", // 最速・低レイテンシ
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75,
+            style: 0.3,
+            use_speaker_boost: true,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error("ElevenLabs API error:", error);
+      return Response.json({ error: "音声生成に失敗しました" }, { status: 500 });
+    }
+
+    // 音声バイナリをそのままクライアントに返す
+    const audioBuffer = await response.arrayBuffer();
+    return new Response(audioBuffer, {
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (err) {
+    console.error("speak error:", err);
+    return Response.json({ error: "サーバーエラーが発生しました" }, { status: 500 });
+  }
+}
