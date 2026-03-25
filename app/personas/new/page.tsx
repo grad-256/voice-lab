@@ -41,7 +41,7 @@ export default function NewPersonaPage() {
 
   const [name, setName] = useState("");
   const [stylePrompt, setStylePrompt] = useState<string>(STYLE_PRESETS[0].value);
-  const [voiceId, setVoiceId] = useState(VOICE_OPTIONS[0].id);
+  const [voiceId, setVoiceId] = useState<string>(VOICE_OPTIONS[0].id);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
