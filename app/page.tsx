@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  appendMessage,
+  createConversation,
+  getOrCreateConversation,
+  loadMessages,
+} from "@/lib/conversations";
 import { type Persona, getPersonas } from "@/lib/personas";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
@@ -40,23 +46,37 @@ function HomeInner() {
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // 現在の会話 ID（DB 保存に使用）
+  const conversationIdRef = useRef<string | null>(null);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const recordingStartRef = useRef<number>(0);
   const processAudioRef = useRef<((blob: Blob) => Promise<void>) | null>(null);
 
-  // URL パラメータからキャラを読み込む
+  // URL パラメータからキャラを読み込み、会話履歴を復元
   useEffect(() => {
     const personaId = searchParams.get("persona");
     if (!personaId) return;
-    getPersonas()
-      .then((list) => {
+
+    (async () => {
+      try {
+        const list = await getPersonas();
         const found = list.find((p) => p.id === personaId) ?? null;
         setPersona(found);
-        setMessages([]); // キャラ切り替え時に会話をリセット
-      })
-      .catch(() => setErrorMsg("キャラクターの読み込みに失敗しました"));
+
+        if (!found) return;
+
+        // 会話 ID を取得（または新規作成）して履歴を復元
+        const convId = await getOrCreateConversation(found.id);
+        conversationIdRef.current = convId;
+        const history = await loadMessages(convId);
+        setMessages(history.map((m) => ({ id: m.id, role: m.role, text: m.content })));
+      } catch {
+        setErrorMsg("キャラクターの読み込みに失敗しました");
+      }
+    })();
   }, [searchParams]);
 
   // 自動スクロール
@@ -152,7 +172,11 @@ function HomeInner() {
         const { text: userText, error: t_err } = await transcribeRes.json();
         if (t_err || !userText) throw new Error(t_err ?? "音声認識に失敗しました");
 
-        const userMsg: Message = { id: uid(), role: "user", text: userText };
+        // ユーザーメッセージを DB に保存（失敗しても会話は続行）
+        const userDbId = conversationIdRef.current
+          ? await appendMessage(conversationIdRef.current, "user", userText).catch(() => uid())
+          : uid();
+        const userMsg: Message = { id: userDbId, role: "user", text: userText };
         setMessages((prev) => [...prev, userMsg]);
 
         // 2. Claude: テキスト → 返答（キャラのシステムプロンプトを渡す）
@@ -169,7 +193,11 @@ function HomeInner() {
         const { text: aiText, error: c_err } = await chatRes.json();
         if (c_err || !aiText) throw new Error(c_err ?? "AI 応答の取得に失敗しました");
 
-        const aiMsg: Message = { id: uid(), role: "assistant", text: aiText };
+        // AI メッセージを DB に保存
+        const aiDbId = conversationIdRef.current
+          ? await appendMessage(conversationIdRef.current, "assistant", aiText).catch(() => uid())
+          : uid();
+        const aiMsg: Message = { id: aiDbId, role: "assistant", text: aiText };
         setMessages((prev) => [...prev, aiMsg]);
 
         const isGoodbye = /\b(bye|goodbye)\b/i.test(userText);
@@ -193,7 +221,14 @@ function HomeInner() {
         const audio = new Audio(audioUrl);
         audio.onended = () => {
           URL.revokeObjectURL(audioUrl);
-          if (isGoodbye) setTimeout(() => setMessages([]), 3000);
+          if (isGoodbye && persona) {
+            // 新しい会話セッションを作成してメッセージをリセット
+            setTimeout(async () => {
+              const newConvId = await createConversation(persona.id).catch(() => null);
+              if (newConvId) conversationIdRef.current = newConvId;
+              setMessages([]);
+            }, 3000);
+          }
           setStatus("idle");
         };
         audio.onerror = () => {
