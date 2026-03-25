@@ -1,8 +1,10 @@
 "use client";
 
+import { type Persona, getPersonas } from "@/lib/personas";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 
 // ────────────────────────────────────────────────
 // 型定義
@@ -21,44 +23,54 @@ type Status =
   | "processing" // Whisper → Claude → ElevenLabs
   | "speaking"; // 音声再生中
 
-// ────────────────────────────────────────────────
-// ユーティリティ
-// ────────────────────────────────────────────────
 function uid() {
   return Math.random().toString(36).slice(2);
 }
 
 // ────────────────────────────────────────────────
-// メインコンポーネント
+// メインコンポーネント（useSearchParams を使うため Suspense でラップ）
 // ────────────────────────────────────────────────
-export default function Home() {
+function HomeInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
+  const [persona, setPersona] = useState<Persona | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // ログアウト処理
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const chatBottomRef = useRef<HTMLDivElement>(null);
+  const recordingStartRef = useRef<number>(0);
+  const processAudioRef = useRef<((blob: Blob) => Promise<void>) | null>(null);
+
+  // URL パラメータからキャラを読み込む
+  useEffect(() => {
+    const personaId = searchParams.get("persona");
+    if (!personaId) return;
+    getPersonas()
+      .then((list) => {
+        const found = list.find((p) => p.id === personaId) ?? null;
+        setPersona(found);
+        setMessages([]); // キャラ切り替え時に会話をリセット
+      })
+      .catch(() => setErrorMsg("キャラクターの読み込みに失敗しました"));
+  }, [searchParams]);
+
+  // 自動スクロール
+  // biome-ignore lint/correctness/useExhaustiveDependencies: messages.length で意図的にトリガー
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length]);
+
+  // ログアウト
   const handleSignOut = useCallback(async () => {
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
   }, [supabase, router]);
-
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const chatBottomRef = useRef<HTMLDivElement>(null);
-  const recordingStartRef = useRef<number>(0); // 録音開始時刻（ms）
-  // stale closure 対策: processAudio の最新版を ref で保持
-  const processAudioRef = useRef<((blob: Blob) => Promise<void>) | null>(null);
-
-  // 新メッセージが来たら自動スクロール（件数が変わったときだけ実行）
-  // messages の件数が変わったときだけスクロール（biome ignore: 意図的な依存）
-  // biome-ignore lint/correctness/useExhaustiveDependencies: messages.length で意図的にトリガー
-  useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
 
   // ────────────────────────────────────────────────
   // 録音 開始
@@ -68,7 +80,6 @@ export default function Home() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      // ブラウザ対応の MIME タイプを自動選択（Safari は webm 非対応）
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
         : MediaRecorder.isTypeSupported("audio/webm")
@@ -87,7 +98,6 @@ export default function Home() {
       recorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: mimeType });
         for (const t of stream.getTracks()) t.stop();
-        // デバッグ: blob サイズを確認（1KB以下なら音声が録れていない）
         console.log("録音 blob size:", blob.size, "bytes");
         if (blob.size < 1000) {
           processAudioRef.current = null;
@@ -95,13 +105,11 @@ export default function Home() {
           setStatus("idle");
           return;
         }
-        // ref 経由で最新の processAudio を呼ぶ（stale closure 対策）
         processAudioRef.current?.(blob);
       };
 
-      // 100ms ごとにデータを収集（タイムスライス指定でデータ欠損を防ぐ）
       recorder.start(100);
-      recordingStartRef.current = Date.now(); // 録音開始時刻を記録
+      recordingStartRef.current = Date.now();
       mediaRecorderRef.current = recorder;
       setStatus("recording");
     } catch {
@@ -112,12 +120,11 @@ export default function Home() {
   // ────────────────────────────────────────────────
   // 録音 停止
   // ────────────────────────────────────────────────
-  const MIN_RECORDING_MS = 1500; // 最小録音時間：1.5秒
+  const MIN_RECORDING_MS = 1500;
 
   const stopRecording = useCallback(() => {
     const elapsed = Date.now() - recordingStartRef.current;
     if (elapsed < MIN_RECORDING_MS) {
-      // まだ短すぎる場合は残り時間後に自動停止
       const remaining = MIN_RECORDING_MS - elapsed;
       setTimeout(() => {
         mediaRecorderRef.current?.stop();
@@ -130,16 +137,14 @@ export default function Home() {
   }, []);
 
   // ────────────────────────────────────────────────
-  // パイプライン: 音声 → テキスト → Claude → ElevenLabs → 再生
+  // パイプライン: 音声 → Whisper → Claude → ElevenLabs → 再生
   // ────────────────────────────────────────────────
   const processAudio = useCallback(
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     async (audioBlob: Blob) => {
       try {
         // 1. Whisper: 音声 → テキスト
         const form = new FormData();
         form.append("audio", audioBlob, "audio.webm");
-
         const transcribeRes = await fetch("/api/transcribe", {
           method: "POST",
           body: form,
@@ -150,16 +155,16 @@ export default function Home() {
         const userMsg: Message = { id: uid(), role: "user", text: userText };
         setMessages((prev) => [...prev, userMsg]);
 
-        // 2. Claude: テキスト → 返答
-        const history = messages.map(({ role, text }) => ({
-          role,
-          content: text,
-        }));
-
+        // 2. Claude: テキスト → 返答（キャラのシステムプロンプトを渡す）
+        const history = messages.map(({ role, text }) => ({ role, content: text }));
         const chatRes = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: userText, history }),
+          body: JSON.stringify({
+            message: userText,
+            history,
+            systemPrompt: persona?.style_prompt,
+          }),
         });
         const { text: aiText, error: c_err } = await chatRes.json();
         if (c_err || !aiText) throw new Error(c_err ?? "AI 応答の取得に失敗しました");
@@ -167,14 +172,16 @@ export default function Home() {
         const aiMsg: Message = { id: uid(), role: "assistant", text: aiText };
         setMessages((prev) => [...prev, aiMsg]);
 
-        // 会話終了ワード検出（bye / goodbye）→ 音声再生後にリセット
         const isGoodbye = /\b(bye|goodbye)\b/i.test(userText);
 
-        // 3. ElevenLabs: テキスト → 音声
+        // 3. ElevenLabs: テキスト → 音声（キャラのボイス ID を渡す）
         const speakRes = await fetch("/api/speak", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: aiText }),
+          body: JSON.stringify({
+            text: aiText,
+            voiceId: persona?.voice_id,
+          }),
         });
         if (!speakRes.ok) throw new Error("音声生成に失敗しました");
 
@@ -186,10 +193,7 @@ export default function Home() {
         const audio = new Audio(audioUrl);
         audio.onended = () => {
           URL.revokeObjectURL(audioUrl);
-          if (isGoodbye) {
-            // 3秒後に会話をリセット
-            setTimeout(() => setMessages([]), 3000);
-          }
+          if (isGoodbye) setTimeout(() => setMessages([]), 3000);
           setStatus("idle");
         };
         audio.onerror = () => {
@@ -202,10 +206,9 @@ export default function Home() {
         setStatus("idle");
       }
     },
-    [messages]
+    [messages, persona]
   );
 
-  // processAudio が更新されるたびに ref を同期
   useEffect(() => {
     processAudioRef.current = processAudio;
   }, [processAudio]);
@@ -213,14 +216,15 @@ export default function Home() {
   // ────────────────────────────────────────────────
   // ステータスラベル
   // ────────────────────────────────────────────────
+  const personaName = persona?.name ?? "キャラ未選択";
   const statusLabel: Record<Status, string> = {
-    idle: "タップして話す",
+    idle: persona ? "タップして話す" : "キャラクターを選んでください",
     recording: "録音中... もう一度タップで停止",
-    processing: "Emma が考えています...",
-    speaking: "Emma が話しています...",
+    processing: `${personaName} が考えています...`,
+    speaking: `${personaName} が話しています...`,
   };
 
-  const isButtonDisabled = status === "processing" || status === "speaking";
+  const isButtonDisabled = !persona || status === "processing" || status === "speaking";
 
   // ────────────────────────────────────────────────
   // レンダリング
@@ -229,24 +233,40 @@ export default function Home() {
     <main className="flex flex-col h-screen max-w-2xl mx-auto px-4">
       {/* ヘッダー */}
       <header className="py-4 border-b border-gray-800 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
-          E
+        {/* キャラアバター */}
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+          {persona ? persona.name.charAt(0).toUpperCase() : "?"}
         </div>
-        <div>
-          <h1 className="font-semibold text-white">Emma</h1>
-          <p className="text-xs text-gray-400">英会話パートナー · カナダ出身 25歳</p>
+
+        {/* キャラ名 */}
+        <div className="flex-1 min-w-0">
+          <h1 className="font-semibold text-white truncate">{personaName}</h1>
+          {persona ? (
+            <p className="text-xs text-gray-400 truncate">{persona.style_prompt.slice(0, 40)}…</p>
+          ) : (
+            <p className="text-xs text-gray-400">キャラクターが選択されていません</p>
+          )}
         </div>
+
+        {/* 話し中インジケーター */}
         {status === "speaking" && (
-          <span className="ml-auto text-xs text-green-400 flex items-center gap-1">
+          <span className="text-xs text-green-400 flex items-center gap-1 flex-shrink-0">
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block" />
             話し中
           </span>
         )}
+
+        {/* キャラ切り替え & ログアウト */}
+        <Link
+          href="/personas"
+          className="text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded flex-shrink-0"
+        >
+          キャラ変更
+        </Link>
         <button
           type="button"
           onClick={handleSignOut}
-          className="ml-auto text-xs text-gray-500 hover:text-gray-300 transition-colors px-2 py-1 rounded"
-          aria-label="ログアウト"
+          className="text-xs text-gray-500 hover:text-gray-300 transition-colors px-2 py-1 rounded flex-shrink-0"
         >
           ログアウト
         </button>
@@ -254,14 +274,30 @@ export default function Home() {
 
       {/* チャットエリア */}
       <div className="flex-1 overflow-y-auto py-6 space-y-4">
-        {messages.length === 0 && (
+        {/* キャラ未選択時 */}
+        {!persona && (
+          <div className="text-center text-gray-500 mt-16 text-sm">
+            <p className="text-4xl mb-4">🎭</p>
+            <p>会話相手のキャラクターを選んでください</p>
+            <Link
+              href="/personas"
+              className="mt-4 inline-block px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors"
+            >
+              キャラクターを選ぶ
+            </Link>
+          </div>
+        )}
+
+        {/* キャラ選択済み・メッセージなし */}
+        {persona && messages.length === 0 && (
           <div className="text-center text-gray-500 mt-16 text-sm">
             <p className="text-4xl mb-4">🎙️</p>
-            <p>下のボタンをタップして Emma と話してみよう！</p>
+            <p>下のボタンをタップして {persona.name} と話してみよう！</p>
             <p className="mt-1 text-xs text-gray-600">マイクへのアクセス許可が必要です</p>
           </div>
         )}
 
+        {/* メッセージ一覧 */}
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -269,7 +305,7 @@ export default function Home() {
           >
             {msg.role === "assistant" && (
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold mr-2 flex-shrink-0 mt-1">
-                E
+                {persona?.name.charAt(0).toUpperCase() ?? "A"}
               </div>
             )}
             <div
@@ -284,11 +320,11 @@ export default function Home() {
           </div>
         ))}
 
-        {/* ローディング表示 */}
+        {/* ローディング */}
         {status === "processing" && (
           <div className="flex justify-start">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold mr-2 flex-shrink-0">
-              E
+              {persona?.name.charAt(0).toUpperCase() ?? "A"}
             </div>
             <div className="bg-gray-800 px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-1.5">
               <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
@@ -318,7 +354,6 @@ export default function Home() {
       {/* 録音ボタン */}
       <div className="py-6 flex flex-col items-center gap-3">
         <p className="text-xs text-gray-500">{statusLabel[status]}</p>
-
         <button
           disabled={isButtonDisabled}
           type="button"
@@ -340,7 +375,6 @@ export default function Home() {
           aria-label={status === "recording" ? "録音停止" : "録音開始"}
         >
           {status === "recording" ? (
-            // 停止アイコン
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="w-8 h-8"
@@ -353,7 +387,6 @@ export default function Home() {
               <rect x="6" y="6" width="12" height="12" rx="2" />
             </svg>
           ) : (
-            // マイクアイコン
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="w-8 h-8"
@@ -369,5 +402,13 @@ export default function Home() {
         </button>
       </div>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense>
+      <HomeInner />
+    </Suspense>
   );
 }

@@ -6,13 +6,16 @@ const VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? "EXAVITQu4vr4xnSDxMaL"; // "
 
 export async function POST(req: Request) {
   try {
-    const { text } = (await req.json()) as { text: string };
+    const { text, voiceId } = (await req.json()) as { text: string; voiceId?: string };
 
     if (!text) {
       return Response.json({ error: "テキストが空です" }, { status: 400 });
     }
 
-    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
+    // キャラのボイス ID を優先し、なければ環境変数 → デフォルト（Bella）の順で使用
+    const resolvedVoiceId = voiceId ?? VOICE_ID;
+
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${resolvedVoiceId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -1,7 +1,7 @@
 export const runtime = "edge";
 
-// Phase 0: システムプロンプトをコードに直書き（Phase 1 で UI から設定可能にする）
-const SYSTEM_PROMPT = `
+// デフォルトのシステムプロンプト（キャラ未設定時のフォールバック）
+const DEFAULT_SYSTEM_PROMPT = `
 You are Emma, a friendly English conversation partner from Canada.
 
 Rules:
@@ -20,11 +20,12 @@ type Message = {
 type RequestBody = {
   message: string;
   history: Message[];
+  systemPrompt?: string; // キャラのシステムプロンプト（省略時はデフォルト）
 };
 
 export async function POST(req: Request) {
   try {
-    const { message, history } = (await req.json()) as RequestBody;
+    const { message, history, systemPrompt } = (await req.json()) as RequestBody;
 
     if (!message) {
       return Response.json({ error: "メッセージが空です" }, { status: 400 });
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 512,
-        system: SYSTEM_PROMPT,
+        system: systemPrompt ?? DEFAULT_SYSTEM_PROMPT,
         messages,
       }),
     });
