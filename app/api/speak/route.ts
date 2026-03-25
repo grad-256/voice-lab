@@ -6,33 +6,33 @@ const VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? "EXAVITQu4vr4xnSDxMaL"; // "
 
 export async function POST(req: Request) {
   try {
-    const { text } = (await req.json()) as { text: string };
+    const { text, voiceId } = (await req.json()) as { text: string; voiceId?: string };
 
     if (!text) {
       return Response.json({ error: "テキストが空です" }, { status: 400 });
     }
 
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "xi-api-key": process.env.ELEVENLABS_API_KEY ?? "",
+    // キャラのボイス ID を優先し、なければ環境変数 → デフォルト（Bella）の順で使用
+    const resolvedVoiceId = voiceId ?? VOICE_ID;
+
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${resolvedVoiceId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "xi-api-key": process.env.ELEVENLABS_API_KEY ?? "",
+      },
+      body: JSON.stringify({
+        text,
+        model_id: "eleven_turbo_v2_5", // 最速・低レイテンシ
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+          style: 0.3,
+          use_speaker_boost: true,
         },
-        body: JSON.stringify({
-          text,
-          model_id: "eleven_turbo_v2_5", // 最速・低レイテンシ
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-            style: 0.3,
-            use_speaker_boost: true,
-          },
-          speed: 0.75, // 1.0が標準、0.75でゆっくり（語学学習向け）
-        }),
-      }
-    );
+        speed: 0.75, // 1.0が標準、0.75でゆっくり（語学学習向け）
+      }),
+    });
 
     if (!response.ok) {
       const error = await response.text();

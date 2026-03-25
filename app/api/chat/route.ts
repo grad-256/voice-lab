@@ -1,7 +1,7 @@
 export const runtime = "edge";
 
-// Phase 0: システムプロンプトをコードに直書き（Phase 1 で UI から設定可能にする）
-const SYSTEM_PROMPT = `
+// デフォルトのシステムプロンプト（キャラ未設定時のフォールバック）
+const DEFAULT_SYSTEM_PROMPT = `
 You are Emma, a friendly English conversation partner from Canada.
 
 Rules:
@@ -20,20 +20,26 @@ type Message = {
 type RequestBody = {
   message: string;
   history: Message[];
+  systemPrompt?: string; // キャラのシステムプロンプト（省略時はデフォルト）
 };
+
+// システムプロンプトに JSON 返答の指示を付加する
+function buildSystemPrompt(base: string): string {
+  return `${base}
+
+IMPORTANT: Always respond with a JSON object in exactly this format (no other text outside the JSON):
+{"reply": "<your English response>", "translation": "<Japanese translation of your reply>"}`;
+}
 
 export async function POST(req: Request) {
   try {
-    const { message, history } = (await req.json()) as RequestBody;
+    const { message, history, systemPrompt } = (await req.json()) as RequestBody;
 
     if (!message) {
       return Response.json({ error: "メッセージが空です" }, { status: 400 });
     }
 
-    const messages: Message[] = [
-      ...history,
-      { role: "user", content: message },
-    ];
+    const messages: Message[] = [...history, { role: "user", content: message }];
 
     // Anthropic Claude API（fetch で直接呼び出し）
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -46,7 +52,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 512,
-        system: SYSTEM_PROMPT,
+        system: buildSystemPrompt(systemPrompt ?? DEFAULT_SYSTEM_PROMPT),
         messages,
       }),
     });
@@ -57,12 +63,23 @@ export async function POST(req: Request) {
       return Response.json({ error: "AI 応答の取得に失敗しました" }, { status: 500 });
     }
 
-    const data = await response.json() as {
+    const data = (await response.json()) as {
       content: { type: string; text: string }[];
     };
 
-    const text = data.content[0]?.text ?? "";
-    return Response.json({ text });
+    const raw = data.content[0]?.text ?? "";
+
+    // JSON をパース。コードフェンス（```json...```）が付いている場合は除去する
+    try {
+      const cleaned = raw
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/, "")
+        .trim();
+      const parsed = JSON.parse(cleaned) as { reply?: string; translation?: string };
+      return Response.json({ text: parsed.reply ?? raw, translation: parsed.translation ?? null });
+    } catch {
+      return Response.json({ text: raw, translation: null });
+    }
   } catch (err) {
     console.error("chat error:", err);
     return Response.json({ error: "サーバーエラーが発生しました" }, { status: 500 });

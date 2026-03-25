@@ -1,6 +1,16 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import {
+  appendMessage,
+  createConversation,
+  getOrCreateConversation,
+  loadMessages,
+} from "@/lib/conversations";
+import { type Persona, getPersonas } from "@/lib/personas";
+import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 
 // ────────────────────────────────────────────────
 // 型定義
@@ -11,41 +21,84 @@ type Message = {
   id: string;
   role: Role;
   text: string;
+  translation?: string | null;
 };
 
 type Status =
-  | "idle"       // 待機中
-  | "recording"  // 録音中
+  | "idle" // 待機中
+  | "recording" // 録音中
   | "processing" // Whisper → Claude → ElevenLabs
-  | "speaking";  // 音声再生中
+  | "speaking"; // 音声再生中
 
-// ────────────────────────────────────────────────
-// ユーティリティ
-// ────────────────────────────────────────────────
 function uid() {
   return Math.random().toString(36).slice(2);
 }
 
 // ────────────────────────────────────────────────
-// メインコンポーネント
+// メインコンポーネント（useSearchParams を使うため Suspense でラップ）
 // ────────────────────────────────────────────────
-export default function Home() {
+function HomeInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = createClient();
+
+  const [persona, setPersona] = useState<Persona | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // 現在の会話 ID（DB 保存に使用）
+  const conversationIdRef = useRef<string | null>(null);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const chatBottomRef = useRef<HTMLDivElement>(null);
-  const recordingStartRef = useRef<number>(0); // 録音開始時刻（ms）
-  // stale closure 対策: processAudio の最新版を ref で保持
+  const recordingStartRef = useRef<number>(0);
   const processAudioRef = useRef<((blob: Blob) => Promise<void>) | null>(null);
 
-  // 新メッセージが来たら自動スクロール（件数が変わったときだけ実行）
-  // messages.length の変化でスクロールを意図的にトリガー
+  // URL パラメータからキャラを読み込み、会話履歴を復元
+  useEffect(() => {
+    const personaId = searchParams.get("persona");
+    if (!personaId) return;
+
+    (async () => {
+      try {
+        const list = await getPersonas();
+        const found = list.find((p) => p.id === personaId) ?? null;
+        setPersona(found);
+
+        if (!found) return;
+
+        // 会話 ID を取得（または新規作成）して履歴を復元
+        const convId = await getOrCreateConversation(found.id);
+        conversationIdRef.current = convId;
+        const history = await loadMessages(convId);
+        setMessages(
+          history.map((m) => ({
+            id: m.id,
+            role: m.role,
+            text: m.content,
+            translation: m.translation,
+          }))
+        );
+      } catch {
+        setErrorMsg("キャラクターの読み込みに失敗しました");
+      }
+    })();
+  }, [searchParams]);
+
+  // 自動スクロール
+  // biome-ignore lint/correctness/useExhaustiveDependencies: messages.length で意図的にトリガー
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  // ログアウト
+  const handleSignOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }, [supabase, router]);
 
   // ────────────────────────────────────────────────
   // 録音 開始
@@ -55,14 +108,13 @@ export default function Home() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      // ブラウザ対応の MIME タイプを自動選択（Safari は webm 非対応）
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
         : MediaRecorder.isTypeSupported("audio/webm")
-        ? "audio/webm"
-        : MediaRecorder.isTypeSupported("audio/mp4")
-        ? "audio/mp4"
-        : "audio/ogg";
+          ? "audio/webm"
+          : MediaRecorder.isTypeSupported("audio/mp4")
+            ? "audio/mp4"
+            : "audio/ogg";
 
       const recorder = new MediaRecorder(stream, { mimeType });
       audioChunksRef.current = [];
@@ -73,8 +125,7 @@ export default function Home() {
 
       recorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: mimeType });
-        stream.getTracks().forEach((t) => t.stop());
-        // デバッグ: blob サイズを確認（1KB以下なら音声が録れていない）
+        for (const t of stream.getTracks()) t.stop();
         console.log("録音 blob size:", blob.size, "bytes");
         if (blob.size < 1000) {
           processAudioRef.current = null;
@@ -82,13 +133,11 @@ export default function Home() {
           setStatus("idle");
           return;
         }
-        // ref 経由で最新の processAudio を呼ぶ（stale closure 対策）
         processAudioRef.current?.(blob);
       };
 
-      // 100ms ごとにデータを収集（タイムスライス指定でデータ欠損を防ぐ）
       recorder.start(100);
-      recordingStartRef.current = Date.now(); // 録音開始時刻を記録
+      recordingStartRef.current = Date.now();
       mediaRecorderRef.current = recorder;
       setStatus("recording");
     } catch {
@@ -99,12 +148,11 @@ export default function Home() {
   // ────────────────────────────────────────────────
   // 録音 停止
   // ────────────────────────────────────────────────
-  const MIN_RECORDING_MS = 1500; // 最小録音時間：1.5秒
+  const MIN_RECORDING_MS = 1500;
 
   const stopRecording = useCallback(() => {
     const elapsed = Date.now() - recordingStartRef.current;
     if (elapsed < MIN_RECORDING_MS) {
-      // まだ短すぎる場合は残り時間後に自動停止
       const remaining = MIN_RECORDING_MS - elapsed;
       setTimeout(() => {
         mediaRecorderRef.current?.stop();
@@ -117,16 +165,14 @@ export default function Home() {
   }, []);
 
   // ────────────────────────────────────────────────
-  // パイプライン: 音声 → テキスト → Claude → ElevenLabs → 再生
+  // パイプライン: 音声 → Whisper → Claude → ElevenLabs → 再生
   // ────────────────────────────────────────────────
   const processAudio = useCallback(
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     async (audioBlob: Blob) => {
       try {
         // 1. Whisper: 音声 → テキスト
         const form = new FormData();
         form.append("audio", audioBlob, "audio.webm");
-
         const transcribeRes = await fetch("/api/transcribe", {
           method: "POST",
           body: form,
@@ -134,51 +180,72 @@ export default function Home() {
         const { text: userText, error: t_err } = await transcribeRes.json();
         if (t_err || !userText) throw new Error(t_err ?? "音声認識に失敗しました");
 
-        const userMsg: Message = { id: uid(), role: "user", text: userText };
+        // ユーザーメッセージを DB に保存（失敗しても会話は続行）
+        const userDbId = conversationIdRef.current
+          ? await appendMessage(conversationIdRef.current, "user", userText).catch(() => uid())
+          : uid();
+        const userMsg: Message = { id: userDbId, role: "user", text: userText };
         setMessages((prev) => [...prev, userMsg]);
 
-        // 2. Claude: テキスト → 返答
-        const history = messages.map(({ role, text }) => ({
-          role,
-          content: text,
-        }));
-
+        // 2. Claude: テキスト → 返答（キャラのシステムプロンプトを渡す）
+        const history = messages.map(({ role, text }) => ({ role, content: text }));
         const chatRes = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: userText, history }),
+          body: JSON.stringify({
+            message: userText,
+            history,
+            systemPrompt: persona?.style_prompt,
+          }),
         });
-        const { text: aiText, error: c_err } = await chatRes.json();
+        const { text: aiText, translation: aiTranslation, error: c_err } = await chatRes.json();
         if (c_err || !aiText) throw new Error(c_err ?? "AI 応答の取得に失敗しました");
 
-        const aiMsg: Message = { id: uid(), role: "assistant", text: aiText };
+        // AI メッセージを DB に保存（翻訳も含む）
+        const aiDbId = conversationIdRef.current
+          ? await appendMessage(
+              conversationIdRef.current,
+              "assistant",
+              aiText,
+              aiTranslation
+            ).catch(() => uid())
+          : uid();
+        const aiMsg: Message = {
+          id: aiDbId,
+          role: "assistant",
+          text: aiText,
+          translation: aiTranslation,
+        };
         setMessages((prev) => [...prev, aiMsg]);
 
-        // 会話終了ワード検出（bye / goodbye）→ 音声再生後にリセット
         const isGoodbye = /\b(bye|goodbye)\b/i.test(userText);
 
-
-        // 3. ElevenLabs: テキスト → 音声
+        // 3. ElevenLabs: テキスト → 音声（キャラのボイス ID を渡す）
         const speakRes = await fetch("/api/speak", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: aiText }),
+          body: JSON.stringify({
+            text: aiText,
+            voiceId: persona?.voice_id,
+          }),
         });
         if (!speakRes.ok) throw new Error("音声生成に失敗しました");
 
         const audioBuffer = await speakRes.arrayBuffer();
-        const audioUrl = URL.createObjectURL(
-          new Blob([audioBuffer], { type: "audio/mpeg" })
-        );
+        const audioUrl = URL.createObjectURL(new Blob([audioBuffer], { type: "audio/mpeg" }));
 
         // 4. 自動再生
         setStatus("speaking");
         const audio = new Audio(audioUrl);
         audio.onended = () => {
           URL.revokeObjectURL(audioUrl);
-          if (isGoodbye) {
-            // 3秒後に会話をリセット
-            setTimeout(() => setMessages([]), 3000);
+          if (isGoodbye && persona) {
+            // 新しい会話セッションを作成してメッセージをリセット
+            setTimeout(async () => {
+              const newConvId = await createConversation(persona.id).catch(() => null);
+              if (newConvId) conversationIdRef.current = newConvId;
+              setMessages([]);
+            }, 3000);
           }
           setStatus("idle");
         };
@@ -192,10 +259,9 @@ export default function Home() {
         setStatus("idle");
       }
     },
-    [messages]
+    [messages, persona]
   );
 
-  // processAudio が更新されるたびに ref を同期
   useEffect(() => {
     processAudioRef.current = processAudio;
   }, [processAudio]);
@@ -203,14 +269,15 @@ export default function Home() {
   // ────────────────────────────────────────────────
   // ステータスラベル
   // ────────────────────────────────────────────────
+  const personaName = persona?.name ?? "キャラ未選択";
   const statusLabel: Record<Status, string> = {
-    idle: "タップして話す",
+    idle: persona ? "タップして話す" : "キャラクターを選んでください",
     recording: "録音中... もう一度タップで停止",
-    processing: "Emma が考えています...",
-    speaking: "Emma が話しています...",
+    processing: `${personaName} が考えています...`,
+    speaking: `${personaName} が話しています...`,
   };
 
-  const isButtonDisabled = status === "processing" || status === "speaking";
+  const isButtonDisabled = !persona || status === "processing" || status === "speaking";
 
   // ────────────────────────────────────────────────
   // レンダリング
@@ -219,31 +286,71 @@ export default function Home() {
     <main className="flex flex-col h-screen max-w-2xl mx-auto px-4">
       {/* ヘッダー */}
       <header className="py-4 border-b border-gray-800 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
-          E
+        {/* キャラアバター */}
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+          {persona ? persona.name.charAt(0).toUpperCase() : "?"}
         </div>
-        <div>
-          <h1 className="font-semibold text-white">Emma</h1>
-          <p className="text-xs text-gray-400">英会話パートナー · カナダ出身 25歳</p>
+
+        {/* キャラ名 */}
+        <div className="flex-1 min-w-0">
+          <h1 className="font-semibold text-white truncate">{personaName}</h1>
+          {persona ? (
+            <p className="text-xs text-gray-400 truncate">{persona.style_prompt.slice(0, 40)}…</p>
+          ) : (
+            <p className="text-xs text-gray-400">キャラクターが選択されていません</p>
+          )}
         </div>
+
+        {/* 話し中インジケーター */}
         {status === "speaking" && (
-          <span className="ml-auto text-xs text-green-400 flex items-center gap-1">
+          <span className="text-xs text-green-400 flex items-center gap-1 flex-shrink-0">
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block" />
             話し中
           </span>
         )}
+
+        {/* キャラ切り替え & ログアウト */}
+        <Link
+          href="/personas"
+          className="text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded flex-shrink-0"
+        >
+          キャラ変更
+        </Link>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="text-xs text-gray-500 hover:text-gray-300 transition-colors px-2 py-1 rounded flex-shrink-0"
+        >
+          ログアウト
+        </button>
       </header>
 
       {/* チャットエリア */}
       <div className="flex-1 overflow-y-auto py-6 space-y-4">
-        {messages.length === 0 && (
+        {/* キャラ未選択時 */}
+        {!persona && (
+          <div className="text-center text-gray-500 mt-16 text-sm">
+            <p className="text-4xl mb-4">🎭</p>
+            <p>会話相手のキャラクターを選んでください</p>
+            <Link
+              href="/personas"
+              className="mt-4 inline-block px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors"
+            >
+              キャラクターを選ぶ
+            </Link>
+          </div>
+        )}
+
+        {/* キャラ選択済み・メッセージなし */}
+        {persona && messages.length === 0 && (
           <div className="text-center text-gray-500 mt-16 text-sm">
             <p className="text-4xl mb-4">🎙️</p>
-            <p>下のボタンをタップして Emma と話してみよう！</p>
+            <p>下のボタンをタップして {persona.name} と話してみよう！</p>
             <p className="mt-1 text-xs text-gray-600">マイクへのアクセス許可が必要です</p>
           </div>
         )}
 
+        {/* メッセージ一覧 */}
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -251,7 +358,7 @@ export default function Home() {
           >
             {msg.role === "assistant" && (
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold mr-2 flex-shrink-0 mt-1">
-                E
+                {persona?.name.charAt(0).toUpperCase() ?? "A"}
               </div>
             )}
             <div
@@ -262,15 +369,21 @@ export default function Home() {
               }`}
             >
               {msg.text}
+              {/* AI メッセージの日本語訳 */}
+              {msg.role === "assistant" && msg.translation && (
+                <p className="mt-2 pt-2 border-t border-gray-700 text-xs text-gray-400 leading-relaxed">
+                  {msg.translation}
+                </p>
+              )}
             </div>
           </div>
         ))}
 
-        {/* ローディング表示 */}
+        {/* ローディング */}
         {status === "processing" && (
           <div className="flex justify-start">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold mr-2 flex-shrink-0">
-              E
+              {persona?.name.charAt(0).toUpperCase() ?? "A"}
             </div>
             <div className="bg-gray-800 px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-1.5">
               <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
@@ -300,7 +413,6 @@ export default function Home() {
       {/* 録音ボタン */}
       <div className="py-6 flex flex-col items-center gap-3">
         <p className="text-xs text-gray-500">{statusLabel[status]}</p>
-
         <button
           disabled={isButtonDisabled}
           type="button"
@@ -311,28 +423,51 @@ export default function Home() {
           className={`
             w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200
             focus:outline-none focus:ring-4 focus:ring-indigo-500/50
-            ${isButtonDisabled
-              ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-              : status === "recording"
-              ? "bg-red-600 text-white recording-pulse cursor-pointer"
-              : "bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white cursor-pointer shadow-lg shadow-indigo-900/50"
+            ${
+              isButtonDisabled
+                ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                : status === "recording"
+                  ? "bg-red-600 text-white recording-pulse cursor-pointer"
+                  : "bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white cursor-pointer shadow-lg shadow-indigo-900/50"
             }
           `}
           aria-label={status === "recording" ? "録音停止" : "録音開始"}
         >
           {status === "recording" ? (
-            // 停止アイコン
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" aria-label="停止アイコン">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-8 h-8"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              role="img"
+              aria-label="停止アイコン"
+            >
+              <title>停止</title>
               <rect x="6" y="6" width="12" height="12" rx="2" />
             </svg>
           ) : (
-            // マイクアイコン
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" aria-label="マイクアイコン">
-              <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21H9v2h6v-2h-2v-2.07A8.001 8.001 0 0 0 20 11h-2a6 6 0 0 1-12 0H4a8.001 8.001 0 0 0 7 7.93z"/>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-8 h-8"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              role="img"
+              aria-label="マイクアイコン"
+            >
+              <title>マイク</title>
+              <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21H9v2h6v-2h-2v-2.07A8.001 8.001 0 0 0 20 11h-2a6 6 0 0 1-12 0H4a8.001 8.001 0 0 0 7 7.93z" />
             </svg>
           )}
         </button>
       </div>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense>
+      <HomeInner />
+    </Suspense>
   );
 }

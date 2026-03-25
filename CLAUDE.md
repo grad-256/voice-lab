@@ -23,11 +23,12 @@ ChatGPT との差別化：「AI と話す」ではなく「AI で作った"他�
 | 言語 | TypeScript（strict） | |
 | スタイル | Tailwind CSS v3 | |
 | Linter/Formatter | Biome | `biome.json` 参照 |
+| 認証 | Supabase Auth | メール/パスワード認証 |
 | STT | OpenAI Whisper（`whisper-1`） | 音声 → テキスト |
 | 対話AI | Claude Haiku（`claude-haiku-4-5-20251001`） | テキスト → 返答 |
 | TTS | ElevenLabs（`eleven_turbo_v2_5`） | テキスト → 音声 |
 | ホスティング | Cloudflare Pages（予定） | `@cloudflare/next-on-pages` |
-| DB | なし（Phase 0） | 会話履歴は React state のみ |
+| DB | なし（Phase 1 途中） | 会話履歴は React state のみ |
 
 ---
 

@@ -26,12 +26,6 @@
     }
   },
   "files": {
-    "ignore": [
-      "node_modules",
-      ".next",
-      ".vercel",
-      "*.config.ts",
-      "*.config.mjs"
-    ]
+    "ignore": ["node_modules", ".next", ".vercel", "*.config.ts", "*.config.mjs"]
   }
 }
