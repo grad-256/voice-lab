@@ -1,5 +1,8 @@
 "use client";
 
+// 静的プリレンダリングを無効化（Supabase クライアントはビルド時に初期化できないため）
+export const dynamic = "force-dynamic";
+
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
