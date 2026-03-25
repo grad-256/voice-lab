@@ -23,6 +23,14 @@ type RequestBody = {
   systemPrompt?: string; // キャラのシステムプロンプト（省略時はデフォルト）
 };
 
+// システムプロンプトに JSON 返答の指示を付加する
+function buildSystemPrompt(base: string): string {
+  return `${base}
+
+IMPORTANT: Always respond with a JSON object in exactly this format (no other text outside the JSON):
+{"reply": "<your English response>", "translation": "<Japanese translation of your reply>"}`;
+}
+
 export async function POST(req: Request) {
   try {
     const { message, history, systemPrompt } = (await req.json()) as RequestBody;
@@ -44,7 +52,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 512,
-        system: systemPrompt ?? DEFAULT_SYSTEM_PROMPT,
+        system: buildSystemPrompt(systemPrompt ?? DEFAULT_SYSTEM_PROMPT),
         messages,
       }),
     });
@@ -59,8 +67,19 @@ export async function POST(req: Request) {
       content: { type: string; text: string }[];
     };
 
-    const text = data.content[0]?.text ?? "";
-    return Response.json({ text });
+    const raw = data.content[0]?.text ?? "";
+
+    // JSON をパース。コードフェンス（```json...```）が付いている場合は除去する
+    try {
+      const cleaned = raw
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/, "")
+        .trim();
+      const parsed = JSON.parse(cleaned) as { reply?: string; translation?: string };
+      return Response.json({ text: parsed.reply ?? raw, translation: parsed.translation ?? null });
+    } catch {
+      return Response.json({ text: raw, translation: null });
+    }
   } catch (err) {
     console.error("chat error:", err);
     return Response.json({ error: "サーバーエラーが発生しました" }, { status: 500 });

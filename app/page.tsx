@@ -21,6 +21,7 @@ type Message = {
   id: string;
   role: Role;
   text: string;
+  translation?: string | null;
 };
 
 type Status =
@@ -72,7 +73,14 @@ function HomeInner() {
         const convId = await getOrCreateConversation(found.id);
         conversationIdRef.current = convId;
         const history = await loadMessages(convId);
-        setMessages(history.map((m) => ({ id: m.id, role: m.role, text: m.content })));
+        setMessages(
+          history.map((m) => ({
+            id: m.id,
+            role: m.role,
+            text: m.content,
+            translation: m.translation,
+          }))
+        );
       } catch {
         setErrorMsg("キャラクターの読み込みに失敗しました");
       }
@@ -190,14 +198,24 @@ function HomeInner() {
             systemPrompt: persona?.style_prompt,
           }),
         });
-        const { text: aiText, error: c_err } = await chatRes.json();
+        const { text: aiText, translation: aiTranslation, error: c_err } = await chatRes.json();
         if (c_err || !aiText) throw new Error(c_err ?? "AI 応答の取得に失敗しました");
 
-        // AI メッセージを DB に保存
+        // AI メッセージを DB に保存（翻訳も含む）
         const aiDbId = conversationIdRef.current
-          ? await appendMessage(conversationIdRef.current, "assistant", aiText).catch(() => uid())
+          ? await appendMessage(
+              conversationIdRef.current,
+              "assistant",
+              aiText,
+              aiTranslation
+            ).catch(() => uid())
           : uid();
-        const aiMsg: Message = { id: aiDbId, role: "assistant", text: aiText };
+        const aiMsg: Message = {
+          id: aiDbId,
+          role: "assistant",
+          text: aiText,
+          translation: aiTranslation,
+        };
         setMessages((prev) => [...prev, aiMsg]);
 
         const isGoodbye = /\b(bye|goodbye)\b/i.test(userText);
@@ -351,6 +369,12 @@ function HomeInner() {
               }`}
             >
               {msg.text}
+              {/* AI メッセージの日本語訳 */}
+              {msg.role === "assistant" && msg.translation && (
+                <p className="mt-2 pt-2 border-t border-gray-700 text-xs text-gray-400 leading-relaxed">
+                  {msg.translation}
+                </p>
+              )}
             </div>
           </div>
         ))}

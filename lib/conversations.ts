@@ -7,6 +7,7 @@ export type ConversationMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  translation?: string | null;
 };
 
 // ────────────────────────────────────────────────
@@ -69,7 +70,7 @@ export async function loadMessages(conversationId: string): Promise<Conversation
   const supabase = createClient();
   const { data, error } = await supabase
     .from("messages")
-    .select("id, role, content")
+    .select("id, role, content, translation")
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: true });
 
@@ -83,12 +84,13 @@ export async function loadMessages(conversationId: string): Promise<Conversation
 export async function appendMessage(
   conversationId: string,
   role: "user" | "assistant",
-  content: string
+  content: string,
+  translation?: string | null
 ): Promise<string> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("messages")
-    .insert({ conversation_id: conversationId, role, content })
+    .insert({ conversation_id: conversationId, role, content, translation: translation ?? null })
     .select("id")
     .single();
 
