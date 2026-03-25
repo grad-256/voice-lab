@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // ────────────────────────────────────────────────
 // 型定義
@@ -14,10 +16,10 @@ type Message = {
 };
 
 type Status =
-  | "idle"       // 待機中
-  | "recording"  // 録音中
+  | "idle" // 待機中
+  | "recording" // 録音中
   | "processing" // Whisper → Claude → ElevenLabs
-  | "speaking";  // 音声再生中
+  | "speaking"; // 音声再生中
 
 // ────────────────────────────────────────────────
 // ユーティリティ
@@ -30,9 +32,19 @@ function uid() {
 // メインコンポーネント
 // ────────────────────────────────────────────────
 export default function Home() {
+  const router = useRouter();
+  const supabase = createClient();
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // ログアウト処理
+  const handleSignOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }, [supabase, router]);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -42,7 +54,8 @@ export default function Home() {
   const processAudioRef = useRef<((blob: Blob) => Promise<void>) | null>(null);
 
   // 新メッセージが来たら自動スクロール（件数が変わったときだけ実行）
-  // messages.length の変化でスクロールを意図的にトリガー
+  // messages の件数が変わったときだけスクロール（biome ignore: 意図的な依存）
+  // biome-ignore lint/correctness/useExhaustiveDependencies: messages.length で意図的にトリガー
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
@@ -59,10 +72,10 @@ export default function Home() {
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
         : MediaRecorder.isTypeSupported("audio/webm")
-        ? "audio/webm"
-        : MediaRecorder.isTypeSupported("audio/mp4")
-        ? "audio/mp4"
-        : "audio/ogg";
+          ? "audio/webm"
+          : MediaRecorder.isTypeSupported("audio/mp4")
+            ? "audio/mp4"
+            : "audio/ogg";
 
       const recorder = new MediaRecorder(stream, { mimeType });
       audioChunksRef.current = [];
@@ -73,7 +86,7 @@ export default function Home() {
 
       recorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: mimeType });
-        stream.getTracks().forEach((t) => t.stop());
+        for (const t of stream.getTracks()) t.stop();
         // デバッグ: blob サイズを確認（1KB以下なら音声が録れていない）
         console.log("録音 blob size:", blob.size, "bytes");
         if (blob.size < 1000) {
@@ -157,7 +170,6 @@ export default function Home() {
         // 会話終了ワード検出（bye / goodbye）→ 音声再生後にリセット
         const isGoodbye = /\b(bye|goodbye)\b/i.test(userText);
 
-
         // 3. ElevenLabs: テキスト → 音声
         const speakRes = await fetch("/api/speak", {
           method: "POST",
@@ -167,9 +179,7 @@ export default function Home() {
         if (!speakRes.ok) throw new Error("音声生成に失敗しました");
 
         const audioBuffer = await speakRes.arrayBuffer();
-        const audioUrl = URL.createObjectURL(
-          new Blob([audioBuffer], { type: "audio/mpeg" })
-        );
+        const audioUrl = URL.createObjectURL(new Blob([audioBuffer], { type: "audio/mpeg" }));
 
         // 4. 自動再生
         setStatus("speaking");
@@ -232,6 +242,14 @@ export default function Home() {
             話し中
           </span>
         )}
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="ml-auto text-xs text-gray-500 hover:text-gray-300 transition-colors px-2 py-1 rounded"
+          aria-label="ログアウト"
+        >
+          ログアウト
+        </button>
       </header>
 
       {/* チャットエリア */}
@@ -311,24 +329,41 @@ export default function Home() {
           className={`
             w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200
             focus:outline-none focus:ring-4 focus:ring-indigo-500/50
-            ${isButtonDisabled
-              ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-              : status === "recording"
-              ? "bg-red-600 text-white recording-pulse cursor-pointer"
-              : "bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white cursor-pointer shadow-lg shadow-indigo-900/50"
+            ${
+              isButtonDisabled
+                ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                : status === "recording"
+                  ? "bg-red-600 text-white recording-pulse cursor-pointer"
+                  : "bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white cursor-pointer shadow-lg shadow-indigo-900/50"
             }
           `}
           aria-label={status === "recording" ? "録音停止" : "録音開始"}
         >
           {status === "recording" ? (
             // 停止アイコン
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" aria-label="停止アイコン">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-8 h-8"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              role="img"
+              aria-label="停止アイコン"
+            >
+              <title>停止</title>
               <rect x="6" y="6" width="12" height="12" rx="2" />
             </svg>
           ) : (
             // マイクアイコン
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" aria-label="マイクアイコン">
-              <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21H9v2h6v-2h-2v-2.07A8.001 8.001 0 0 0 20 11h-2a6 6 0 0 1-12 0H4a8.001 8.001 0 0 0 7 7.93z"/>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-8 h-8"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              role="img"
+              aria-label="マイクアイコン"
+            >
+              <title>マイク</title>
+              <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21H9v2h6v-2h-2v-2.07A8.001 8.001 0 0 0 20 11h-2a6 6 0 0 1-12 0H4a8.001 8.001 0 0 0 7 7.93z" />
             </svg>
           )}
         </button>

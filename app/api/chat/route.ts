@@ -30,10 +30,7 @@ export async function POST(req: Request) {
       return Response.json({ error: "メッセージが空です" }, { status: 400 });
     }
 
-    const messages: Message[] = [
-      ...history,
-      { role: "user", content: message },
-    ];
+    const messages: Message[] = [...history, { role: "user", content: message }];
 
     // Anthropic Claude API（fetch で直接呼び出し）
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -57,7 +54,7 @@ export async function POST(req: Request) {
       return Response.json({ error: "AI 応答の取得に失敗しました" }, { status: 500 });
     }
 
-    const data = await response.json() as {
+    const data = (await response.json()) as {
       content: { type: string; text: string }[];
     };
 

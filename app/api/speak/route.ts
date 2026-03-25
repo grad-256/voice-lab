@@ -12,27 +12,24 @@ export async function POST(req: Request) {
       return Response.json({ error: "テキストが空です" }, { status: 400 });
     }
 
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "xi-api-key": process.env.ELEVENLABS_API_KEY ?? "",
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "xi-api-key": process.env.ELEVENLABS_API_KEY ?? "",
+      },
+      body: JSON.stringify({
+        text,
+        model_id: "eleven_turbo_v2_5", // 最速・低レイテンシ
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+          style: 0.3,
+          use_speaker_boost: true,
         },
-        body: JSON.stringify({
-          text,
-          model_id: "eleven_turbo_v2_5", // 最速・低レイテンシ
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-            style: 0.3,
-            use_speaker_boost: true,
-          },
-          speed: 0.75, // 1.0が標準、0.75でゆっくり（語学学習向け）
-        }),
-      }
-    );
+        speed: 0.75, // 1.0が標準、0.75でゆっくり（語学学習向け）
+      }),
+    });
 
     if (!response.ok) {
       const error = await response.text();
