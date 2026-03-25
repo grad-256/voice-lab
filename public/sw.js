@@ -9,3 +9,9 @@ self.addEventListener("install", () => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
+
+// fetch ハンドラ（Chrome の PWA インストール要件）
+// キャッシュなし・ネットワークをそのままパススルー
+self.addEventListener("fetch", (event) => {
+  event.respondWith(fetch(event.request));
+});
