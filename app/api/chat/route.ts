@@ -1,5 +1,7 @@
 export const runtime = "edge";
 
+import { buildSystemPrompt, parseClaudeResponse } from "@/lib/chat";
+
 // デフォルトのシステムプロンプト（キャラ未設定時のフォールバック）
 const DEFAULT_SYSTEM_PROMPT = `
 You are Emma, a friendly English conversation partner from Canada.
@@ -22,14 +24,6 @@ type RequestBody = {
   history: Message[];
   systemPrompt?: string; // キャラのシステムプロンプト（省略時はデフォルト）
 };
-
-// システムプロンプトに JSON 返答の指示を付加する
-function buildSystemPrompt(base: string): string {
-  return `${base}
-
-IMPORTANT: Always respond with a JSON object in exactly this format (no other text outside the JSON):
-{"reply": "<your English response>", "translation": "<Japanese translation of your reply>"}`;
-}
 
 export async function POST(req: Request) {
   try {
@@ -69,17 +63,9 @@ export async function POST(req: Request) {
 
     const raw = data.content[0]?.text ?? "";
 
-    // JSON をパース。コードフェンス（```json...```）が付いている場合は除去する
-    try {
-      const cleaned = raw
-        .replace(/^```(?:json)?\s*/i, "")
-        .replace(/\s*```$/, "")
-        .trim();
-      const parsed = JSON.parse(cleaned) as { reply?: string; translation?: string };
-      return Response.json({ text: parsed.reply ?? raw, translation: parsed.translation ?? null });
-    } catch {
-      return Response.json({ text: raw, translation: null });
-    }
+    // lib/chat の parseClaudeResponse でパース（コードフェンス対応済み）
+    const { reply, translation } = parseClaudeResponse(raw);
+    return Response.json({ text: reply, translation });
   } catch (err) {
     console.error("chat error:", err);
     return Response.json({ error: "サーバーエラーが発生しました" }, { status: 500 });

@@ -1,5 +1,7 @@
 export const runtime = "edge";
 
+import { getMimeExtension } from "@/lib/transcribe";
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -11,7 +13,7 @@ export async function POST(req: Request) {
 
     // MIME タイプから拡張子を決定（Safari は mp4、Chrome は webm）
     const mimeType = audio.type || "audio/webm";
-    const ext = mimeType.includes("mp4") ? "mp4" : mimeType.includes("ogg") ? "ogg" : "webm";
+    const ext = getMimeExtension(mimeType);
 
     // OpenAI Whisper API に送信
     const openaiForm = new FormData();
