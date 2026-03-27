@@ -9,6 +9,7 @@ import {
   getOrCreateConversation,
   loadMessages,
 } from "@/lib/conversations";
+import { type ConversationLevel } from "@/lib/chat";
 import { type Persona, getPersonas } from "@/lib/personas";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
@@ -49,6 +50,8 @@ function HomeInner() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
+  const [level, setLevel] = useState<ConversationLevel>("intermediate");
 
   // 現在の会話 ID（DB 保存に使用）
   const conversationIdRef = useRef<string | null>(null);
@@ -181,6 +184,7 @@ function HomeInner() {
           body: form,
         });
         const { text: userText, error: t_err } = await transcribeRes.json();
+        if (t_err === "SERVICE_QUOTA_EXCEEDED") { setQuotaExceeded(true); setStatus("idle"); return; }
         if (t_err || !userText) throw new Error(t_err ?? "音声認識に失敗しました");
 
         // ユーザーメッセージを DB に保存（失敗しても会話は続行）
@@ -199,9 +203,11 @@ function HomeInner() {
             message: userText,
             history,
             systemPrompt: persona?.style_prompt,
+            level,
           }),
         });
         const { text: aiText, translation: aiTranslation, error: c_err } = await chatRes.json();
+        if (c_err === "SERVICE_QUOTA_EXCEEDED") { setQuotaExceeded(true); setStatus("idle"); return; }
         if (c_err || !aiText) throw new Error(c_err ?? "AI 応答の取得に失敗しました");
 
         // AI メッセージを DB に保存（翻訳も含む）
@@ -232,7 +238,11 @@ function HomeInner() {
             voiceId: persona?.voice_id,
           }),
         });
-        if (!speakRes.ok) throw new Error("音声生成に失敗しました");
+        if (!speakRes.ok) {
+          const { error: s_err } = await speakRes.json();
+          if (s_err === "SERVICE_QUOTA_EXCEEDED") { setQuotaExceeded(true); setStatus("idle"); return; }
+          throw new Error("音声生成に失敗しました");
+        }
 
         const audioBuffer = await speakRes.arrayBuffer();
         const audioUrl = URL.createObjectURL(new Blob([audioBuffer], { type: "audio/mpeg" }));
@@ -280,13 +290,13 @@ function HomeInner() {
     speaking: `${personaName} が話しています...`,
   };
 
-  const isButtonDisabled = !persona || status === "processing" || status === "speaking";
+  const isButtonDisabled = !persona || status === "processing" || status === "speaking" || quotaExceeded;
 
   // ────────────────────────────────────────────────
   // レンダリング
   // ────────────────────────────────────────────────
   return (
-    <main className="flex flex-col h-screen max-w-2xl mx-auto px-4">
+    <main className="flex flex-col h-screen w-full max-w-2xl mx-auto px-4 overflow-hidden">
       {/* ヘッダー */}
       <header className="py-4 border-b border-gray-800 flex items-center gap-3">
         {/* キャラアバター */}
@@ -327,6 +337,27 @@ function HomeInner() {
           ログアウト
         </button>
       </header>
+
+      {/* レベル選択 */}
+      <div className="flex gap-1 py-2 border-b border-gray-800/50">
+        {(["beginner", "intermediate", "advanced"] as const).map((l) => {
+          const labels = { beginner: "初級", intermediate: "中級", advanced: "上級" };
+          return (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setLevel(l)}
+              className={`flex-1 py-1 text-xs font-medium rounded-md transition-colors ${
+                level === l
+                  ? "bg-indigo-600 text-white"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              {labels[l]}
+            </button>
+          );
+        })}
+      </div>
 
       {/* チャットエリア */}
       <div className="flex-1 overflow-y-auto py-6 space-y-4">
@@ -398,6 +429,14 @@ function HomeInner() {
 
         <div ref={chatBottomRef} />
       </div>
+
+      {/* 利用上限バナー */}
+      {quotaExceeded && (
+        <div className="mb-3 px-4 py-3 bg-amber-900/60 border border-amber-700 rounded-lg text-amber-300 text-sm">
+          <p className="font-medium">現在、サービスの月間利用上限に達しています。</p>
+          <p className="text-xs mt-1 text-amber-400">月初めにリセットされます。しばらくお待ちください。</p>
+        </div>
+      )}
 
       {/* エラー表示 */}
       {errorMsg && (

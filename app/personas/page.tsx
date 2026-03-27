@@ -43,7 +43,7 @@ export default function PersonasPage() {
   };
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8">
+    <main className="w-full max-w-2xl mx-auto px-4 py-8 flex-1 overflow-hidden">
       {/* ヘッダー */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -93,7 +93,7 @@ export default function PersonasPage() {
         {personas.map((persona) => (
           <div
             key={persona.id}
-            className="flex items-center gap-4 p-4 bg-gray-900 border border-gray-800 rounded-xl hover:border-indigo-700 transition-colors"
+            className="flex items-center gap-4 p-4 bg-gray-900 border border-gray-800 rounded-xl hover:border-indigo-700 transition-colors overflow-hidden"
           >
             {/* アバター */}
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
