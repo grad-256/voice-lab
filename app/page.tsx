@@ -3,13 +3,13 @@
 // 静的プリレンダリングを無効化（Supabase クライアントはビルド時に初期化できないため）
 export const dynamic = "force-dynamic";
 
+import type { ConversationLevel } from "@/lib/chat";
 import {
   appendMessage,
   createConversation,
   getOrCreateConversation,
   loadMessages,
 } from "@/lib/conversations";
-import { type ConversationLevel } from "@/lib/chat";
 import { type Persona, getPersonas } from "@/lib/personas";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
@@ -99,13 +99,6 @@ function HomeInner() {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-  // ログアウト
-  const handleSignOut = useCallback(async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
-  }, [supabase, router]);
-
   // ────────────────────────────────────────────────
   // 録音 開始
   // ────────────────────────────────────────────────
@@ -184,7 +177,11 @@ function HomeInner() {
           body: form,
         });
         const { text: userText, error: t_err } = await transcribeRes.json();
-        if (t_err === "SERVICE_QUOTA_EXCEEDED") { setQuotaExceeded(true); setStatus("idle"); return; }
+        if (t_err === "SERVICE_QUOTA_EXCEEDED") {
+          setQuotaExceeded(true);
+          setStatus("idle");
+          return;
+        }
         if (t_err || !userText) throw new Error(t_err ?? "音声認識に失敗しました");
 
         // ユーザーメッセージを DB に保存（失敗しても会話は続行）
@@ -207,7 +204,11 @@ function HomeInner() {
           }),
         });
         const { text: aiText, translation: aiTranslation, error: c_err } = await chatRes.json();
-        if (c_err === "SERVICE_QUOTA_EXCEEDED") { setQuotaExceeded(true); setStatus("idle"); return; }
+        if (c_err === "SERVICE_QUOTA_EXCEEDED") {
+          setQuotaExceeded(true);
+          setStatus("idle");
+          return;
+        }
         if (c_err || !aiText) throw new Error(c_err ?? "AI 応答の取得に失敗しました");
 
         // AI メッセージを DB に保存（翻訳も含む）
@@ -240,7 +241,11 @@ function HomeInner() {
         });
         if (!speakRes.ok) {
           const { error: s_err } = await speakRes.json();
-          if (s_err === "SERVICE_QUOTA_EXCEEDED") { setQuotaExceeded(true); setStatus("idle"); return; }
+          if (s_err === "SERVICE_QUOTA_EXCEEDED") {
+            setQuotaExceeded(true);
+            setStatus("idle");
+            return;
+          }
           throw new Error("音声生成に失敗しました");
         }
 
@@ -290,7 +295,8 @@ function HomeInner() {
     speaking: `${personaName} が話しています...`,
   };
 
-  const isButtonDisabled = !persona || status === "processing" || status === "speaking" || quotaExceeded;
+  const isButtonDisabled =
+    !persona || status === "processing" || status === "speaking" || quotaExceeded;
 
   // ────────────────────────────────────────────────
   // レンダリング
@@ -298,44 +304,38 @@ function HomeInner() {
   return (
     <main className="flex flex-col h-screen w-full max-w-2xl mx-auto px-4 overflow-hidden">
       {/* ヘッダー */}
-      <header className="py-4 border-b border-gray-800 flex items-center gap-3">
+      <header className="py-3 border-b border-gray-800 flex items-center gap-3">
         {/* キャラアバター */}
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-base flex-shrink-0">
           {persona ? persona.name.charAt(0).toUpperCase() : "?"}
         </div>
 
         {/* キャラ名 */}
         <div className="flex-1 min-w-0">
-          <h1 className="font-semibold text-white truncate">{personaName}</h1>
-          {persona ? (
-            <p className="text-xs text-gray-400 truncate">{persona.style_prompt.slice(0, 40)}…</p>
-          ) : (
-            <p className="text-xs text-gray-400">キャラクターが選択されていません</p>
+          <h1 className="font-semibold text-white text-sm truncate">{personaName}</h1>
+          {status === "speaking" && (
+            <p className="text-xs text-green-400 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
+              話し中
+            </p>
           )}
         </div>
 
-        {/* 話し中インジケーター */}
-        {status === "speaking" && (
-          <span className="text-xs text-green-400 flex items-center gap-1 flex-shrink-0">
-            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block" />
-            話し中
-          </span>
-        )}
-
-        {/* キャラ切り替え & ログアウト */}
-        <Link
-          href="/personas"
-          className="text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded flex-shrink-0"
-        >
-          キャラ変更
-        </Link>
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="text-xs text-gray-500 hover:text-gray-300 transition-colors px-2 py-1 rounded flex-shrink-0"
-        >
-          ログアウト
-        </button>
+        {/* ナビゲーション */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <Link
+            href="/personas"
+            className="text-xs text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded"
+          >
+            キャラ変更
+          </Link>
+          <Link
+            href="/settings"
+            className="text-xs text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded"
+          >
+            設定
+          </Link>
+        </div>
       </header>
 
       {/* レベル選択 */}
@@ -348,9 +348,7 @@ function HomeInner() {
               type="button"
               onClick={() => setLevel(l)}
               className={`flex-1 py-1 text-xs font-medium rounded-md transition-colors ${
-                level === l
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-500 hover:text-gray-300"
+                level === l ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-gray-300"
               }`}
             >
               {labels[l]}
@@ -434,7 +432,9 @@ function HomeInner() {
       {quotaExceeded && (
         <div className="mb-3 px-4 py-3 bg-amber-900/60 border border-amber-700 rounded-lg text-amber-300 text-sm">
           <p className="font-medium">現在、サービスの月間利用上限に達しています。</p>
-          <p className="text-xs mt-1 text-amber-400">月初めにリセットされます。しばらくお待ちください。</p>
+          <p className="text-xs mt-1 text-amber-400">
+            月初めにリセットされます。しばらくお待ちください。
+          </p>
         </div>
       )}
 

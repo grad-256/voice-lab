@@ -9,7 +9,8 @@ export default function PrivacyPage() {
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-white mb-3">1. 運営者</h2>
           <p className="text-sm leading-relaxed">
-            本サービス「MyVoiceLab」は、個人により運営されています。<br />
+            本サービス「MyVoiceLab」は、個人により運営されています。
+            <br />
             お問い合わせ先：
             <a
               href="mailto:m.miyaudi@uclab-w.com"
@@ -41,7 +42,9 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-3">4. 業務委託先への情報提供（外国含む）</h2>
+          <h2 className="text-lg font-semibold text-white mb-3">
+            4. 業務委託先への情報提供（外国含む）
+          </h2>
           <p className="text-sm leading-relaxed">
             本サービスは、サービス提供のために以下の事業者に処理を委託しています。
             委託先はすべて米国に拠点を置く企業であり、個人データが日本国外（米国）のサーバーで処理されます。
@@ -125,7 +128,8 @@ export default function PrivacyPage() {
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-white mb-3">10. お問い合わせ</h2>
           <p className="text-sm leading-relaxed">
-            プライバシーに関するお問い合わせは以下までご連絡ください。<br />
+            プライバシーに関するお問い合わせは以下までご連絡ください。
+            <br />
             <a
               href="mailto:m.miyaudi@uclab-w.com"
               className="text-indigo-400 hover:text-indigo-300 transition-colors"

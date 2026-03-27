@@ -39,14 +39,20 @@ export default function LoginPage() {
         router.refresh();
       } else {
         // サインアップ
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
         });
         if (error) throw error;
-        setSuccessMsg(
-          "確認メールを送信しました。メールのリンクをクリックしてアカウントを有効化してください。"
-        );
+        // Confirm email オフの場合はセッションが即発行されるのでリダイレクト
+        if (data.session) {
+          router.push("/");
+          router.refresh();
+        } else {
+          setSuccessMsg(
+            "確認メールを送信しました。メールのリンクをクリックしてアカウントを有効化してください。"
+          );
+        }
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "エラーが発生しました";
