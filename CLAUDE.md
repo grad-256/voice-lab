@@ -122,6 +122,32 @@ Chrome → `audio/webm;codecs=opus` / Safari → `audio/mp4` / Firefox → `audi
 
 ---
 
+## 品質評価基準（ハーネスパターン）
+
+Anthropic Labs の研究（[Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps)）をもとに定義。
+実装完了時は必ず以下の基準でセルフチェックを行うこと。
+
+### 機能品質
+- 各機能はスタブ・モックでなく**実際に動作**しているか
+- API エラー時にユーザーへ**日本語でフィードバック**しているか
+- **Edge Runtime の制約**（`fs`、`path` 禁止）に違反していないか
+- エッジケース（空入力・ネットワーク断・長時間無音）が処理されているか
+
+### UI/UX 品質
+- UI は**一貫した世界観**を持つか（色・タイポグラフィ・レイアウトの統一）
+- テンプレート的な AI デザインを避けているか（白背景・紫グラデーション・量産カードは NG）
+- ユーザーが迷わず操作できるか（録音→返答→再生のフローが直感的か）
+
+### 音声フロー品質（VoiceLab 固有）
+- Whisper → Claude Haiku → ElevenLabs のパイプラインが途切れなく繋がっているか
+- 録音が `MIN_RECORDING_MS = 1500` 以上確保されているか
+- ブラウザごとの音声フォーマット（Chrome/Safari/Firefox）が正しく切り替わるか
+
+> **セルフレビューは甘くなりがち。** 少しでも怪しい点があれば「不合格」として修正すること。
+> 「概ね良い」「小さな問題だから大丈夫」という判断は禁止。
+
+---
+
 ## よくある作業パターン
 
 ### API Route を追加するとき
