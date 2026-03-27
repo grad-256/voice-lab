@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 未ログインでもアクセス可能なページ
-  const publicPaths = ["/login", "/privacy", "/terms"];
+  const publicPaths = ["/login", "/privacy", "/terms", "/reset-password"];
 
   // 未ログイン かつ 公開ページ以外 → /login にリダイレクト
   if (!user && !publicPaths.includes(pathname)) {
