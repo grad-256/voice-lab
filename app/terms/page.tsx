@@ -39,9 +39,7 @@ export default function TermsPage() {
               通信環境・外部 API（OpenAI・Anthropic・ElevenLabs）の障害による
               サービス停止について、責任を負いません。
             </li>
-            <li>
-              本サービスの利用により生じた損害について、運営者は一切の責任を負いません。
-            </li>
+            <li>本サービスの利用により生じた損害について、運営者は一切の責任を負いません。</li>
           </ul>
         </section>
 
@@ -85,7 +83,10 @@ export default function TermsPage() {
         </section>
 
         <div className="mt-12 pt-8 border-t border-gray-800 flex gap-6">
-          <a href="/privacy" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+          <a
+            href="/privacy"
+            className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+          >
             プライバシーポリシー
           </a>
           <a href="/" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">

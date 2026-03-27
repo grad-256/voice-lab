@@ -8,7 +8,7 @@
 // Safari  → audio/mp4              → mp4
 // Firefox → audio/ogg              → ogg
 export function getMimeExtension(mimeType: string): "mp4" | "ogg" | "webm" {
-	if (mimeType.includes("mp4")) return "mp4";
-	if (mimeType.includes("ogg")) return "ogg";
-	return "webm"; // デフォルト（Chrome / 不明）
+  if (mimeType.includes("mp4")) return "mp4";
+  if (mimeType.includes("ogg")) return "ogg";
+  return "webm"; // デフォルト（Chrome / 不明）
 }
