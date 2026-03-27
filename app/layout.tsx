@@ -3,12 +3,12 @@ import "./globals.css";
 import { SwRegister } from "./sw-register";
 
 export const metadata: Metadata = {
-  title: "VoiceLab — AI 英会話パートナー",
+  title: "MyVoiceLab — AI 英会話パートナー",
   description: "声で話しかけると AI が音声で返してくれる英会話練習アプリ",
   // PWA: ホーム画面に追加したときのアイコン・タイトル（iOS）
   appleWebApp: {
     capable: true,
-    title: "VoiceLab",
+    title: "MyVoiceLab",
     statusBarStyle: "black-translucent",
   },
 };
