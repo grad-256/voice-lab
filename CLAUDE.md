@@ -1,4 +1,4 @@
-# VoiceLab — CLAUDE.md
+# MyVoiceLab — CLAUDE.md
 
 このファイルは Claude がこのプロジェクトで作業するときの共通コンテキストです。
 必ずこのファイルを最初に読み、内容を踏まえて作業してください。
@@ -157,7 +157,7 @@ Anthropic Labs の研究（[Harness design for long-running application developm
 - テンプレート的な AI デザインを避けているか（白背景・紫グラデーション・量産カードは NG）
 - ユーザーが迷わず操作できるか（録音→返答→再生のフローが直感的か）
 
-### 音声フロー品質（VoiceLab 固有）
+### 音声フロー品質（MyVoiceLab 固有）
 - Whisper → Claude Haiku → ElevenLabs のパイプラインが途切れなく繋がっているか
 - 録音が `MIN_RECORDING_MS = 1500` 以上確保されているか
 - ブラウザごとの音声フォーマット（Chrome/Safari/Firefox）が正しく切り替わるか

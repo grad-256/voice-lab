@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "VoiceLab — AI 英会話パートナー",
-    short_name: "VoiceLab",
+    name: "MyVoiceLab — AI 英会話パートナー",
+    short_name: "MyVoiceLab",
     description: "声で話しかけると AI が音声で返してくれる英会話練習アプリ",
     start_url: "/",
     display: "standalone",
