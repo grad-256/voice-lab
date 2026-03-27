@@ -127,6 +127,25 @@ Chrome → `audio/webm;codecs=opus` / Safari → `audio/mp4` / Firefox → `audi
 Anthropic Labs の研究（[Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps)）をもとに定義。
 実装完了時は必ず以下の基準でセルフチェックを行うこと。
 
+### ハーネス構成（マルチエージェントフロー）
+
+```
+プロンプト1行
+    ↓
+[プランナー]  機能仕様・スプリント計画に展開
+    ↓
+[ジェネレーター]  コードを実装（スプリント単位）
+    ↓
+[エバリュエーター]  実際にアプリを操作してテスト
+    ↓（不合格：具体的なバグ報告）
+[ジェネレーター]  フィードバックをもとに修正
+    ↓（合格まで繰り返す）
+  完了
+```
+
+> **生成と評価を分離することが核心。** 作る側と評価する側が同じエージェントだと自己評価が甘くなる。
+> Phase 2 以降で本格導入予定。Phase 1 では CLAUDE.md の基準によるセルフチェックで代替する。
+
 ### 機能品質
 - 各機能はスタブ・モックでなく**実際に動作**しているか
 - API エラー時にユーザーへ**日本語でフィードバック**しているか
