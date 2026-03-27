@@ -1,6 +1,6 @@
 export const runtime = "edge";
 
-import { buildSystemPrompt, parseClaudeResponse } from "@/lib/chat";
+import { type ConversationLevel, buildSystemPrompt, parseClaudeResponse } from "@/lib/chat";
 
 // デフォルトのシステムプロンプト（キャラ未設定時のフォールバック）
 const DEFAULT_SYSTEM_PROMPT = `
@@ -22,12 +22,13 @@ type Message = {
 type RequestBody = {
   message: string;
   history: Message[];
-  systemPrompt?: string; // キャラのシステムプロンプト（省略時はデフォルト）
+  systemPrompt?: string;
+  level?: ConversationLevel;
 };
 
 export async function POST(req: Request) {
   try {
-    const { message, history, systemPrompt } = (await req.json()) as RequestBody;
+    const { message, history, systemPrompt, level } = (await req.json()) as RequestBody;
 
     if (!message) {
       return Response.json({ error: "メッセージが空です" }, { status: 400 });
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 512,
-        system: buildSystemPrompt(systemPrompt ?? DEFAULT_SYSTEM_PROMPT),
+        system: buildSystemPrompt(systemPrompt ?? DEFAULT_SYSTEM_PROMPT, level ?? "intermediate"),
         messages,
       }),
     });
@@ -54,6 +55,9 @@ export async function POST(req: Request) {
     if (!response.ok) {
       const error = await response.text();
       console.error("Claude API error:", error);
+      if (response.status === 429 || response.status === 529) {
+        return Response.json({ error: "SERVICE_QUOTA_EXCEEDED" }, { status: 429 });
+      }
       return Response.json({ error: "AI 応答の取得に失敗しました" }, { status: 500 });
     }
 

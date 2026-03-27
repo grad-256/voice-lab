@@ -68,7 +68,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen px-4 bg-gray-950">
+    <main className="flex flex-col items-center justify-center flex-1 px-4 bg-gray-950">
       <div className="w-full max-w-sm">
         {/* ロゴ */}
         <div className="text-center mb-8">

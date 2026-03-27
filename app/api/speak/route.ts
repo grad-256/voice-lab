@@ -37,6 +37,9 @@ export async function POST(req: Request) {
     if (!response.ok) {
       const error = await response.text();
       console.error("ElevenLabs API error:", error);
+      if (response.status === 429) {
+        return Response.json({ error: "SERVICE_QUOTA_EXCEEDED" }, { status: 429 });
+      }
       return Response.json({ error: "音声生成に失敗しました" }, { status: 500 });
     }
 

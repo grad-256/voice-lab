@@ -33,8 +33,11 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // 未ログイン かつ /login 以外 → /login にリダイレクト
-  if (!user && pathname !== "/login") {
+  // 未ログインでもアクセス可能なページ
+  const publicPaths = ["/login", "/privacy", "/terms"];
+
+  // 未ログイン かつ 公開ページ以外 → /login にリダイレクト
+  if (!user && !publicPaths.includes(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
