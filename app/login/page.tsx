@@ -4,18 +4,46 @@
 export const dynamic = "force-dynamic";
 
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (
-    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-4 h-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+      />
     </svg>
   ) : (
-    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-4 h-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"
+      />
     </svg>
   );
 }
@@ -23,17 +51,20 @@ function EyeIcon({ open }: { open: boolean }) {
 // ────────────────────────────────────────────────
 // ログイン / サインアップ / パスワードリセット 画面
 // ────────────────────────────────────────────────
-export default function LoginPage() {
+function LoginPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
-  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [showGuestDialog, setShowGuestDialog] = useState(false);
 
   const switchMode = (next: "login" | "signup" | "forgot") => {
     setMode(next);
@@ -102,19 +133,19 @@ export default function LoginPage() {
             V
           </div>
           <h1 className="text-2xl font-bold text-white">MyVoiceLab</h1>
-          <p className="text-sm text-gray-400 mt-1">AI 音声会話パートナー</p>
+          <p className="text-base text-gray-400 mt-1">AI 音声会話パートナー</p>
         </div>
 
         {mode === "forgot" ? (
           /* パスワードリセットモード */
           <>
             <h2 className="text-base font-semibold text-white mb-1">パスワードをお忘れの方</h2>
-            <p className="text-sm text-gray-400 mb-6">
+            <p className="text-base text-gray-400 mb-6">
               登録済みのメールアドレスを入力してください。リセット用リンクをお送りします。
             </p>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm text-gray-400 mb-1">
+                <label htmlFor="email" className="block text-base text-gray-400 mb-1">
                   メールアドレス
                 </label>
                 <input
@@ -124,17 +155,17 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="you@example.com"
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm"
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-base"
                 />
               </div>
 
               {errorMsg && (
-                <div className="px-4 py-3 bg-red-900/60 border border-red-700 rounded-lg text-red-300 text-sm">
+                <div className="px-4 py-3 bg-red-900/60 border border-red-700 rounded-lg text-red-300 text-base">
                   {errorMsg}
                 </div>
               )}
               {successMsg && (
-                <div className="px-4 py-3 bg-green-900/60 border border-green-700 rounded-lg text-green-300 text-sm">
+                <div className="px-4 py-3 bg-green-900/60 border border-green-700 rounded-lg text-green-300 text-base">
                   {successMsg}
                 </div>
               )}
@@ -142,7 +173,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium rounded-lg transition-colors text-sm"
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium rounded-lg transition-colors text-base"
               >
                 {loading ? "送信中..." : "リセットメールを送信"}
               </button>
@@ -150,7 +181,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => switchMode("login")}
-                className="w-full text-sm text-gray-400 hover:text-white transition-colors text-center"
+                className="w-full text-base text-gray-400 hover:text-white transition-colors text-center"
               >
                 ← ログインに戻る
               </button>
@@ -184,7 +215,7 @@ export default function LoginPage() {
             {/* フォーム */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm text-gray-400 mb-1">
+                <label htmlFor="email" className="block text-base text-gray-400 mb-1">
                   メールアドレス
                 </label>
                 <input
@@ -194,12 +225,12 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="you@example.com"
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm"
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-base"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm text-gray-400 mb-1">
+                <label htmlFor="password" className="block text-base text-gray-400 mb-1">
                   パスワード
                 </label>
                 <div className="relative">
@@ -211,7 +242,7 @@ export default function LoginPage() {
                     required
                     placeholder="6文字以上"
                     minLength={6}
-                    className="w-full px-4 py-3 pr-10 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm"
+                    className="w-full px-4 py-3 pr-10 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-base"
                   />
                   <button
                     type="button"
@@ -225,14 +256,14 @@ export default function LoginPage() {
 
               {/* エラー表示 */}
               {errorMsg && (
-                <div className="px-4 py-3 bg-red-900/60 border border-red-700 rounded-lg text-red-300 text-sm">
+                <div className="px-4 py-3 bg-red-900/60 border border-red-700 rounded-lg text-red-300 text-base">
                   {errorMsg}
                 </div>
               )}
 
               {/* 成功表示 */}
               {successMsg && (
-                <div className="px-4 py-3 bg-green-900/60 border border-green-700 rounded-lg text-green-300 text-sm">
+                <div className="px-4 py-3 bg-green-900/60 border border-green-700 rounded-lg text-green-300 text-base">
                   {successMsg}
                 </div>
               )}
@@ -240,7 +271,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium rounded-lg transition-colors text-sm"
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium rounded-lg transition-colors text-base"
               >
                 {loading ? "処理中..." : mode === "login" ? "ログイン" : "アカウントを作成"}
               </button>
@@ -250,15 +281,63 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => switchMode("forgot")}
-                  className="w-full text-sm text-gray-500 hover:text-gray-300 transition-colors text-center"
+                  className="w-full text-base text-gray-500 hover:text-gray-300 transition-colors text-center"
                 >
                   パスワードをお忘れの方
                 </button>
               )}
+
+              <div className="text-center">
+                <span className="text-gray-500 text-base">または</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowGuestDialog(true)}
+                className="block w-full text-center py-2 text-base text-gray-400 hover:text-gray-200 transition-colors"
+              >
+                ログインせずに試す（5往復まで無料）
+              </button>
             </form>
           </>
         )}
       </div>
+
+      {/* ゲスト体験ダイアログ */}
+      {showGuestDialog && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 max-w-sm w-full space-y-4">
+            <h2 className="text-lg font-semibold text-white">ゲストとして試す</h2>
+            <ul className="text-gray-300 text-base space-y-2">
+              <li>・最大5往復まで無料体験できます</li>
+              <li>・会話履歴は保存されません</li>
+              <li>・続けて使うにはアカウント登録が必要です</li>
+            </ul>
+            <div className="flex flex-col gap-2 pt-2">
+              <Link
+                href="/"
+                className="w-full py-2 text-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-base font-medium transition-colors"
+              >
+                ゲストとして試す
+              </Link>
+              <button
+                type="button"
+                onClick={() => setShowGuestDialog(false)}
+                className="w-full py-2 text-center rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-base transition-colors"
+              >
+                キャンセル
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageInner />
+    </Suspense>
   );
 }

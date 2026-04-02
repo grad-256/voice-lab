@@ -104,10 +104,11 @@ Chrome → `audio/webm;codecs=opus` / Safari → `audio/mp4` / Firefox → `audi
 | Phase | 内容 | 状態 |
 |---|---|---|
 | **Phase 0** | 最小 AI 音声アプリ（Whisper → Claude → ElevenLabs） | ✅ **完了** |
-| Phase 1 | 語学学習者向け製品完成（認証・キャラ設定・UI仕上げ） | 待機中 |
+| **Phase 1** | 語学学習者向け製品完成（認証・キャラ設定・UI仕上げ） | ✅ **完了** |
+| **Phase 1.5** | ゲストモード＋フリーミアム導線（ログイン不要で利用開始 → 制限 → 認証 → 有料版） | 🔄 **進行中** |
 | Phase 2 | AWS インフラ学習（Hono / Docker / Terraform / CI/CD）+ MCP Client | 待機中 |
 | Phase 3 | MCP サーバー作成・公開 | 待機中 |
-| Phase 4 | 収益化（Freemium・決済・MCP B2B 展開） | 待機中 |
+| Phase 4 | 収益化（Freemium・決済・MCP B2B 展開） | 待機中 |P
 
 ---
 
