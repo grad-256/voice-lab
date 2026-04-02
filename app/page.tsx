@@ -10,6 +10,7 @@ import {
   getOrCreateConversation,
   loadMessages,
 } from "@/lib/conversations";
+import { GUEST_LIMIT, incrementGuestCount, isGuestLimitReached } from "@/lib/guestUsage";
 import { type Persona, getPersonas } from "@/lib/personas";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
@@ -39,6 +40,19 @@ function uid() {
 }
 
 // ────────────────────────────────────────────────
+// ゲスト用デフォルトペルソナ
+// ────────────────────────────────────────────────
+const GUEST_PERSONA: Persona = {
+  id: "guest",
+  user_id: "guest",
+  name: "Yuki",
+  style_prompt:
+    "You are Yuki, a friendly English conversation partner. Keep responses short and encouraging.",
+  voice_id: "EXAVITQu4vr4xnSDxMaL",
+  created_at: "",
+};
+
+// ────────────────────────────────────────────────
 // メインコンポーネント（useSearchParams を使うため Suspense でラップ）
 // ────────────────────────────────────────────────
 function HomeInner() {
@@ -52,6 +66,8 @@ function HomeInner() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [quotaExceeded, setQuotaExceeded] = useState(false);
   const [level, setLevel] = useState<ConversationLevel>("intermediate");
+  const [isGuest, setIsGuest] = useState(false);
+  const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
 
   // 現在の会話 ID（DB 保存に使用）
   const conversationIdRef = useRef<string | null>(null);
@@ -62,8 +78,25 @@ function HomeInner() {
   const recordingStartRef = useRef<number>(0);
   const processAudioRef = useRef<((blob: Blob) => Promise<void>) | null>(null);
 
+  // ゲスト検出：未ログインならデフォルトペルソナを設定
+  useEffect(() => {
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setIsGuest(true);
+        setPersona(GUEST_PERSONA);
+        if (isGuestLimitReached()) {
+          setShowGuestLimitModal(true);
+        }
+      }
+    })();
+  }, [supabase]);
+
   // URL パラメータからキャラを読み込み、会話履歴を復元
   useEffect(() => {
+    if (isGuest) return;
     const personaId = searchParams.get("persona");
     if (!personaId) return;
 
@@ -91,7 +124,7 @@ function HomeInner() {
         setErrorMsg("キャラクターの読み込みに失敗しました");
       }
     })();
-  }, [searchParams]);
+  }, [searchParams, isGuest]);
 
   // 自動スクロール
   // biome-ignore lint/correctness/useExhaustiveDependencies: messages.length で意図的にトリガー
@@ -184,10 +217,11 @@ function HomeInner() {
         }
         if (t_err || !userText) throw new Error(t_err ?? "音声認識に失敗しました");
 
-        // ユーザーメッセージを DB に保存（失敗しても会話は続行）
-        const userDbId = conversationIdRef.current
-          ? await appendMessage(conversationIdRef.current, "user", userText).catch(() => uid())
-          : uid();
+        // ユーザーメッセージを DB に保存（ゲスト時はスキップ）
+        const userDbId =
+          !isGuest && conversationIdRef.current
+            ? await appendMessage(conversationIdRef.current, "user", userText).catch(() => uid())
+            : uid();
         const userMsg: Message = { id: userDbId, role: "user", text: userText };
         setMessages((prev) => [...prev, userMsg]);
 
@@ -211,15 +245,16 @@ function HomeInner() {
         }
         if (c_err || !aiText) throw new Error(c_err ?? "AI 応答の取得に失敗しました");
 
-        // AI メッセージを DB に保存（翻訳も含む）
-        const aiDbId = conversationIdRef.current
-          ? await appendMessage(
-              conversationIdRef.current,
-              "assistant",
-              aiText,
-              aiTranslation
-            ).catch(() => uid())
-          : uid();
+        // AI メッセージを DB に保存（ゲスト時はスキップ）
+        const aiDbId =
+          !isGuest && conversationIdRef.current
+            ? await appendMessage(
+                conversationIdRef.current,
+                "assistant",
+                aiText,
+                aiTranslation
+              ).catch(() => uid())
+            : uid();
         const aiMsg: Message = {
           id: aiDbId,
           role: "assistant",
@@ -229,6 +264,16 @@ function HomeInner() {
         setMessages((prev) => [...prev, aiMsg]);
 
         const isGoodbye = /\b(bye|goodbye)\b/i.test(userText);
+
+        // ゲストの場合は利用回数をカウント
+        if (isGuest) {
+          const newCount = incrementGuestCount();
+          if (newCount >= GUEST_LIMIT) {
+            setShowGuestLimitModal(true);
+            setStatus("idle");
+            return;
+          }
+        }
 
         // 3. ElevenLabs: テキスト → 音声（キャラのボイス ID を渡す）
         const speakRes = await fetch("/api/speak", {
@@ -260,8 +305,10 @@ function HomeInner() {
           if (isGoodbye && persona) {
             // 新しい会話セッションを作成してメッセージをリセット
             setTimeout(async () => {
-              const newConvId = await createConversation(persona.id).catch(() => null);
-              if (newConvId) conversationIdRef.current = newConvId;
+              if (!isGuest) {
+                const newConvId = await createConversation(persona.id).catch(() => null);
+                if (newConvId) conversationIdRef.current = newConvId;
+              }
               setMessages([]);
             }, 3000);
           }
@@ -277,7 +324,7 @@ function HomeInner() {
         setStatus("idle");
       }
     },
-    [messages, persona]
+    [messages, persona, isGuest, level]
   );
 
   useEffect(() => {
@@ -296,7 +343,11 @@ function HomeInner() {
   };
 
   const isButtonDisabled =
-    !persona || status === "processing" || status === "speaking" || quotaExceeded;
+    !persona ||
+    status === "processing" ||
+    status === "speaking" ||
+    quotaExceeded ||
+    showGuestLimitModal;
 
   // ────────────────────────────────────────────────
   // レンダリング
@@ -312,9 +363,9 @@ function HomeInner() {
 
         {/* キャラ名 */}
         <div className="flex-1 min-w-0">
-          <h1 className="font-semibold text-white text-sm truncate">{personaName}</h1>
+          <h1 className="font-semibold text-white text-base truncate">{personaName}</h1>
           {status === "speaking" && (
-            <p className="text-xs text-green-400 flex items-center gap-1">
+            <p className="text-sm text-green-400 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
               話し中
             </p>
@@ -325,13 +376,13 @@ function HomeInner() {
         <div className="flex items-center gap-1 flex-shrink-0">
           <Link
             href="/personas"
-            className="text-xs text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded"
+            className={`text-sm text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded ${isGuest ? "pointer-events-none opacity-40" : ""}`}
           >
             キャラ変更
           </Link>
           <Link
             href="/settings"
-            className="text-xs text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded"
+            className="text-sm text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded"
           >
             設定
           </Link>
@@ -346,27 +397,33 @@ function HomeInner() {
             <button
               key={l}
               type="button"
-              onClick={() => setLevel(l)}
-              className={`flex-1 py-1 text-xs font-medium rounded-md transition-colors ${
+              onClick={() => !isGuest && setLevel(l)}
+              disabled={isGuest}
+              className={`flex-1 py-1 text-sm font-medium rounded-md transition-colors ${
                 level === l ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-gray-300"
-              }`}
+              } ${isGuest ? "opacity-40 cursor-not-allowed" : ""}`}
             >
               {labels[l]}
             </button>
           );
         })}
       </div>
+      {isGuest && (
+        <p className="text-xs text-gray-500 text-center py-1">
+          ログインするとキャラ変更・レベル設定が利用できます
+        </p>
+      )}
 
       {/* チャットエリア */}
       <div className="flex-1 overflow-y-auto py-6 space-y-4">
         {/* キャラ未選択時 */}
         {!persona && (
-          <div className="text-center text-gray-500 mt-16 text-sm">
+          <div className="text-center text-gray-500 mt-16 text-base">
             <p className="text-4xl mb-4">🎭</p>
             <p>会話相手のキャラクターを選んでください</p>
             <Link
               href="/personas"
-              className="mt-4 inline-block px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors"
+              className="mt-4 inline-block px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-base rounded-lg transition-colors"
             >
               キャラクターを選ぶ
             </Link>
@@ -375,10 +432,10 @@ function HomeInner() {
 
         {/* キャラ選択済み・メッセージなし */}
         {persona && messages.length === 0 && (
-          <div className="text-center text-gray-500 mt-16 text-sm">
+          <div className="text-center text-gray-500 mt-16 text-base">
             <p className="text-4xl mb-4">🎙️</p>
             <p>下のボタンをタップして {persona.name} と話してみよう！</p>
-            <p className="mt-1 text-xs text-gray-600">マイクへのアクセス許可が必要です</p>
+            <p className="mt-1 text-sm text-gray-600">マイクへのアクセス許可が必要です</p>
           </div>
         )}
 
@@ -389,12 +446,12 @@ function HomeInner() {
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             {msg.role === "assistant" && (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold mr-2 flex-shrink-0 mt-1">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-base font-bold mr-2 flex-shrink-0 mt-1">
                 {persona?.name.charAt(0).toUpperCase() ?? "A"}
               </div>
             )}
             <div
-              className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+              className={`max-w-[80%] px-4 py-3 rounded-2xl text-base leading-relaxed ${
                 msg.role === "user"
                   ? "bg-indigo-600 text-white rounded-tr-sm"
                   : "bg-gray-800 text-gray-100 rounded-tl-sm"
@@ -403,7 +460,7 @@ function HomeInner() {
               {msg.text}
               {/* AI メッセージの日本語訳 */}
               {msg.role === "assistant" && msg.translation && (
-                <p className="mt-2 pt-2 border-t border-gray-700 text-xs text-gray-400 leading-relaxed">
+                <p className="mt-2 pt-2 border-t border-gray-700 text-sm text-gray-400 leading-relaxed">
                   {msg.translation}
                 </p>
               )}
@@ -414,7 +471,7 @@ function HomeInner() {
         {/* ローディング */}
         {status === "processing" && (
           <div className="flex justify-start">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold mr-2 flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-base font-bold mr-2 flex-shrink-0">
               {persona?.name.charAt(0).toUpperCase() ?? "A"}
             </div>
             <div className="bg-gray-800 px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-1.5">
@@ -430,9 +487,9 @@ function HomeInner() {
 
       {/* 利用上限バナー */}
       {quotaExceeded && (
-        <div className="mb-3 px-4 py-3 bg-amber-900/60 border border-amber-700 rounded-lg text-amber-300 text-sm">
+        <div className="mb-3 px-4 py-3 bg-amber-900/60 border border-amber-700 rounded-lg text-amber-300 text-base">
           <p className="font-medium">現在、サービスの月間利用上限に達しています。</p>
-          <p className="text-xs mt-1 text-amber-400">
+          <p className="text-sm mt-1 text-amber-400">
             月初めにリセットされます。しばらくお待ちください。
           </p>
         </div>
@@ -440,7 +497,7 @@ function HomeInner() {
 
       {/* エラー表示 */}
       {errorMsg && (
-        <div className="mb-3 px-4 py-2 bg-red-900/60 border border-red-700 rounded-lg text-red-300 text-sm flex items-center justify-between">
+        <div className="mb-3 px-4 py-2 bg-red-900/60 border border-red-700 rounded-lg text-red-300 text-base flex items-center justify-between">
           <span>{errorMsg}</span>
           <button
             type="button"
@@ -454,7 +511,7 @@ function HomeInner() {
 
       {/* 録音ボタン */}
       <div className="py-6 flex flex-col items-center gap-3">
-        <p className="text-xs text-gray-500">{statusLabel[status]}</p>
+        <p className="text-sm text-gray-500">{statusLabel[status]}</p>
         <button
           disabled={isButtonDisabled}
           type="button"
@@ -502,6 +559,35 @@ function HomeInner() {
           )}
         </button>
       </div>
+
+      {/* ゲスト利用上限モーダル */}
+      {showGuestLimitModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 max-w-sm w-full text-center space-y-4">
+            <div className="text-2xl">🎉</div>
+            <h2 className="text-lg font-semibold text-white">
+              {GUEST_LIMIT}往復の会話を体験いただけました！
+            </h2>
+            <p className="text-gray-400 text-base">
+              続けるにはログインが必要です。 ログインすると会話履歴も保存されます。
+            </p>
+            <div className="flex flex-col gap-2">
+              <Link
+                href="/login"
+                className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-base font-medium transition-colors"
+              >
+                ログインする
+              </Link>
+              <Link
+                href="/login?mode=signup"
+                className="w-full py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-base font-medium transition-colors"
+              >
+                新規登録（無料）
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
