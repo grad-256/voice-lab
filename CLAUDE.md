@@ -199,6 +199,11 @@ Anthropic Labs の研究（[Harness design for long-running application developm
 3. `process.env` でキーを参照
 4. エラー時は `Response.json({ error: "..." }, { status: 500 })` で返す
 
+### ページ（Server Component）を追加するとき
+- 動的なページには `export const runtime = "edge";` を先頭に追加する
+- Cloudflare Pages は非静的ルートがすべて Edge Runtime である必要があるため
+- 静的ページ（`○` 表示）は不要だが、`createClient` などを使う動的ページは必須
+
 ### システムプロンプトを変更するとき
 `app/api/chat/route.ts` の `SYSTEM_PROMPT` 定数を編集する。
 （Phase 1 で UI から設定可能にする予定）
