@@ -1,16 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { SwRegister } from "./sw-register";
 
 export const metadata: Metadata = {
   title: "MyVoiceLab — AI 英会話パートナー",
   description: "声で話しかけると AI が音声で返してくれる英会話練習アプリ",
-  // PWA: ホーム画面に追加したときのアイコン・タイトル（iOS）
-  appleWebApp: {
-    capable: true,
-    title: "MyVoiceLab",
-    statusBarStyle: "black-translucent",
-  },
 };
 
 export const viewport: Viewport = {
@@ -28,9 +21,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <head>
-        <link rel="apple-touch-icon" href="/icon-192.png" />
-      </head>
       <body className="min-h-screen bg-gray-950 text-gray-100 antialiased flex flex-col">
         <div className="flex-1 flex flex-col">{children}</div>
         <footer className="border-t border-gray-800 py-4 px-6 text-center">
@@ -43,7 +33,6 @@ export default function RootLayout({
             </a>
           </div>
         </footer>
-        <SwRegister />
       </body>
     </html>
   );
