@@ -82,14 +82,14 @@ function LoginPageInner() {
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        router.push("/");
+        router.push("/app");
         router.refresh();
       } else if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
         // Confirm email オフの場合はセッションが即発行されるのでリダイレクト
         if (data.session) {
-          router.push("/");
+          router.push("/app");
           router.refresh();
         } else {
           setSuccessMsg(
@@ -314,7 +314,7 @@ function LoginPageInner() {
             </ul>
             <div className="flex flex-col gap-2 pt-2">
               <Link
-                href="/"
+                href="/app"
                 className="w-full py-2 text-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-base font-medium transition-colors"
               >
                 ゲストとして試す

@@ -79,6 +79,27 @@ export async function loadMessages(conversationId: string): Promise<Conversation
 }
 
 // ────────────────────────────────────────────────
+// 自分のフィードバックを取得（メッセージID → rating）
+// ────────────────────────────────────────────────
+export async function loadFeedback(
+  messageIds: string[]
+): Promise<Record<string, "positive" | "negative">> {
+  if (messageIds.length === 0) return {};
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("message_feedback")
+    .select("message_id, rating")
+    .in("message_id", messageIds);
+
+  if (error) return {};
+  const result: Record<string, "positive" | "negative"> = {};
+  for (const row of data ?? []) {
+    result[row.message_id] = row.rating as "positive" | "negative";
+  }
+  return result;
+}
+
+// ────────────────────────────────────────────────
 // メッセージを保存
 // ────────────────────────────────────────────────
 export async function appendMessage(
