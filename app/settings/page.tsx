@@ -48,7 +48,7 @@ export default function SettingsPage() {
     <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-8">
       {/* ヘッダー */}
       <div className="flex items-center gap-3 mb-8">
-        <Link href="/" className="text-gray-400 hover:text-white transition-colors text-sm">
+        <Link href="/app" className="text-gray-400 hover:text-white transition-colors text-sm">
           ← 戻る
         </Link>
         <h1 className="text-xl font-semibold text-white">設定</h1>

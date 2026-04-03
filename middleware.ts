@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 未ログインでもアクセス可能なページ
-  const publicPaths = ["/", "/login", "/privacy", "/terms", "/reset-password"];
+  const publicPaths = ["/", "/app", "/login", "/privacy", "/terms", "/reset-password"];
 
   // 未ログイン かつ 公開ページ以外 → /login にリダイレクト
   if (!user && !publicPaths.includes(pathname)) {
@@ -43,10 +43,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // ログイン済み かつ /login → / にリダイレクト
+  // ログイン済み かつ /login → /app にリダイレクト
   if (user && pathname === "/login") {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/app";
     return NextResponse.redirect(url);
   }
 

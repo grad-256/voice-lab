@@ -168,6 +168,29 @@ Anthropic Labs の研究（[Harness design for long-running application developm
 
 ---
 
+## エージェントチーム構成
+
+`.claude/agents/` に以下のエージェントが定義されている。
+
+| エージェント | 役割 | 主な用途 |
+|---|---|---|
+| **planner** | 仕様書展開 | 1行プロンプト → スプリント計画 |
+| **evaluator** | 品質レビュー | 実装完了後のテスト・合否判定 |
+| **pdm** | プロダクト戦略 | 優先度・KPI・ユーザージャーニー分析 |
+| **marketer** | 訴求設計 | コピー・プライシング・感情設計 |
+| **frontend** | フロントエンド実装 | UI・ページ・クライアントロジック（Next.js / Tailwind） |
+| **backend** | バックエンド実装 | API Routes・外部API統合・Supabase操作 |
+| **infrastructure** | インフラ管理 | Cloudflare Pages・Supabase設定・デプロイ・CI/CD |
+
+### チームの使い方
+- **実装タスク**：`planner` → `frontend` / `backend` / `infrastructure` → `evaluator`
+- **プロダクト判断**：`pdm` + `marketer` → `planner` で仕様統合
+- **フルチーム**：`pdm` → `planner` → `frontend` + `backend` + `infrastructure`（並行） → `evaluator`
+- `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`（`.claude/settings.json`）で有効化済み
+- チーム起動は `/launch-team` スキルで自動化（`.claude/skills/launch-team/SKILL.md`）
+
+---
+
 ## よくある作業パターン
 
 ### API Route を追加するとき

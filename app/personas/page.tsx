@@ -48,7 +48,7 @@ export default function PersonasPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <Link
-            href="/"
+            href="/app"
             className="text-gray-400 hover:text-white text-sm mb-2 flex items-center gap-1 transition-colors"
           >
             ← トップへ
@@ -110,7 +110,7 @@ export default function PersonasPage() {
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 type="button"
-                onClick={() => router.push(`/?persona=${persona.id}`)}
+                onClick={() => router.push(`/app?persona=${persona.id}`)}
                 className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-lg transition-colors"
               >
                 話す
