@@ -10,7 +10,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-jakarta), var(--font-noto), sans-serif;
 }
 
 /* 録音ボタン アニメーション */
@@ -31,4 +31,132 @@ body {
 
 .recording-pulse {
   animation: pulse-ring 1.5s infinite;
+}
+
+/* ────── LP アニメーション ────── */
+
+/* メッセージの出現アニメーション */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeSlideUp {
+  animation: fadeSlideUp 0.35s ease both;
+}
+
+/* 背景ブロブ */
+@keyframes blobFloat1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(40px, -30px) scale(1.08); }
+  66%       { transform: translate(-20px, 20px) scale(0.96); }
+}
+
+@keyframes blobFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(-50px, 20px) scale(1.06); }
+  66%       { transform: translate(30px, -40px) scale(0.98); }
+}
+
+@keyframes blobFloat3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%       { transform: translate(20px, 30px) scale(1.05); }
+}
+
+.blob-1 { animation: blobFloat1 14s ease-in-out infinite; }
+.blob-2 { animation: blobFloat2 18s ease-in-out infinite; }
+.blob-3 { animation: blobFloat3 22s ease-in-out infinite; }
+
+/* オーロラグラデーション（Personas セクション） */
+@keyframes aurora {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.aurora-bg {
+  background: linear-gradient(
+    135deg,
+    rgba(139,92,246,0.18) 0%,
+    rgba(99,102,241,0.22) 20%,
+    rgba(236,72,153,0.12) 40%,
+    rgba(6,182,212,0.16) 60%,
+    rgba(79,70,229,0.20) 80%,
+    rgba(139,92,246,0.18) 100%
+  );
+  background-size: 300% 300%;
+  animation: aurora 10s ease infinite;
+}
+
+/* CSS オーブ浮遊アニメーション（Features セクション） */
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(40px, -50px) scale(1.06); }
+  66%       { transform: translate(-20px, 30px) scale(0.96); }
+}
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(-50px, 30px) scale(1.04); }
+  66%       { transform: translate(30px, -40px) scale(0.98); }
+}
+@keyframes orbFloat3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%       { transform: translate(-30px, -40px) scale(1.05); }
+}
+
+.orb-1 {
+  position: absolute;
+  width: 500px; height: 500px;
+  left: -100px; top: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,246,0.30) 0%, transparent 70%);
+  filter: blur(40px);
+  animation: orbFloat1 16s ease-in-out infinite;
+}
+.orb-2 {
+  position: absolute;
+  width: 420px; height: 420px;
+  right: -80px; top: 20%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,102,241,0.28) 0%, transparent 70%);
+  filter: blur(40px);
+  animation: orbFloat2 20s ease-in-out infinite;
+}
+.orb-3 {
+  position: absolute;
+  width: 360px; height: 360px;
+  left: 38%; bottom: -60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(6,182,212,0.22) 0%, transparent 70%);
+  filter: blur(40px);
+  animation: orbFloat3 24s ease-in-out infinite;
+}
+
+/* オーロラ（Personas セクション） */
+@keyframes aurora {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.aurora-anim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(139,92,246,0.20) 0%,
+    rgba(99,102,241,0.25) 20%,
+    rgba(236,72,153,0.14) 40%,
+    rgba(6,182,212,0.18) 60%,
+    rgba(79,70,229,0.22) 80%,
+    rgba(139,92,246,0.20) 100%
+  );
+  background-size: 300% 300%;
+  animation: aurora 10s ease infinite;
+  pointer-events: none;
 }
