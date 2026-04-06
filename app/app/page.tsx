@@ -19,9 +19,9 @@ import {
 } from "@/lib/guestUsage";
 import { type Persona, getPersonas } from "@/lib/personas";
 import { createClient } from "@/lib/supabase/client";
-import posthog from "posthog-js";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import posthog from "posthog-js";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 
 // ────────────────────────────────────────────────
@@ -138,9 +138,7 @@ function HomeInner() {
           }))
         );
         // DB から自分のフィードバックを復元して初期状態に反映
-        const assistantIds = history
-          .filter((m) => m.role === "assistant")
-          .map((m) => m.id);
+        const assistantIds = history.filter((m) => m.role === "assistant").map((m) => m.id);
         const savedFeedback = await loadFeedback(assistantIds);
         setFeedback(savedFeedback);
       } catch {
@@ -462,7 +460,9 @@ function HomeInner() {
         const levelIndex = levels.indexOf(level);
         return (
           <div className="py-2 border-b border-gray-800/50">
-            <div className={`relative grid grid-cols-3 rounded-lg p-1 ${isGuest ? "bg-gray-800/30 opacity-40" : "bg-gray-800/50"}`}>
+            <div
+              className={`relative grid grid-cols-3 rounded-lg p-1 ${isGuest ? "bg-gray-800/30 opacity-40" : "bg-gray-800/50"}`}
+            >
               {/* スライドするピル */}
               <div
                 className="absolute top-1 bottom-1 w-1/3 bg-indigo-600 rounded-md shadow-lg shadow-indigo-900/50 transition-transform duration-200 ease-out"
@@ -472,7 +472,12 @@ function HomeInner() {
                 <button
                   key={l}
                   type="button"
-                  onClick={() => { if (!isGuest) { setLevel(l); posthog.capture("level_changed", { level: l }); } }}
+                  onClick={() => {
+                    if (!isGuest) {
+                      setLevel(l);
+                      posthog.capture("level_changed", { level: l });
+                    }
+                  }}
                   disabled={isGuest}
                   className={`relative z-10 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 ${
                     level === l ? "text-white" : "text-gray-400 hover:text-gray-200"
@@ -709,14 +714,24 @@ function HomeInner() {
             <div className="flex flex-col gap-2">
               <Link
                 href="/login"
-                onClick={() => posthog.capture("signup_cta_clicked", { source: "guest_limit_modal", action: "login" })}
+                onClick={() =>
+                  posthog.capture("signup_cta_clicked", {
+                    source: "guest_limit_modal",
+                    action: "login",
+                  })
+                }
                 className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-base font-medium transition-colors"
               >
                 ログインする
               </Link>
               <Link
                 href="/login?mode=signup"
-                onClick={() => posthog.capture("signup_cta_clicked", { source: "guest_limit_modal", action: "signup" })}
+                onClick={() =>
+                  posthog.capture("signup_cta_clicked", {
+                    source: "guest_limit_modal",
+                    action: "signup",
+                  })
+                }
                 className="w-full py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-base font-medium transition-colors"
               >
                 新規登録（無料）

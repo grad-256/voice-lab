@@ -120,7 +120,11 @@ export default function ChatDemo() {
         </div>
 
         {/* メッセージエリア：固定高さ＋内部スクロール */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto py-3 space-y-3 scroll-smooth" style={{ scrollbarWidth: "none" }}>
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto py-3 space-y-3 scroll-smooth"
+          style={{ scrollbarWidth: "none" }}
+        >
           {messages.map((msg, i) => (
             <div
               key={`${i}-${msg.text}`}

@@ -38,17 +38,17 @@ export default function RootLayout({
     <html lang="ja" className={`${jakartaSans.variable} ${notoSansJP.variable}`}>
       <body className="min-h-screen bg-gray-950 text-gray-100 antialiased flex flex-col">
         <PostHogProvider>
-        <div className="flex-1 flex flex-col">{children}</div>
-        <footer className="border-t border-gray-800 py-4 px-6 text-center">
-          <div className="flex justify-center gap-6 text-xs text-gray-600">
-            <a href="/terms" className="hover:text-gray-400 transition-colors">
-              利用規約
-            </a>
-            <a href="/privacy" className="hover:text-gray-400 transition-colors">
-              プライバシーポリシー
-            </a>
-          </div>
-        </footer>
+          <div className="flex-1 flex flex-col">{children}</div>
+          <footer className="border-t border-gray-800 py-4 px-6 text-center">
+            <div className="flex justify-center gap-6 text-xs text-gray-600">
+              <a href="/terms" className="hover:text-gray-400 transition-colors">
+                利用規約
+              </a>
+              <a href="/privacy" className="hover:text-gray-400 transition-colors">
+                プライバシーポリシー
+              </a>
+            </div>
+          </footer>
         </PostHogProvider>
       </body>
     </html>

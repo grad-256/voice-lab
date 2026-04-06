@@ -16,6 +16,7 @@ function EyeIcon({ open }: { open: boolean }) {
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
+      aria-hidden="true"
     >
       <path
         strokeLinecap="round"
@@ -37,6 +38,7 @@ function EyeIcon({ open }: { open: boolean }) {
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
+      aria-hidden="true"
     >
       <path
         strokeLinecap="round"
