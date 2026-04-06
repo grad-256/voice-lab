@@ -19,6 +19,7 @@ import {
 } from "@/lib/guestUsage";
 import { type Persona, getPersonas } from "@/lib/personas";
 import { createClient } from "@/lib/supabase/client";
+import posthog from "posthog-js";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
@@ -101,8 +102,10 @@ function HomeInner() {
         setIsGuest(true);
         setPersona(GUEST_PERSONA);
         setGuestCount(getGuestCount());
+        posthog.capture("guest_session_started");
         if (isGuestLimitReached()) {
           setShowGuestLimitModal(true);
+          posthog.capture("guest_limit_reached");
         }
       }
     })();
@@ -293,6 +296,7 @@ function HomeInner() {
         if (isGuest) {
           const newCount = incrementGuestCount();
           setGuestCount(newCount);
+          posthog.capture("guest_message_sent", { count: newCount });
           if (newCount >= GUEST_LIMIT) {
             setShowGuestLimitModal(true);
             setStatus("idle");
@@ -447,29 +451,43 @@ function HomeInner() {
       </header>
 
       {/* レベル選択 */}
-      <div className="flex gap-1 py-2 border-b border-gray-800/50">
-        {(["beginner", "intermediate", "advanced"] as const).map((l) => {
-          const labels = { beginner: "初級", intermediate: "中級", advanced: "上級" };
-          return (
-            <button
-              key={l}
-              type="button"
-              onClick={() => !isGuest && setLevel(l)}
-              disabled={isGuest}
-              className={`flex-1 py-1 text-sm font-medium rounded-md transition-colors ${
-                level === l ? "bg-indigo-600 text-white" : "text-gray-500 hover:text-gray-300"
-              } ${isGuest ? "opacity-40 cursor-not-allowed" : ""}`}
-            >
-              {labels[l]}
-            </button>
-          );
-        })}
-      </div>
-      {isGuest && (
-        <p className="text-xs text-gray-500 text-center py-1">
-          ログインするとキャラ変更・レベル設定が利用できます
-        </p>
-      )}
+      {(() => {
+        const levels = ["beginner", "intermediate", "advanced"] as const;
+        const labels = { beginner: "初級", intermediate: "中級", advanced: "上級" };
+        const descriptions = {
+          beginner: "A1-A2 ・ 短い文・やさしい語彙",
+          intermediate: "B1-B2 ・ 日常表現・自然な会話",
+          advanced: "C1 ・ 豊かな語彙・複雑な表現",
+        };
+        const levelIndex = levels.indexOf(level);
+        return (
+          <div className="py-2 border-b border-gray-800/50">
+            <div className={`relative grid grid-cols-3 rounded-lg p-1 ${isGuest ? "bg-gray-800/30 opacity-40" : "bg-gray-800/50"}`}>
+              {/* スライドするピル */}
+              <div
+                className="absolute top-1 bottom-1 w-1/3 bg-indigo-600 rounded-md shadow-lg shadow-indigo-900/50 transition-transform duration-200 ease-out"
+                style={{ transform: `translateX(${levelIndex * 100}%)` }}
+              />
+              {levels.map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => { if (!isGuest) { setLevel(l); posthog.capture("level_changed", { level: l }); } }}
+                  disabled={isGuest}
+                  className={`relative z-10 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 ${
+                    level === l ? "text-white" : "text-gray-400 hover:text-gray-200"
+                  } ${isGuest ? "cursor-not-allowed" : ""}`}
+                >
+                  {labels[l]}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-center text-gray-500 mt-2 h-4 transition-all duration-200">
+              {isGuest ? "ログインするとレベル設定が利用できます" : descriptions[level]}
+            </p>
+          </div>
+        );
+      })()}
 
       {/* チャットエリア */}
       <div className="flex-1 overflow-y-auto py-6 space-y-4">
@@ -691,12 +709,14 @@ function HomeInner() {
             <div className="flex flex-col gap-2">
               <Link
                 href="/login"
+                onClick={() => posthog.capture("signup_cta_clicked", { source: "guest_limit_modal", action: "login" })}
                 className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-base font-medium transition-colors"
               >
                 ログインする
               </Link>
               <Link
                 href="/login?mode=signup"
+                onClick={() => posthog.capture("signup_cta_clicked", { source: "guest_limit_modal", action: "signup" })}
                 className="w-full py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-base font-medium transition-colors"
               >
                 新規登録（無料）

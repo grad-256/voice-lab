@@ -30,12 +30,22 @@ pnpm test
 
 ---
 
+## コミットメッセージの注意事項
+
+> ⚠️ **コミットメッセージは必ず英語（ASCII のみ）で書くこと。**
+>
+> Cloudflare Pages の API が日本語などのマルチバイト文字を含むコミットメッセージを
+> `Invalid commit message, it must be a valid UTF-8 string. [code: 8000111]` として
+> 拒否し、デプロイが失敗する。（2026-04-06 確認済み）
+
+---
+
 ## PR タイトルの命名規則
 
 ブランチ名とコミット内容から判断して、以下の形式にする：
 
 ```
-<type>: <日本語で何をしたか>（英語でも可）
+<type>: <English description>
 ```
 
 | type | 使う場面 |
