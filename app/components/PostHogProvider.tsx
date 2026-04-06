@@ -13,8 +13,8 @@ export default function PostHogProvider({ children }: { children: ReactNode }) {
     posthog.init(key, {
       api_host: host ?? "https://us.i.posthog.com",
       person_profiles: "identified_only", // ゲストは匿名、ログイン後に紐付け
-      capture_pageview: true,             // ページビュー自動計測
-      capture_pageleave: true,            // 離脱も記録
+      capture_pageview: true, // ページビュー自動計測
+      capture_pageleave: true, // 離脱も記録
     });
   }, []);
 

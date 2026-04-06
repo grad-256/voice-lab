@@ -41,8 +41,20 @@ const STEPS = [
     title: "キャラクターを選ぶ",
     desc: "性格・声・話し方の異なるパートナーから選択。自分に合った相手を見つけよう。",
     icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-6 h-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+        />
       </svg>
     ),
   },
@@ -51,8 +63,20 @@ const STEPS = [
     title: "マイクで話しかける",
     desc: "ボタンを押して話すだけ。文字を打つ必要なし。本物の会話と同じ感覚で練習できる。",
     icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-6 h-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"
+        />
       </svg>
     ),
   },
@@ -61,8 +85,20 @@ const STEPS = [
     title: "声で返ってくる",
     desc: "AI が音声で返答。日本語訳もつくから、わからない表現もその場で確認できる。",
     icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-6 h-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"
+        />
       </svg>
     ),
   },
@@ -84,10 +120,16 @@ export default async function LandingPage() {
             My<span className="text-indigo-400">VoiceLab</span>
           </span>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5">
+            <Link
+              href="/login"
+              className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5"
+            >
               ログイン
             </Link>
-            <Link href="/app" className="text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors">
+            <Link
+              href="/app"
+              className="text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors"
+            >
               無料で試す
             </Link>
           </div>
@@ -101,55 +143,55 @@ export default async function LandingPage() {
           <HeroBg />
 
           <div className="relative z-20 max-w-5xl mx-auto px-6 pt-24 pb-20">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
-            {/* 左：コピー */}
-            <div className="flex-1 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-medium px-3 py-1.5 rounded-full mb-8">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-                登録不要・今すぐ体験できます
+            <div className="flex flex-col lg:flex-row items-center gap-16">
+              {/* 左：コピー */}
+              <div className="flex-1 text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-medium px-3 py-1.5 rounded-full mb-8">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                  登録不要・今すぐ体験できます
+                </div>
+
+                <h1 className="text-5xl sm:text-6xl font-bold leading-[1.1] tracking-tight">
+                  話す練習相手が、
+                  <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-indigo-400 to-cyan-400">
+                    ここにいる。
+                  </span>
+                </h1>
+
+                <p className="mt-6 text-lg text-gray-400 leading-relaxed max-w-md">
+                  人前だと緊張する。練習相手がいない。
+                  <br />
+                  そんな悩みを、AI が作ったあなた専用の
+                  <br />
+                  会話パートナーが解決します。
+                </p>
+
+                <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                  <Link
+                    href="/app"
+                    className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all text-base shadow-lg shadow-indigo-900/50 hover:shadow-indigo-900/70 hover:-translate-y-0.5"
+                  >
+                    無料で話してみる
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="px-8 py-3.5 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-700 text-gray-200 font-medium rounded-xl transition-colors text-base"
+                  >
+                    ログイン
+                  </Link>
+                </div>
+
+                <p className="mt-4 text-xs text-gray-600">
+                  クレジットカード不要・5往復まで無料体験
+                </p>
               </div>
 
-              <h1 className="text-5xl sm:text-6xl font-bold leading-[1.1] tracking-tight">
-                話す練習相手が、
-                <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-indigo-400 to-cyan-400">
-                  ここにいる。
-                </span>
-              </h1>
-
-              <p className="mt-6 text-lg text-gray-400 leading-relaxed max-w-md">
-                人前だと緊張する。練習相手がいない。
-                <br />
-                そんな悩みを、AI が作ったあなた専用の
-                <br />
-                会話パートナーが解決します。
-              </p>
-
-              <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-                <Link
-                  href="/app"
-                  className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all text-base shadow-lg shadow-indigo-900/50 hover:shadow-indigo-900/70 hover:-translate-y-0.5"
-                >
-                  無料で話してみる
-                </Link>
-                <Link
-                  href="/login"
-                  className="px-8 py-3.5 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-700 text-gray-200 font-medium rounded-xl transition-colors text-base"
-                >
-                  ログイン
-                </Link>
+              {/* 右：アニメーションチャット */}
+              <div className="flex-shrink-0 w-[272px]">
+                <ChatDemo />
               </div>
-
-              <p className="mt-4 text-xs text-gray-600">
-                クレジットカード不要・5往復まで無料体験
-              </p>
             </div>
-
-            {/* 右：アニメーションチャット */}
-            <div className="flex-shrink-0 w-[272px]">
-              <ChatDemo />
-            </div>
-          </div>
           </div>
         </section>
 
@@ -219,7 +261,9 @@ export default async function LandingPage() {
                 },
               ].map((f, i) => (
                 <ScrollReveal key={f.title} delay={i * 100}>
-                  <div className={`bg-gradient-to-br ${f.gradient} border ${f.border} rounded-2xl p-6 h-full`}>
+                  <div
+                    className={`bg-gradient-to-br ${f.gradient} border ${f.border} rounded-2xl p-6 h-full`}
+                  >
                     <div className="text-3xl mb-4">{f.icon}</div>
                     <h3 className="text-white font-semibold text-lg mb-2">{f.title}</h3>
                     <p className="text-gray-400 text-sm leading-relaxed">{f.desc}</p>
@@ -248,7 +292,9 @@ export default async function LandingPage() {
               {SAMPLE_PERSONAS.map((p, i) => (
                 <ScrollReveal key={p.name} delay={i * 100}>
                   <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 flex flex-col items-center text-center hover:border-gray-700 transition-colors h-full">
-                    <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${p.color} flex items-center justify-center text-white font-bold text-xl mb-4 shadow-lg`}>
+                    <div
+                      className={`w-14 h-14 rounded-full bg-gradient-to-br ${p.color} flex items-center justify-center text-white font-bold text-xl mb-4 shadow-lg`}
+                    >
                       {p.initial}
                     </div>
                     <h3 className="text-white font-semibold text-lg">{p.name}</h3>
@@ -287,23 +333,6 @@ export default async function LandingPage() {
             </ScrollReveal>
           </div>
         </section>
-
-        {/* ────── Footer ────── */}
-        <footer className="border-t border-gray-800/50 py-8">
-          <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-600">
-            <span>
-              My<span className="text-indigo-500">VoiceLab</span>
-            </span>
-            <div className="flex gap-6">
-              <Link href="/terms" className="hover:text-gray-400 transition-colors">
-                利用規約
-              </Link>
-              <Link href="/privacy" className="hover:text-gray-400 transition-colors">
-                プライバシーポリシー
-              </Link>
-            </div>
-          </div>
-        </footer>
       </main>
     </div>
   );

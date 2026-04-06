@@ -20,7 +20,7 @@ export default function HeroBg() {
       { color: "rgba(139, 92, 246, 0.35)", freq: 0.012, amp: 60, speed: 0.018, phase: 0 },
       { color: "rgba(99, 102, 241, 0.28)", freq: 0.018, amp: 40, speed: 0.024, phase: 1.2 },
       { color: "rgba(79, 70, 229, 0.20)", freq: 0.008, amp: 80, speed: 0.012, phase: 2.5 },
-      { color: "rgba(6, 182, 212, 0.15)",  freq: 0.022, amp: 30, speed: 0.030, phase: 0.8 },
+      { color: "rgba(6, 182, 212, 0.15)", freq: 0.022, amp: 30, speed: 0.03, phase: 0.8 },
     ];
 
     // パーティクルの定義
@@ -34,11 +34,7 @@ export default function HeroBg() {
       color: string;
     };
 
-    const PARTICLE_COLORS = [
-      "rgba(139,92,246,",
-      "rgba(99,102,241,",
-      "rgba(6,182,212,",
-    ];
+    const PARTICLE_COLORS = ["rgba(139,92,246,", "rgba(99,102,241,", "rgba(6,182,212,"];
 
     const particles: Particle[] = Array.from({ length: 48 }, () => ({
       x: Math.random() * window.innerWidth,
