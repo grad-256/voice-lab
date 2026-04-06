@@ -97,6 +97,11 @@ Chrome → `audio/webm;codecs=opus` / Safari → `audio/mp4` / Firefox → `audi
 ### 最小録音時間
 `MIN_RECORDING_MS = 1500`（1.5秒）。Whisper に渡す音声が短すぎると "you" などの hallucination が発生するため。
 
+### コミットメッセージは英語（ASCII）のみ
+Cloudflare Pages の API は日本語などのマルチバイト文字を含むコミットメッセージを拒否し、デプロイが失敗する。
+`Invalid commit message, it must be a valid UTF-8 string. [code: 8000111]`
+**git commit メッセージは必ず英語で書くこと。**
+
 ---
 
 ## フェーズロードマップ

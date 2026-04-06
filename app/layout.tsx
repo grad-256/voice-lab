@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP, Plus_Jakarta_Sans } from "next/font/google";
+import PostHogProvider from "./components/PostHogProvider";
 import "./globals.css";
 
 const jakartaSans = Plus_Jakarta_Sans({
@@ -36,6 +37,7 @@ export default function RootLayout({
   return (
     <html lang="ja" className={`${jakartaSans.variable} ${notoSansJP.variable}`}>
       <body className="min-h-screen bg-gray-950 text-gray-100 antialiased flex flex-col">
+        <PostHogProvider>
         <div className="flex-1 flex flex-col">{children}</div>
         <footer className="border-t border-gray-800 py-4 px-6 text-center">
           <div className="flex justify-center gap-6 text-xs text-gray-600">
@@ -47,6 +49,7 @@ export default function RootLayout({
             </a>
           </div>
         </footer>
+        </PostHogProvider>
       </body>
     </html>
   );
