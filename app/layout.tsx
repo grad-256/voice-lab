@@ -1,5 +1,19 @@
 import type { Metadata, Viewport } from "next";
+import { Noto_Sans_JP, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+
+const jakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
+
+const notoSansJP = Noto_Sans_JP({
+  subsets: ["latin"],
+  variable: "--font-noto",
+  display: "swap",
+  weight: ["400", "500", "700"],
+});
 
 export const metadata: Metadata = {
   title: "MyVoiceLab — AI 英会話パートナー",
@@ -20,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja">
+    <html lang="ja" className={`${jakartaSans.variable} ${notoSansJP.variable}`}>
       <body className="min-h-screen bg-gray-950 text-gray-100 antialiased flex flex-col">
         <div className="flex-1 flex flex-col">{children}</div>
         <footer className="border-t border-gray-800 py-4 px-6 text-center">

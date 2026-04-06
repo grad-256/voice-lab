@@ -71,7 +71,7 @@ function HomeInner() {
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [quotaExceeded, setQuotaExceeded] = useState(false);
-  const [level, setLevel] = useState<ConversationLevel>("intermediate");
+  const [level, setLevel] = useState<ConversationLevel>("beginner");
   const [isGuest, setIsGuest] = useState(false);
   const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
   const [guestCount, setGuestCount] = useState(0);
