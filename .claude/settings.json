@@ -2,17 +2,8 @@
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
+  "teammateMmode": "tmux",
   "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd /sessions/vibrant-inspiring-cori/mnt/voice-lab && node_modules/.bin/vitest run --reporter=verbose 2>&1"
-          }
-        ]
-      }
-    ]
+    "PostToolUse": []
   }
 }
