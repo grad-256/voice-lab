@@ -1,14 +1,14 @@
 /**
  * ゲストユーザーの利用回数管理
  * localStorage で vl_guest_count キーを管理する純粋関数
- * SSR（typeof window === "undefined"）に対応
+ * SSR（typeof localStorage === "undefined"）に対応
  */
 
 export const GUEST_LIMIT = 5;
 export const STORAGE_KEY = "vl_guest_count";
 
 export function getGuestCount(): number {
-  if (typeof window === "undefined") return 0;
+  if (typeof localStorage === "undefined") return 0;
   const value = localStorage.getItem(STORAGE_KEY);
   if (value === null) return 0;
   const parsed = Number.parseInt(value, 10);
@@ -16,14 +16,14 @@ export function getGuestCount(): number {
 }
 
 export function incrementGuestCount(): number {
-  if (typeof window === "undefined") return 0;
+  if (typeof localStorage === "undefined") return 0;
   const next = getGuestCount() + 1;
   localStorage.setItem(STORAGE_KEY, String(next));
   return next;
 }
 
 export function resetGuestCount(): void {
-  if (typeof window === "undefined") return;
+  if (typeof localStorage === "undefined") return;
   localStorage.setItem(STORAGE_KEY, "0");
 }
 
