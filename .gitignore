@@ -34,3 +34,4 @@ Thumbs.db
 # Cloudflare / Wrangler
 # ──────────────────────────────────────────────────
 .wrangler/
+.claude/flags/
