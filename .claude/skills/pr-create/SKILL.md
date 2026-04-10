@@ -1,110 +1,103 @@
 ---
 name: pr-create
 description: |
-  VoiceLab の PR（プルリクエスト）を作成するスキル。
+  VoiceLab の PR 作成の日本語トリガー層（薄いディスパッチャー）。
   「PRを作って」「プルリクを出して」「PR作成」「マージしたい」
   「ブランチを main に入れたい」「変更をプッシュしてPR出して」
   などのトリガーで必ず使うこと。
-  gh コマンドで適切なタイトル・本文の PR を作成し、VoiceLab の開発コンテキストを反映する。
+  実体の PR 作成処理は plugin 版 commit-commands:commit-push-pr に委譲する。
 ---
 
-# PR 作成スキル（VoiceLab）
+# VoiceLab PR 作成ディスパッチャー
 
-## 事前確認
+このスキルは**薄いラッパー**です。PR 作成の本体処理は plugin 版
+`commit-commands:commit-push-pr` が担当し、VoiceLab 固有の品質チェックは
+CLAUDE.md の「品質評価基準（ハーネスパターン）」セクションが単一の真実です。
+このファイルには品質基準を**重複して書きません**。
+
+---
+
+## 🚨 重要な運用ルール
+
+1. **PR 作成は必ずこのスキル経由で行う**
+   raw `gh pr create` を Claude が直接叩かない。日本語トリガーはこのスキルで受け、
+   plugin 版に委譲することで VoiceLab 固有のルール（CLAUDE.md 参照・英語コミット等）が確実に適用される。
+
+2. **マージは Claude が実行しない**
+   `gh pr merge` は Claude が叩かない。PR 作成・push 完了後、
+   **「マージは Masaru さん側でお願いします」**と一言添えて委ねる。
+   例外：Masaru さんが明示的に「マージまでやって」と指示した場合のみ。
+
+3. **レビューは `pr-review` スキルを使う**
+   PR 作成後にレビューを求められたら `pr-review` スキルを呼び出す（こちらも薄いディスパッチャー）。
+
+---
+
+## 処理手順
+
+### STEP 1：事前確認
 
 ```bash
-# 現在のブランチ名
 git branch --show-current
-
-# main との差分コミット
 git log main..HEAD --oneline
-
-# 変更ファイルの一覧
 git diff main...HEAD --stat
-
-# テストが通っているか
 pnpm test
 ```
 
-テストが落ちていたら PR を作る前にユーザーに報告して確認を取る。
+テストが落ちていたら PR を作らず Masaru さんに報告して確認を取る。
+
+### STEP 2：plugin 版に委譲
+
+Skill tool で **`commit-commands:commit-push-pr`** を実行する。plugin 側が：
+
+- commit message の生成（※ **必ず英語 ASCII のみ**。後述）
+- remote への push（`-u origin <branch>` 相当）
+- PR の作成
+
+を一気通貫でやってくれる。
+
+### STEP 3：VoiceLab 固有チェックを反映
+
+plugin 生成の PR 本文に、CLAUDE.md の「品質評価基準（ハーネスパターン）」
+セクションから**該当項目**を拾ってチェックリストとして追記する。
+変更に関係ない項目は省略してよい。
+
+- **機能品質**：スタブ・モックでない / API エラー時に日本語フィードバック / Edge Runtime 制約 / エッジケース
+- **UI/UX 品質**：一貫した世界観 / 量産カード NG
+- **音声フロー品質**（音声まわりに触った場合のみ）：Whisper → Claude Haiku → ElevenLabs パイプライン / `MIN_RECORDING_MS = 1500` / ブラウザ別フォーマット分岐
+
+### STEP 4：完了報告
+
+PR URL を表示し、**「マージは Masaru さん側でお願いします」**の一言を必ず添える。
 
 ---
 
-## コミットメッセージの注意事項
+## コミットメッセージの言語ルール
 
-> ⚠️ **コミットメッセージは必ず英語（ASCII のみ）で書くこと。**
+> ⚠️ **コミットメッセージは必ず英語（ASCII のみ）で書く**。
 >
 > Cloudflare Pages の API が日本語などのマルチバイト文字を含むコミットメッセージを
 > `Invalid commit message, it must be a valid UTF-8 string. [code: 8000111]` として
-> 拒否し、デプロイが失敗する。（2026-04-06 確認済み）
+> 拒否し、デプロイが失敗する。CLAUDE.md 参照。
+>
+> PreToolUse Bash hook が `.claude/hooks/check-commit-ascii.sh` で自動検知する仕組みも入っている。
+> PR タイトル・本文は日本語 OK（Cloudflare は PR 本体を見ない）。
 
 ---
 
-## PR タイトルの命名規則
+## フォールバック
 
-ブランチ名とコミット内容から判断して、以下の形式にする：
+plugin 版 `commit-commands:commit-push-pr` が期待通り動かない場合は、
+raw `gh pr create` へフォールバックしてよい。その場合も：
 
-```
-<type>: <English description>
-```
+- コミットメッセージは英語 ASCII
+- PR 本文のチェックリストは CLAUDE.md の品質評価基準セクションを参照
+- マージは Claude が実行しない（上記ルール 2 は変わらず）
 
-| type | 使う場面 |
-|------|---------|
-| `feat` | 新機能の追加 |
-| `fix` | バグ修正 |
-| `docs` | ドキュメント変更のみ |
-| `refactor` | 動作を変えないコードの整理 |
-| `test` | テストの追加・修正 |
-| `chore` | 設定・依存関係の変更 |
-
-タイトルは 70 文字以内。
+を守る。
 
 ---
 
-## PR 本文のテンプレート
+## ドラフト PR
 
-```markdown
-## 概要
-<!-- 何をなぜ変更したか、1〜3 行で -->
-
-## 変更内容
-<!-- 箇条書きで変更点を列挙 -->
--
-
-## テスト
-<!-- どう確認したか -->
-- [ ] `pnpm test` 全通過
-- [ ] ローカルで動作確認済み
-
-## チェックリスト（CLAUDE.md より）
-- [ ] スタブ・モックでなく実際に動作している
-- [ ] API エラー時に日本語でフィードバックしている
-- [ ] Edge Runtime の制約に違反していない（fs/path 禁止）
-- [ ] TypeScript strict モード（any 禁止）
-```
-
----
-
-## PR を作成する
-
-```bash
-gh pr create \
-  --title "<タイトル>" \
-  --body "$(cat <<'EOF'
-<本文>
-EOF
-)" \
-  --base main
-```
-
-作成後は PR の URL を表示する。
-
----
-
-## ドラフト PR にする場合
-
-変更が未完成・レビュー前の確認用なら `--draft` を追加する：
-
-```bash
-gh pr create --draft --title "..." --body "..."
-```
+変更が未完成・レビュー前の確認用なら、plugin 版呼び出し時に draft 指定を伝える。
