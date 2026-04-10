@@ -4,6 +4,46 @@
   },
   "teammateMmode": "tmux",
   "hooks": {
-    "PostToolUse": []
+    "PreToolUse": [
+      {
+        "matcher": "Read|Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); b=$(basename \"$f\"); case \"$b\" in .env|.env.local|.env.production|.env.development|.env.staging) echo '【安全網】.env 系ファイルへのアクセスはブロックされています。APIキー流出防止のため Claude からは参照・編集できません。構造を確認したい場合は .env.local.example を見てください。内容を変更したい場合は Masaru さん自身のエディタで直接編集してください。' >&2; exit 2 ;; esac; exit 0"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command // empty'); case \"$cmd\" in *\"git commit\"*) if printf '%s' \"$cmd\" | LC_ALL=C tr -d '\\000-\\177' | LC_ALL=C grep -q .; then echo '【安全網】git commit メッセージに非ASCII文字（日本語など）が含まれています。Cloudflare Pages のデプロイ API は UTF-8 非ASCIIコミットメッセージを拒否します（Invalid commit message code: 8000111）。メッセージを英語で書き直してください。CLAUDE.md 参照。' >&2; exit 2; fi ;; esac; exit 0"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *.ts|*.tsx) case \"$f\" in */app/*|*/components/*|*/lib/*) mkdir -p .claude/flags && touch .claude/flags/evaluator-pending ;; esac ;; esac; exit 0"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f .claude/flags/evaluator-pending ]; then rm -f .claude/flags/evaluator-pending; echo '【自動ハーネス】VoiceLab のコード変更（app/components/lib 配下の .ts/.tsx）を検知しました。必ず Agent ツールで subagent_type=\"evaluator\" を起動し、直前の変更に対して CLAUDE.md の品質基準で厳格レビューしてください。合格なら完了レポート、不合格なら修正ループへ。このメッセージは無視しないこと。' >&2; exit 2; fi; exit 0"
+          }
+        ]
+      }
+    ]
   }
 }
