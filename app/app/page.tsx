@@ -292,9 +292,12 @@ function HomeInner() {
 
         // ゲストの場合は利用回数をカウント
         if (isGuest) {
-          const newCount = incrementGuestCount();
+          const newCount = incrementGuestCount("chat");
           setGuestCount(newCount);
-          posthog.capture("guest_message_sent", { count: newCount });
+          posthog.capture("guest_usage_incremented", {
+            event: "chat",
+            count: newCount,
+          });
           if (newCount >= GUEST_LIMIT) {
             setShowGuestLimitModal(true);
             setStatus("idle");
