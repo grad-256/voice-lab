@@ -33,7 +33,9 @@ export interface PresetVoice {
 }
 
 /**
- * 暫定登録：枠 A（男性 20 代）/ B（男性 30 代）/ E（女性 30 代）/ G（中性）。
+ * 全 8 枠登録済み：A（男性 20 代）/ B（男性 30 代）/ C（男性 40〜50 代）/
+ *                D（女性 20 代前半）/ E（女性 30 代）/ F（女性 40〜50 代）/
+ *                G（中性 20〜30 代）/ H（中性 30〜40 代）。
  *
  * attributes は試聴サンプルでの最終調整前の概算値（試聴後に微調整前提）。
  */
@@ -63,6 +65,30 @@ export const PRESET_VOICES: readonly PresetVoice[] = [
     },
   },
   {
+    voiceId: "a9paacvZxTlkONiCPzfC",
+    slot: "C",
+    description: "男性・40〜50代・落ち着いた低音域",
+    attributes: {
+      pitch: 0.2,
+      brightness: 0.35,
+      tempo: 0.45,
+      gender: 0.1,
+      age: 0.75,
+    },
+  },
+  {
+    voiceId: "XEQBC9sleaE3f5ff82UR",
+    slot: "D",
+    description: "女性・20代前半・明るく柔らかい声",
+    attributes: {
+      pitch: 0.7,
+      brightness: 0.65,
+      tempo: 0.55,
+      gender: 0.85,
+      age: 0.3,
+    },
+  },
+  {
     voiceId: "uJCs8Cm3vdGWEkXI6wUX",
     slot: "E",
     description: "女性・30代・落ち着いた中音域",
@@ -72,6 +98,18 @@ export const PRESET_VOICES: readonly PresetVoice[] = [
       tempo: 0.5,
       gender: 0.85,
       age: 0.5,
+    },
+  },
+  {
+    voiceId: "dGku3wKAuA20JBmsCsXv",
+    slot: "F",
+    description: "女性・40〜50代・温度感のある中低域",
+    attributes: {
+      pitch: 0.55,
+      brightness: 0.5,
+      tempo: 0.5,
+      gender: 0.85,
+      age: 0.7,
     },
   },
   {
@@ -88,6 +126,24 @@ export const PRESET_VOICES: readonly PresetVoice[] = [
       tempo: 0.5,
       gender: 0.5,
       age: 0.4,
+    },
+  },
+  {
+    voiceId: "Z9VxF84ucVtzvKlmYFhh",
+    slot: "H",
+    description: "中性的・30〜40代・クールで知的な声",
+    // G 枠（中性 20〜30 代・フラット）との差別化が肝。同じ gender=0.5 厳密で
+    // 偶然 brightness を G と同方向（0.4）に振ると、中性的なターゲット録音（170Hz/centroid 1900Hz）を
+    // H が奪ってしまう（G ≒ 0.54、H ≒ 0.73）。
+    // 「クール・知的」は声学的に子音が立ちやすく centroid 高め＝brightness を中央より上に向ける方が
+    // セマンティクスとも整合する。これで G（暗め・若め）と H（明るめ・年上）が
+    // brightness 軸で反対方向を向き、対象とする録音帯が分離される。
+    attributes: {
+      pitch: 0.45,
+      brightness: 0.55,
+      tempo: 0.5,
+      gender: 0.5,
+      age: 0.55,
     },
   },
 ] as const;
