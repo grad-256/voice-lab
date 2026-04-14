@@ -1,7 +1,7 @@
 // プライバシーポリシーページ（静的）
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-gray-950 text-gray-300 px-4 py-16">
+    <main className="flex-1 w-full bg-gray-950 text-gray-300 px-4 py-16">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold text-white mb-2">プライバシーポリシー</h1>
         <p className="text-sm text-gray-500 mb-10">最終更新日：2026年3月27日</p>
