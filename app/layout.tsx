@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP, Plus_Jakarta_Sans } from "next/font/google";
 import PostHogProvider from "./components/PostHogProvider";
+import { AuthMigrationListener } from "./components/auth/AuthMigrationListener";
 import "./globals.css";
 
 const jakartaSans = Plus_Jakarta_Sans({
@@ -50,6 +51,8 @@ export default function RootLayout({
             </div>
           </footer>
         </PostHogProvider>
+        {/* ゲスト → 認証ユーザー移行のトリガ。UI は通常レンダーされない（移行成功時のみトースト表示） */}
+        <AuthMigrationListener />
       </body>
     </html>
   );
