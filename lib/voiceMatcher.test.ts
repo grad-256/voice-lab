@@ -285,4 +285,31 @@ describe("rankVoices", () => {
       expect(r.score).toBeLessThanOrEqual(1);
     }
   });
+
+  // -----------------------------------------------------------------
+  // 8 枠 PRESET_VOICES 全体での回帰テスト
+  // 新しい voice を追加した時に既存ターゲットを奪わないことを保証する
+  // -----------------------------------------------------------------
+
+  it("8 枠全てでも中性 170Hz 録音は G を最上位に返す（H が奪わない）", () => {
+    // G の attributes コメントが「中性ターゲット 170Hz / centroid 1900Hz」を狙うと明記しているため、
+    // 後発の voice 追加でこの指名打ちが崩れたら回帰として検知する
+    const target = normalizeFeatures({ pitchHz: 170, centroidHz: 1900 });
+    const ranked = rankVoices(target, PRESET_VOICES);
+    expect(ranked[0].voice.slot).toBe("G");
+  });
+
+  it("8 枠全てでも男性 115Hz 録音は男性枠（A or B or C）を最上位に返す", () => {
+    const target = normalizeFeatures({ pitchHz: 115, centroidHz: 1400 });
+    const ranked = rankVoices(target, PRESET_VOICES);
+    const masculineSlots = new Set(["A", "B", "C"]);
+    expect(masculineSlots.has(ranked[0].voice.slot)).toBe(true);
+  });
+
+  it("8 枠全てでも女性 230Hz 録音は女性枠（D or E or F）を最上位に返す", () => {
+    const target = normalizeFeatures({ pitchHz: 230, centroidHz: 2400 });
+    const ranked = rankVoices(target, PRESET_VOICES);
+    const feminineSlots = new Set(["D", "E", "F"]);
+    expect(feminineSlots.has(ranked[0].voice.slot)).toBe(true);
+  });
 });

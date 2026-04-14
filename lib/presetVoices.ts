@@ -132,11 +132,15 @@ export const PRESET_VOICES: readonly PresetVoice[] = [
     voiceId: "Z9VxF84ucVtzvKlmYFhh",
     slot: "H",
     description: "中性的・30〜40代・クールで知的な声",
-    // G 枠と差別化するため age を中央より上、brightness を少し暗めに振る。
-    // gender は厳密 0.5 維持（中性枠の主性質）、pitch は中央よりわずかに低めで「落ち着き」を表現。
+    // G 枠（中性 20〜30 代・フラット）との差別化が肝。同じ gender=0.5 厳密で
+    // 偶然 brightness を G と同方向（0.4）に振ると、中性的なターゲット録音（170Hz/centroid 1900Hz）を
+    // H が奪ってしまう（G ≒ 0.54、H ≒ 0.73）。
+    // 「クール・知的」は声学的に子音が立ちやすく centroid 高め＝brightness を中央より上に向ける方が
+    // セマンティクスとも整合する。これで G（暗め・若め）と H（明るめ・年上）が
+    // brightness 軸で反対方向を向き、対象とする録音帯が分離される。
     attributes: {
       pitch: 0.45,
-      brightness: 0.4,
+      brightness: 0.55,
       tempo: 0.5,
       gender: 0.5,
       age: 0.55,
