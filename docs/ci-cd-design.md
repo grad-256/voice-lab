@@ -2,7 +2,9 @@
 
 **対象**：Phase 1.5 〜 Phase 2 の継続的検証・デプロイ基盤
 **作成日**：2026-04-14
-**前提ドキュメント**：`fe-be-boundary.md` / `db-selection.md` / `audio-storage.md` / `terraform-cloudflare.md`
+**前提ドキュメント**：`monorepo-structure.md` / `fe-be-boundary.md` / `db-selection.md` / `audio-storage.md` / `terraform-cloudflare.md`
+
+> **本ドキュメントは モノレポ構成（`apps/web` / `apps/api` / `packages/shared`）を前提に書かれている。** リポジトリ構造は `docs/monorepo-structure.md` を参照。Phase 1.5 時点ではまだモノレポ化していないため、該当するワークフロー例は「Phase 2 で `apps/api` を導入した後」の想定。
 
 ---
 

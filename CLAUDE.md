@@ -28,6 +28,7 @@ ChatGPT との差別化：「AI と話す」ではなく「AI で作った"他�
 | 対話AI | Claude Haiku（`claude-haiku-4-5-20251001`） | テキスト → 返答 |
 | TTS | ElevenLabs（`eleven_turbo_v2_5`） | テキスト → 音声 |
 | ホスティング | Cloudflare Pages（予定） | `@cloudflare/next-on-pages` |
+| リポジトリ構成 | **pnpm workspaces モノレポ** | `apps/web` / `apps/api` / `packages/shared`（Phase 2 で再編）。詳細は `docs/monorepo-structure.md` |
 | DB | なし（Phase 1 途中） | 会話履歴は React state のみ |
 
 ---

@@ -137,7 +137,9 @@ STRIPE_WEBHOOK_SECRET              # D-4 以降
 
 ## 6. 段階的移行ステップ（C-1 で詳細化）
 
-1. **Step A**：Hono プロジェクトを `apps/api`（モノレポ）または別リポに用意して「空の Workers」をデプロイ
+> **前提**：リポジトリ構成は **モノレポ（pnpm workspaces）** で確定している。詳細は `docs/monorepo-structure.md` を参照。
+
+1. **Step A**：Hono プロジェクトを `apps/api`（モノレポ）に用意して「空の Workers」をデプロイ
 2. **Step B**：`/transcribe` だけを Hono に移して FE から叩き先を切り替え、正常動作を確認
 3. **Step C**：`/chat` `/speak` を順次移す
 4. **Step D**：`/feedback` `/account/delete` を移す（認証付き API のパターン確立）
@@ -162,8 +164,10 @@ STRIPE_WEBHOOK_SECRET              # D-4 以降
 
 ## 8. 合意事項（この段階での結論）
 
-- **FE は UI と認証 UI・ブラウザ API に集中する**
-- **BE は外部 API Key・Service Role Key・DB 書き込み・決済を所有する**
+- **リポジトリ構成は モノレポ（pnpm workspaces）で確定**（`docs/monorepo-structure.md`）
+- **FE（`apps/web`）は UI と認証 UI・ブラウザ API に集中する**
+- **BE（`apps/api`）は外部 API Key・Service Role Key・DB 書き込み・決済を所有する**
+- **API 契約の型は `packages/shared/types` で共有**
 - **API は別ドメイン運用、CORS + Bearer トークンで疎結合にする**
 - **Supabase 直叩きの読み取りは当面維持**、将来 BE 経由に統一の方向
 - **移行は `/transcribe` から一本ずつ** 着実に進める
