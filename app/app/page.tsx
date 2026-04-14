@@ -3,6 +3,7 @@
 // 静的プリレンダリングを無効化（Supabase クライアントはビルド時に初期化できないため）
 export const dynamic = "force-dynamic";
 
+import { SavePhraseModal } from "@/app/components/SavePhraseModal";
 import type { ConversationLevel } from "@/lib/chat";
 import {
   appendMessage,
@@ -19,6 +20,7 @@ import {
 } from "@/lib/guestUsage";
 import { type Persona, getPersonas } from "@/lib/personas";
 import { createClient } from "@/lib/supabase/client";
+import { getGuestSelectedVoiceId } from "@/lib/voiceSessionStorage";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
@@ -77,6 +79,15 @@ function HomeInner() {
   const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
   const [guestCount, setGuestCount] = useState(0);
 
+  // 分身の声 voice_id（「これ言えなかった」モーダルで VoicePlayButton に渡す）
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string | null>(null);
+
+  // 「これ言えなかった」モーダル
+  // prefillJaText は常に空（「日本語で書き直す欄」として使う）。
+  // referenceUserText に押下元のユーザー発話（Whisper 出力）を渡し、モーダル上部に参考表示する。
+  const [savePhraseOpen, setSavePhraseOpen] = useState(false);
+  const [savePhraseReferenceText, setSavePhraseReferenceText] = useState<string>("");
+
   // フィードバック状態（メッセージ ID → 'positive' | 'negative'）
   const [feedback, setFeedback] = useState<Record<string, "positive" | "negative">>({});
 
@@ -93,6 +104,7 @@ function HomeInner() {
   const processAudioRef = useRef<((blob: Blob) => Promise<void>) | null>(null);
 
   // ゲスト検出：未ログインならデフォルトペルソナを設定
+  // 合わせて「分身の声」voice_id を取得（ゲスト：localStorage / 認証：/api/voice-session）
   useEffect(() => {
     (async () => {
       const {
@@ -107,6 +119,17 @@ function HomeInner() {
           setShowGuestLimitModal(true);
           posthog.capture("guest_limit_reached");
         }
+        setSelectedVoiceId(getGuestSelectedVoiceId());
+        return;
+      }
+      try {
+        const res = await fetch("/api/voice-session");
+        if (res.ok) {
+          const { voiceId } = (await res.json()) as { voiceId: string | null };
+          setSelectedVoiceId(voiceId ?? null);
+        }
+      } catch {
+        // 分身の声未設定は致命的ではない（モーダル側が導線を出す）
       }
     })();
   }, [supabase]);
@@ -561,6 +584,24 @@ function HomeInner() {
                   </p>
                 )}
               </div>
+              {/* 「これ言えなかった」ボタン（ユーザー発話のみ、余白領域に追加） */}
+              {msg.role === "user" && (
+                <div className="flex justify-end mt-1 mr-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSavePhraseReferenceText(msg.text);
+                      setSavePhraseOpen(true);
+                      posthog.capture("save_phrase_modal_opened", {
+                        source: "user_bubble",
+                      });
+                    }}
+                    className="text-xs text-gray-500 hover:text-indigo-300 transition-colors px-1.5 py-0.5 rounded"
+                  >
+                    これ言えなかった
+                  </button>
+                </div>
+              )}
               {/* フィードバックボタン（AI メッセージのみ） */}
               {msg.role === "assistant" && (
                 <div className="flex gap-1 mt-1 ml-1">
@@ -714,6 +755,18 @@ function HomeInner() {
           )}
         </button>
       </div>
+
+      {/* 「これ言えなかった」モーダル
+       * voiceId：認証ユーザーは voice_sessions、ゲストは localStorage 由来。どちらも無ければ
+       * persona.voice_id（デフォルトは Bella）にフォールバックして「分身の声未設定でも体験だけは試せる」状態を担保する。 */}
+      <SavePhraseModal
+        open={savePhraseOpen}
+        onRequestClose={() => setSavePhraseOpen(false)}
+        prefillJaText=""
+        referenceUserText={savePhraseReferenceText}
+        voiceId={selectedVoiceId ?? persona?.voice_id ?? null}
+        isGuest={isGuest}
+      />
 
       {/* ゲスト利用上限モーダル */}
       {showGuestLimitModal && (
