@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   GUEST_LIMIT,
+  type GuestEvent,
   getGuestCount,
   incrementGuestCount,
   isGuestLimitReached,
@@ -51,30 +52,38 @@ describe("guestUsage", () => {
     expect(getGuestCount()).toBe(0);
   });
 
-  it("incrementGuestCount() で 1 ずつ増える", () => {
-    expect(incrementGuestCount()).toBe(1);
-    expect(incrementGuestCount()).toBe(2);
-    expect(incrementGuestCount()).toBe(3);
+  it("incrementGuestCount('chat') で 1 ずつ増える", () => {
+    expect(incrementGuestCount("chat")).toBe(1);
+    expect(incrementGuestCount("chat")).toBe(2);
+    expect(incrementGuestCount("chat")).toBe(3);
     expect(getGuestCount()).toBe(3);
+  });
+
+  it("異なる event 種別でも同一カウンタに加算される（Q2 の統合カウント仕様）", () => {
+    const events: GuestEvent[] = ["chat", "voice_creation", "suggest", "phrase_play"];
+    events.forEach((event, i) => {
+      expect(incrementGuestCount(event)).toBe(i + 1);
+    });
+    expect(getGuestCount()).toBe(4);
   });
 
   it(`incrementGuestCount() を ${GUEST_LIMIT} 回呼ぶと isGuestLimitReached() が true になる`, () => {
     for (let i = 0; i < GUEST_LIMIT; i++) {
-      incrementGuestCount();
+      incrementGuestCount("chat");
     }
     expect(isGuestLimitReached()).toBe(true);
   });
 
   it("isGuestLimitReached() は上限未満で false を返す", () => {
     for (let i = 0; i < GUEST_LIMIT - 1; i++) {
-      incrementGuestCount();
+      incrementGuestCount("chat");
     }
     expect(isGuestLimitReached()).toBe(false);
   });
 
   it("resetGuestCount() 後に 0 に戻る", () => {
-    incrementGuestCount();
-    incrementGuestCount();
+    incrementGuestCount("chat");
+    incrementGuestCount("voice_creation");
     expect(getGuestCount()).toBe(2);
     resetGuestCount();
     expect(getGuestCount()).toBe(0);

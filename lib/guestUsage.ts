@@ -7,6 +7,9 @@
 export const GUEST_LIMIT = 5;
 export const STORAGE_KEY = "vl_guest_count";
 
+// GUEST_LIMIT に加算される 4 種のイベント（mvp-scope.md 7.Q2）
+export type GuestEvent = "chat" | "voice_creation" | "suggest" | "phrase_play";
+
 export function getGuestCount(): number {
   if (typeof localStorage === "undefined") return 0;
   const value = localStorage.getItem(STORAGE_KEY);
@@ -15,7 +18,9 @@ export function getGuestCount(): number {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-export function incrementGuestCount(): number {
+// event 引数は呼び出し側の分類用（PostHog 等に渡される）。
+// カウンタ自体は種別を問わず +1 の同一カウンタ（Q2 決定）。
+export function incrementGuestCount(_event: GuestEvent): number {
   if (typeof localStorage === "undefined") return 0;
   const next = getGuestCount() + 1;
   localStorage.setItem(STORAGE_KEY, String(next));
