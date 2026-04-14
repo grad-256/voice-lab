@@ -34,7 +34,9 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 未ログインでもアクセス可能なページ
-  const publicPaths = ["/", "/app", "/login", "/privacy", "/terms", "/reset-password"];
+  // /echo はゲストモード前提（mvp-scope.md 5 章「ゲスト時の体験」）：
+  // 録音→候補選択→localStorage 保存までを未ログインで完走できるようにする
+  const publicPaths = ["/", "/app", "/echo", "/login", "/privacy", "/terms", "/reset-password"];
 
   // 未ログイン かつ 公開ページ以外 → /login にリダイレクト
   if (!user && !publicPaths.includes(pathname)) {

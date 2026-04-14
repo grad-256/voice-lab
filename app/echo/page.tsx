@@ -493,23 +493,56 @@ interface CurrentVoicePanelProps {
 }
 
 function CurrentVoicePanel({ voice, source, isAuth }: CurrentVoicePanelProps) {
+  const savedLabel =
+    source === "auth" || isAuth
+      ? "アカウントに保存済み"
+      : "ブラウザに保存（ログインで引き継ぎ可能）";
+
   return (
-    <section className="rounded-2xl border border-emerald-900/60 bg-emerald-950/20 p-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-sm text-emerald-200">
-          現在の分身の声：
-          <span className="ml-1 font-semibold text-white">{voice.description}</span>
-          <span className="ml-2 text-xs text-emerald-300/80">枠 {voice.slot}</span>
-        </p>
-        <p className="text-xs text-emerald-300/70">
-          {source === "auth" || isAuth
-            ? "アカウントに保存済み"
-            : "ブラウザに保存（ログインで引き継ぎ可能）"}
-        </p>
+    <section
+      className="relative overflow-hidden rounded-2xl border-2 border-emerald-500/70 bg-gradient-to-br from-emerald-950/60 via-emerald-900/30 to-gray-900/60 p-5 shadow-lg shadow-emerald-900/30"
+      aria-label="現在の分身の声"
+    >
+      {/* 左端のアクセントバー */}
+      <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-emerald-400 to-emerald-600" />
+
+      <div className="flex items-start gap-4 pl-2">
+        {/* チェックマークアイコン */}
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 ring-2 ring-emerald-400/60">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="h-6 w-6 text-emerald-300"
+            aria-hidden="true"
+          >
+            <path
+              fillRule="evenodd"
+              d="M16.704 5.296a1 1 0 0 1 0 1.408l-7.5 7.5a1 1 0 0 1-1.408 0l-3.5-3.5a1 1 0 1 1 1.408-1.408l2.796 2.796 6.796-6.796a1 1 0 0 1 1.408 0Z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300/90">
+            現在の分身の声
+          </p>
+          <p className="mt-1 text-xl font-bold text-white">
+            {voice.description}
+            <span className="ml-2 align-middle text-xs font-normal text-emerald-200/70">
+              枠 {voice.slot}
+            </span>
+          </p>
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs text-emerald-200">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            {savedLabel}
+          </p>
+          <p className="mt-3 text-xs text-emerald-200/70">
+            変更したい場合は、下の同意にチェックを入れてもう一度録音してください。
+          </p>
+        </div>
       </div>
-      <p className="mt-2 text-xs text-emerald-300/80">
-        変更したい場合は、下の同意にチェックを入れてもう一度録音してください。
-      </p>
     </section>
   );
 }
