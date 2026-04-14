@@ -154,6 +154,16 @@ export default function EchoPage() {
       const pitch = extractPitchHz(samples, sampleRate);
       const centroid = extractSpectralCentroid(samples, sampleRate);
 
+      // Issue #25 のような bias 問題が再発した時のため、抽出値をブラウザコンソールに出す。
+      // 録音データそのものは出さないので、プライバシー観点では数値のみで安全。
+      console.log("[echo features]", {
+        pitchHz: pitch.pitchHz,
+        pitchVoicedFrames: pitch.voicedFrameCount,
+        centroidHz: centroid.centroidHz,
+        centroidVoicedFrames: centroid.voicedFrameCount,
+        sampleRate,
+      });
+
       if (pitch.pitchHz === null && centroid.centroidHz === null) {
         setStatus("extract-failed");
         setErrorMsg(

@@ -132,7 +132,12 @@ export function VoiceCandidateCard({
     }
   }, [previewState, otherIsPlaying, onPreviewStart, voice.voiceId, notifyEndOnce]);
 
-  const scorePercent = Math.round(Math.max(0, Math.min(1, score)) * 100);
+  // 中心化コサイン類似度（lib/voiceMatcher.ts）の戻り値は -1〜1 を取りうる。
+  //   - cos = +1 → 完全一致 → 100%
+  //   - cos = 0 → 中立（中心化後ゼロ方向） → 50%
+  //   - cos = -1 → 完全に逆 → 0%
+  // ユーザー直感（50% 以上なら良いマッチ）に合うよう (cos + 1) / 2 にマッピングする。
+  const scorePercent = Math.round(Math.max(0, Math.min(1, (score + 1) / 2)) * 100);
 
   return (
     <article
