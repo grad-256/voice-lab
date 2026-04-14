@@ -212,6 +212,15 @@ Anthropic Labs の研究（[Harness design for long-running application developm
 - Cloudflare Pages は非静的ルートがすべて Edge Runtime である必要があるため
 - 静的ページ（`○` 表示）は不要だが、`createClient` などを使う動的ページは必須
 
+### ページレイアウトの規約（画面超過の再発防止）
+`app/layout.tsx` の body は既に `min-h-screen flex flex-col` で 100vh を確保しており、
+内部は `<div className="flex-1 flex flex-col">{children}</div>` + footer の構造になっている。
+
+- **ページ側の `<main>` に `min-h-screen` を直接書かない**。body とダブルがけになり、
+  `main = 100vh` + `footer = 自然高` で画面超過（`/echo` 事例）。代わりに `flex-1 w-full` を使う
+- **footer を隠したい画面**（会話画面の `/app` など）だけ、明示的に `h-screen overflow-hidden` を書く
+- 該当例：`/echo`・`/settings/voice`・`/privacy`・`/terms` は `flex-1 w-full`、`/app` のみ `h-screen overflow-hidden`
+
 ### システムプロンプトを変更するとき
 `app/api/chat/route.ts` の `SYSTEM_PROMPT` 定数を編集する。
 （Phase 1 で UI から設定可能にする予定）

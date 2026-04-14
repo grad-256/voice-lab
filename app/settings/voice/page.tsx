@@ -270,7 +270,7 @@ export default function EchoPage() {
   }, []);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-5 py-8">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-5 py-8">
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">分身の声を作る</h1>
         <nav className="flex items-center gap-3 text-sm">

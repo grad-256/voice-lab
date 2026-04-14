@@ -1,12 +1,26 @@
 /**
- * `/api/suggest` の純粋ロジック（mvp-scope.md 3.7 節 / Sprint 3）。
+ * `/api/suggest` の純粋ロジック（mvp-scope.md 3.7 節 / Sprint 3 新設 / Sprint 4 拡張）。
  *
  * Edge Runtime 本体（route.ts）から分離して単体テストしやすくする。
- * Sprint 4 で `recent_messages` / `timing` を入力拡張する際は本ファイルの型に
- * カラムを追加し、`/api/chat` には絶対に混入させない（決定事項 14）。
+ * `/api/chat` には絶対に混入させない（決定事項 14）。
+ *
+ * Sprint 4 変更点：
+ * - `recent_messages` / `timing` を入力型に追加（後方互換。未指定でも動作）。
+ * - `normalizeEnglish` は `lib/normalizeEnglish.ts` に昇格。ここでは re-export のみ。
  */
 
+import { normalizeEnglish } from "./normalizeEnglish";
+
+export { normalizeEnglish };
+
 export const SUGGEST_MODEL = "claude-haiku-4-5-20251001";
+
+export type SuggestTiming = "before_chat" | "during_chat";
+
+export interface SuggestRecentMessage {
+  role: "user" | "assistant";
+  content: string;
+}
 
 export type SuggestSource = "preset" | "user" | "suggest";
 
@@ -22,8 +36,16 @@ export interface SuggestPhrase {
 }
 
 export interface SuggestRequest {
+  /**
+   * Sprint 3 では必須。Sprint 4 以降、会話前サジェスト（`timing: "before_chat"`）で
+   * 起点日本語がない場合に空文字を許容する。
+   */
   ja_text: string;
   persona_id?: string;
+  /** Sprint 4: 会話前 / 中のサジェスト文脈（最新 N ターン、N は API 側で頭打ち） */
+  recent_messages?: SuggestRecentMessage[];
+  /** Sprint 4: サジェストの出現タイミング。未指定時はモーダル用の汎用生成 */
+  timing?: SuggestTiming;
 }
 
 export interface SuggestResponse {
@@ -33,70 +55,37 @@ export interface SuggestResponse {
 }
 
 // ────────────────────────────────────────────────
-// normalizeEnglish（mvp-scope.md 4.5 節の最小版）
-// Sprint 4 で縮約形辞書を拡張する前提。本 Sprint では Sprint 3 の保存時に
-// 使える最低限の正規化を提供する。
-// ────────────────────────────────────────────────
-
-const CONTRACTIONS: Array<[RegExp, string]> = [
-  [/\bcan't\b/gi, "can not"],
-  [/\bwon't\b/gi, "will not"],
-  [/\bdon't\b/gi, "do not"],
-  [/\bdidn't\b/gi, "did not"],
-  [/\bdoesn't\b/gi, "does not"],
-  [/\bisn't\b/gi, "is not"],
-  [/\baren't\b/gi, "are not"],
-  [/\bwasn't\b/gi, "was not"],
-  [/\bweren't\b/gi, "were not"],
-  [/\bhasn't\b/gi, "has not"],
-  [/\bhaven't\b/gi, "have not"],
-  [/\bhadn't\b/gi, "had not"],
-  [/\bit's\b/gi, "it is"],
-  [/\bi'm\b/gi, "i am"],
-  [/\byou're\b/gi, "you are"],
-  [/\bthey're\b/gi, "they are"],
-  [/\bwe're\b/gi, "we are"],
-  [/\bi've\b/gi, "i have"],
-  [/\bi'd\b/gi, "i would"],
-  [/\bi'll\b/gi, "i will"],
-  [/\blet's\b/gi, "let us"],
-  [/\bthat's\b/gi, "that is"],
-  [/\bthere's\b/gi, "there is"],
-];
-
-// 前後のアポストロフィ変種とダブルクオート変種を半角 ASCII に寄せる
-const QUOTE_NORMALIZE: Array<[RegExp, string]> = [
-  [/[\u2018\u2019\u02BC]/g, "'"],
-  [/[\u201C\u201D]/g, '"'],
-];
-
-export function normalizeEnglish(text: string): string {
-  if (typeof text !== "string") return "";
-  let out = text;
-
-  // 全角英数 → 半角
-  out = out.replace(/[\uFF01-\uFF5E]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0));
-  // 全角スペース → 半角
-  out = out.replace(/\u3000/g, " ");
-
-  // クオート統一 → 縮約形展開（展開後に句読点除去するので順序重要）
-  for (const [re, to] of QUOTE_NORMALIZE) out = out.replace(re, to);
-  out = out.toLowerCase();
-  for (const [re, to] of CONTRACTIONS) out = out.replace(re, to);
-
-  // 句読点除去（最小辞書）
-  out = out.replace(/[.,?!;:"']/g, "");
-
-  // 連続空白を 1 個に統合 + 前後トリム
-  out = out.replace(/\s+/g, " ").trim();
-  return out;
-}
-
-// ────────────────────────────────────────────────
 // Claude Haiku 用プロンプト
 // ────────────────────────────────────────────────
 
-export function buildSuggestSystemPrompt(): string {
+export function buildSuggestSystemPrompt(timing?: SuggestTiming): string {
+  if (timing === "before_chat") {
+    return `You help a Japanese English learner prepare useful phrases BEFORE a conversation.
+Suggest 3 natural English phrases the learner might want to say at the start of the conversation,
+given the conversation partner persona (if provided).
+
+STRICT OUTPUT FORMAT — respond with ONLY a JSON object, no prose, no code fences:
+{"phrases":[{"ja_intent":"<短い日本語の意図>","en_text":"<English phrase>"}]}
+
+Rules:
+- Return exactly 3 phrases covering variety (greeting / question / response hook).
+- Each en_text MUST be one short sentence (under 15 words).
+- ja_intent is a concise Japanese label (under 20 chars) describing the intent.
+- Do NOT include romaji, explanations, or any text outside the JSON.`;
+  }
+  if (timing === "during_chat") {
+    return `You help a Japanese English learner continue an ongoing conversation in English.
+Given the recent exchange, suggest 1 to 3 natural English phrases the learner could say next.
+
+STRICT OUTPUT FORMAT — respond with ONLY a JSON object, no prose, no code fences:
+{"phrases":[{"ja_intent":"<短い日本語の意図>","en_text":"<English phrase>"}]}
+
+Rules:
+- Each en_text MUST be one short sentence (under 15 words) that naturally follows the assistant's last turn.
+- Offer variety: agree / ask follow-up / change topic gently.
+- ja_intent is a concise Japanese label (under 20 chars).
+- Do NOT include romaji, explanations, or any text outside the JSON.`;
+  }
   return `You help a Japanese English learner translate what they wanted to say.
 Given a short Japanese utterance, return 1 to 3 natural, conversational English phrases
 that convey the same intent at an everyday spoken register.
@@ -109,6 +98,57 @@ Rules:
 - Offer variety when multiple phrases: casual / polite / alternative phrasing.
 - Do NOT include translations, explanations, or romaji outside the JSON.
 - ja_intent is a concise Japanese label (under 20 chars) describing the intent nuance.`;
+}
+
+/**
+ * Claude に渡す user content を組み立てる（Sprint 4）。
+ *
+ * - `timing` 別にヘッダーを切り替える
+ * - `recent_messages` は末尾 N 件のみ、1 メッセージあたり 200 文字で打ち切り（トークン浪費と PII 流出の抑制）
+ * - `persona_id` はヒントとして末尾に添える（system prompt には載せない）
+ */
+const MAX_RECENT_MESSAGES = 6;
+const MAX_RECENT_MESSAGE_CHARS = 200;
+
+export function buildSuggestUserContent(input: {
+  jaText: string;
+  personaId?: string | null;
+  recentMessages?: SuggestRecentMessage[] | null;
+  timing?: SuggestTiming;
+}): string {
+  const { jaText, personaId, recentMessages, timing } = input;
+  const parts: string[] = [];
+
+  if (personaId) {
+    parts.push(`Persona hint: ${personaId}`);
+  }
+
+  if (recentMessages && recentMessages.length > 0) {
+    const recent = recentMessages
+      .slice(-MAX_RECENT_MESSAGES)
+      .map((m) => {
+        const content =
+          typeof m.content === "string" ? m.content.slice(0, MAX_RECENT_MESSAGE_CHARS) : "";
+        const role = m.role === "assistant" ? "assistant" : "user";
+        return `${role}: ${content}`;
+      })
+      .join("\n");
+    parts.push(`Recent conversation:\n${recent}`);
+  }
+
+  if (timing === "before_chat") {
+    parts.push("Context: The learner is about to start this conversation. Suggest opener phrases.");
+  } else if (timing === "during_chat") {
+    parts.push(
+      "Context: The learner wants the next line to say. Suggest phrases that follow the assistant's last turn."
+    );
+  }
+
+  if (jaText.length > 0) {
+    parts.push(`Japanese utterance:\n${jaText}`);
+  }
+
+  return parts.join("\n\n");
 }
 
 /**
