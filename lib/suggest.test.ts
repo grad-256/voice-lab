@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildFallbackPhrases,
   buildSuggestSystemPrompt,
+  buildSuggestUserContent,
   normalizeEnglish,
   parseSuggestResponse,
   toSuggestPhrases,
@@ -161,11 +162,64 @@ describe("toSuggestPhrases", () => {
 // -------------------------------------------------------
 
 describe("buildSuggestSystemPrompt", () => {
-  it("JSON 出力指示と phrases キーを含む", () => {
+  it("JSON 出力指示と phrases キーを含む（デフォルト）", () => {
     const prompt = buildSuggestSystemPrompt();
     expect(prompt).toContain("JSON");
     expect(prompt).toContain("phrases");
     expect(prompt).toContain("ja_intent");
     expect(prompt).toContain("en_text");
+  });
+
+  it("timing に応じて文脈が切り替わる", () => {
+    const before = buildSuggestSystemPrompt("before_chat");
+    const during = buildSuggestSystemPrompt("during_chat");
+    expect(before).toContain("BEFORE a conversation");
+    expect(during).toContain("continue an ongoing conversation");
+    // 共通要素
+    expect(before).toContain("phrases");
+    expect(during).toContain("phrases");
+  });
+});
+
+// -------------------------------------------------------
+// buildSuggestUserContent
+// Sprint 4：recent_messages / timing / persona_id の組み立て
+// -------------------------------------------------------
+
+describe("buildSuggestUserContent", () => {
+  it("ja_text 単独でも成立する（Sprint 3 互換）", () => {
+    const out = buildSuggestUserContent({ jaText: "こんにちは" });
+    expect(out).toContain("Japanese utterance:");
+    expect(out).toContain("こんにちは");
+  });
+
+  it("persona_id を先頭セクションに入れる", () => {
+    const out = buildSuggestUserContent({ jaText: "yo", personaId: "p-123" });
+    expect(out).toContain("Persona hint: p-123");
+  });
+
+  it("recent_messages は末尾 6 件に絞り、各メッセージ 200 文字で切り詰める", () => {
+    const long = "x".repeat(500);
+    const recent = Array.from({ length: 10 }, (_, i) => ({
+      role: (i % 2 === 0 ? "user" : "assistant") as "user" | "assistant",
+      content: i === 9 ? long : `msg-${i}`,
+    }));
+    const out = buildSuggestUserContent({ jaText: "hello", recentMessages: recent });
+    // msg-0〜msg-3 は落ちる、msg-4〜msg-8 と long が残る（末尾 6 件）
+    expect(out).not.toContain("msg-0");
+    expect(out).toContain("msg-4");
+    expect(out).toContain("msg-8");
+    // 500 文字は 200 に切り詰められる
+    expect(out).not.toContain("x".repeat(201));
+  });
+
+  it("timing=before_chat では開始前のヒントが入る（ja_text 無しでも OK）", () => {
+    const out = buildSuggestUserContent({ jaText: "", timing: "before_chat" });
+    expect(out).toContain("about to start");
+  });
+
+  it("timing=during_chat では直後発話のヒントが入る", () => {
+    const out = buildSuggestUserContent({ jaText: "", timing: "during_chat" });
+    expect(out).toContain("next line");
   });
 });

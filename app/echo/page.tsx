@@ -453,6 +453,7 @@ function SceneDetail({
                   enText={phrase.enText}
                   voiceId={voiceId}
                   sceneId={scene.id}
+                  source="preset"
                   onPlayStart={onPlayStart}
                   onPlayEnd={handlePlayEnd}
                   label={played ? "▶ もう一度聞く" : undefined}

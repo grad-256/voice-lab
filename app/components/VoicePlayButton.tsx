@@ -1,5 +1,6 @@
 "use client";
 
+import { recordPlayedPhrase } from "@/lib/playedPhraseHistory";
 import posthog from "posthog-js";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -7,15 +8,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * 分身の声でフレーズを再生する共通ボタン（mvp-scope.md 3.6 節 / Sprint 2 で新設）。
  *
  * Sprint 3 以降、会話画面のサジェストや「これ言えなかった」モーダルからも再利用する。
+ * Sprint 4 で再生成功時に `sessionStorage` の `recent_played_phrases` に記録する責務を追加。
  *
  * 責務：
  *   - `voiceId` で `/api/speak` を呼び、返ってきた MP3 を再生する
  *   - 再生開始で `phrase_play`、同一マウント内の 2 回目以降で `phrase_replay` を PostHog 発火
+ *   - 再生成功時に `recent_played_phrases`（sessionStorage / 30 分 TTL）へ push
  *   - 親へは `onPlayStart` / `onPlayEnd` / `onPlayError` でコールバック通知
  *
  * 非責務：
  *   - ゲスト利用回数の管理・上限モーダルの表示（親側で onPlayStart を受けて処理）
- *   - 再生履歴の永続化（mvp-scope.md 3.10 節：`play_logs` は DB に持たない）
+ *   - 永続化（`play_logs` は mvp-scope.md 3.10 節で不採用）
  */
 
 export interface VoicePlayButtonProps {
@@ -30,6 +33,11 @@ export interface VoicePlayButtonProps {
   voiceId: string | null;
   /** 計測用：場面から再生された場合の場面 ID */
   sceneId?: string;
+  /**
+   * `recent_played_phrases` に記録する際の出所タグ。
+   * 突合ロジック（phrase_used_in_chat）で `source` をそのまま利用する。
+   */
+  source: "preset" | "user" | "suggest" | "saved";
   /**
    * PostHog 発火・`/api/speak` 呼び出し前に呼ばれる。
    * `false` を返すと再生をキャンセルする（ゲスト上限到達などで親側が中断したい場合）。
@@ -51,6 +59,7 @@ export function VoicePlayButton({
   enText,
   voiceId,
   sceneId,
+  source,
   onPlayStart,
   onPlayEnd,
   onPlayError,
@@ -140,13 +149,21 @@ export function VoicePlayButton({
       };
       await audio.play();
       setState("playing");
+
+      // 再生開始に成功した時点で突合履歴へ記録する（mvp-scope.md 4.5 節）。
+      // 失敗時は記録しない（上の catch に抜ける）。
+      recordPlayedPhrase({
+        phrase_id: phraseId,
+        en_text: enText,
+        source,
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : "再生に失敗しました";
       setState("error");
       setErrorMsg(message);
       onPlayErrorRef.current?.(message);
     }
-  }, [voiceId, state, phraseId, sceneId, enText, onPlayStart]);
+  }, [voiceId, state, phraseId, sceneId, enText, source, onPlayStart]);
 
   const buttonLabel = (() => {
     if (state === "loading") return "読み込み中…";

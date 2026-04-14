@@ -12,15 +12,34 @@ export const runtime = "edge";
 import {
   SUGGEST_MODEL,
   type SuggestPhrase,
+  type SuggestRecentMessage,
   type SuggestRequest,
   type SuggestResponse,
+  type SuggestTiming,
   buildFallbackPhrases,
   buildSuggestSystemPrompt,
+  buildSuggestUserContent,
   parseSuggestResponse,
   toSuggestPhrases,
 } from "@/lib/suggest";
 
 const MAX_JA_LENGTH = 400;
+const ALLOWED_TIMINGS: ReadonlySet<SuggestTiming> = new Set(["before_chat", "during_chat"]);
+
+function sanitizeRecentMessages(raw: unknown): SuggestRecentMessage[] | null {
+  if (!Array.isArray(raw)) return null;
+  const out: SuggestRecentMessage[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const role = (item as { role?: unknown }).role;
+    const content = (item as { content?: unknown }).content;
+    if (role !== "user" && role !== "assistant") continue;
+    if (typeof content !== "string") continue;
+    if (content.length === 0) continue;
+    out.push({ role, content });
+  }
+  return out.length > 0 ? out : null;
+}
 
 function respondWithFallback(): SuggestResponse {
   const phrases = toSuggestPhrases(buildFallbackPhrases(), () => crypto.randomUUID());
@@ -36,7 +55,13 @@ export async function POST(req: Request) {
   }
 
   const jaText = typeof body.ja_text === "string" ? body.ja_text.trim() : "";
-  if (jaText.length === 0) {
+  const timingRaw = typeof body.timing === "string" ? (body.timing as SuggestTiming) : undefined;
+  const timing = timingRaw && ALLOWED_TIMINGS.has(timingRaw) ? timingRaw : undefined;
+  const recentMessages = sanitizeRecentMessages(body.recent_messages);
+
+  // `before_chat` は発話起点の日本語が無くても成立する（開始前のオープナー生成）。
+  // それ以外は従来どおり ja_text 必須。
+  if (timing !== "before_chat" && jaText.length === 0) {
     return Response.json({ error: "ja_text は必須です" }, { status: 400 });
   }
   if (jaText.length > MAX_JA_LENGTH) {
@@ -48,9 +73,12 @@ export async function POST(req: Request) {
   // Claude Haiku 呼び出し。失敗時はフォールバック。
   let rawPhrases: Array<{ ja_intent: string; en_text: string }> = [];
   try {
-    const userContent = personaId
-      ? `Persona hint: ${personaId}\n\nJapanese utterance:\n${jaText}`
-      : `Japanese utterance:\n${jaText}`;
+    const userContent = buildSuggestUserContent({
+      jaText,
+      personaId,
+      recentMessages,
+      timing,
+    });
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -62,7 +90,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: SUGGEST_MODEL,
         max_tokens: 512,
-        system: buildSuggestSystemPrompt(),
+        system: buildSuggestSystemPrompt(timing),
         messages: [{ role: "user", content: userContent }],
       }),
     });

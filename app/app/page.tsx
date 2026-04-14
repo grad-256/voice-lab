@@ -4,6 +4,7 @@
 export const dynamic = "force-dynamic";
 
 import { SavePhraseModal } from "@/app/components/SavePhraseModal";
+import { SuggestPanel } from "@/app/components/SuggestPanel";
 import type { ConversationLevel } from "@/lib/chat";
 import {
   appendMessage,
@@ -18,13 +19,16 @@ import {
   incrementGuestCount,
   isGuestLimitReached,
 } from "@/lib/guestUsage";
+import { normalizeEnglish } from "@/lib/normalizeEnglish";
 import { type Persona, getPersonas } from "@/lib/personas";
+import { matchPlayedPhrase, readPlayedPhrases } from "@/lib/playedPhraseHistory";
+import type { SuggestPhrase, SuggestRecentMessage } from "@/lib/suggest";
 import { createClient } from "@/lib/supabase/client";
 import { getGuestSelectedVoiceId } from "@/lib/voiceSessionStorage";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // ────────────────────────────────────────────────
 // 型定義
@@ -90,6 +94,17 @@ function HomeInner() {
 
   // フィードバック状態（メッセージ ID → 'positive' | 'negative'）
   const [feedback, setFeedback] = useState<Record<string, "positive" | "negative">>({});
+
+  // サジェスト出現タイミング（Sprint 6 で UI から変更可能にする予定。DB デフォルトは both）
+  const [suggestTiming] = useState<"before_chat" | "during_chat" | "both">("both");
+
+  // [ このフレーズで話す ] で指定された「次発話として扱うフレーズ」。
+  // 送信時に phrase_id 直接突合に使い、送信後にクリアする。
+  const [pendingPrefill, setPendingPrefill] = useState<SuggestPhrase | null>(null);
+  const pendingPrefillRef = useRef<SuggestPhrase | null>(null);
+  useEffect(() => {
+    pendingPrefillRef.current = pendingPrefill;
+  }, [pendingPrefill]);
 
   // 音声認識中フラグ（true: Whisper処理中 → ユーザー側プレースホルダー表示）
   const [transcribing, setTranscribing] = useState(false);
@@ -273,6 +288,23 @@ function HomeInner() {
         setTranscribing(false);
         setMessages((prev) => [...prev, userMsg]);
 
+        // 再生→発話の突合（mvp-scope.md 4.5 節）。phrase_id 直接突合 → 正規化テキスト一致の順で判定。
+        // ここで消費するため、突合の有無に関わらず pendingPrefill は ref/state をクリアする。
+        const prefilled = pendingPrefillRef.current;
+        pendingPrefillRef.current = null;
+        setPendingPrefill(null);
+        const userTextNormalized = normalizeEnglish(userText);
+        const match = matchPlayedPhrase(userText, readPlayedPhrases(), {
+          prefilledPhraseId: prefilled?.phrase_id ?? null,
+        });
+        if (match) {
+          posthog.capture("phrase_used_in_chat", {
+            phrase_id: match.phrase_id,
+            source: match.source,
+            match_strategy: match.match_strategy,
+          });
+        }
+
         // 2. Claude: テキスト → 返答（キャラのシステムプロンプトを渡す）
         const history = messages.map(({ role, text }) => ({ role, content: text }));
         const chatRes = await fetch("/api/chat", {
@@ -310,6 +342,14 @@ function HomeInner() {
           translation: aiTranslation,
         };
         setMessages((prev) => [...prev, aiMsg]);
+
+        // 会話 1 ターン完了イベント（mvp-scope.md 4.3 節 / Sprint 4 追加）。
+        // used_suggest はプレフィル or 突合成立したかで判定（PostHog 側の集計容易性のため）。
+        posthog.capture("chat_turn_completed", {
+          persona_id: persona?.id,
+          used_suggest: Boolean(prefilled) || Boolean(match),
+          user_text_normalized: userTextNormalized,
+        });
 
         const isGoodbye = /\b(bye|goodbye)\b/i.test(userText);
 
@@ -415,6 +455,29 @@ function HomeInner() {
 
   // ゲスト用カウンター表示
   const guestRemaining = GUEST_LIMIT - guestCount;
+
+  // サジェストに渡す会話履歴（末尾のみ取る）。messages の参照一貫性を壊さないよう useMemo。
+  const recentMessages = useMemo<SuggestRecentMessage[]>(
+    () => messages.map((m) => ({ role: m.role, content: m.text })),
+    [messages]
+  );
+  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+  // `before_chat` / `during_chat` の表示条件。録音・処理中は出さない。
+  const isIdle = status === "idle" && !transcribing;
+  const showBeforeChat =
+    persona !== null &&
+    messages.length === 0 &&
+    isIdle &&
+    (suggestTiming === "before_chat" || suggestTiming === "both");
+  const showDuringChat =
+    persona !== null &&
+    lastMessage?.role === "assistant" &&
+    isIdle &&
+    (suggestTiming === "during_chat" || suggestTiming === "both");
+
+  const handlePrefill = useCallback((phrase: SuggestPhrase) => {
+    setPendingPrefill(phrase);
+  }, []);
 
   // ────────────────────────────────────────────────
   // ステータスラベル
@@ -557,6 +620,18 @@ function HomeInner() {
           </div>
         )}
 
+        {/* 会話開始前のサジェスト（mvp-scope.md 3.4 節 / Sprint 4） */}
+        <SuggestPanel
+          timing="before_chat"
+          active={showBeforeChat}
+          personaId={persona?.id ?? null}
+          recentMessages={recentMessages}
+          hintJaText=""
+          voiceId={selectedVoiceId ?? persona?.voice_id ?? null}
+          isGuest={isGuest}
+          onPrefill={handlePrefill}
+        />
+
         {/* メッセージ一覧 */}
         {messages.map((msg) => (
           <div
@@ -637,6 +712,18 @@ function HomeInner() {
           </div>
         ))}
 
+        {/* 会話中サジェスト（キャラ返答後・入力待ちの間だけ表示。mvp-scope.md 3.4 節 / Sprint 4） */}
+        <SuggestPanel
+          timing="during_chat"
+          active={showDuringChat}
+          personaId={persona?.id ?? null}
+          recentMessages={recentMessages}
+          hintJaText=""
+          voiceId={selectedVoiceId ?? persona?.voice_id ?? null}
+          isGuest={isGuest}
+          onPrefill={handlePrefill}
+        />
+
         {/* Whisper認識中：ユーザー側プレースホルダー */}
         {transcribing && (
           <div className="flex justify-end">
@@ -683,6 +770,25 @@ function HomeInner() {
             type="button"
             onClick={() => setErrorMsg(null)}
             className="text-red-400 hover:text-red-200 ml-3 text-lg leading-none"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* プレフィル中バナー（[このフレーズで話す]の結果）。
+          次に録音して話せば id 突合で phrase_used_in_chat を発火する。*/}
+      {pendingPrefill && (
+        <div className="mb-2 flex items-start gap-2 rounded-lg border border-indigo-800/50 bg-indigo-950/60 px-3 py-2 text-sm">
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] uppercase tracking-wider text-indigo-300">次に話す</p>
+            <p className="mt-0.5 text-gray-100 break-words">{pendingPrefill.en_text}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPendingPrefill(null)}
+            className="text-xl leading-none text-gray-400 hover:text-white"
+            aria-label="プレフィルをキャンセル"
           >
             ×
           </button>
