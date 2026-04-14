@@ -219,7 +219,11 @@ function HomeInner() {
         for (const t of stream.getTracks()) t.stop();
         console.log("録音 blob size:", blob.size, "bytes");
         if (blob.size < 1000) {
-          processAudioRef.current = null;
+          // processAudioRef は触らない：ここで null にすると次回の録音でも
+          // `recorder.onstop → processAudioRef.current?.(blob)` が no-op になり、
+          // 以降のターンまで Whisper パイプラインが永続的に詰まる（iOS Safari で再現）。
+          // `transcribing` も併せてリセットしてプレースホルダの残留を防ぐ。
+          setTranscribing(false);
           setErrorMsg("音声が短すぎます。もう少し長く話してください。");
           setStatus("idle");
           return;
