@@ -437,6 +437,12 @@ function HomeInner() {
         {/* ナビゲーション */}
         <div className="flex items-center gap-1 flex-shrink-0">
           <Link
+            href="/echo"
+            className="text-sm text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded"
+          >
+            分身の声
+          </Link>
+          <Link
             href="/personas"
             className={`text-sm text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded ${isGuest ? "pointer-events-none opacity-40" : ""}`}
           >
