@@ -346,7 +346,7 @@ function HomeInner() {
         // 会話 1 ターン完了イベント（mvp-scope.md 4.3 節 / Sprint 4 追加）。
         // used_suggest はプレフィル or 突合成立したかで判定（PostHog 側の集計容易性のため）。
         posthog.capture("chat_turn_completed", {
-          persona_id: persona?.id,
+          persona_id: persona?.id ?? null,
           used_suggest: Boolean(prefilled) || Boolean(match),
           user_text_normalized: userTextNormalized,
         });

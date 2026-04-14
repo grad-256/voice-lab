@@ -59,10 +59,17 @@ export async function POST(req: Request) {
   const timing = timingRaw && ALLOWED_TIMINGS.has(timingRaw) ? timingRaw : undefined;
   const recentMessages = sanitizeRecentMessages(body.recent_messages);
 
-  // `before_chat` は発話起点の日本語が無くても成立する（開始前のオープナー生成）。
-  // それ以外は従来どおり ja_text 必須。
-  if (timing !== "before_chat" && jaText.length === 0) {
-    return Response.json({ error: "ja_text は必須です" }, { status: 400 });
+  // サジェスト成立条件（Sprint 4 で拡張）：
+  //   - `before_chat` はオープナー生成で ja_text 不要
+  //   - `during_chat` は recent_messages があれば次発話ヒント生成が成立（ja_text 不要）
+  //   - timing 未指定（モーダル経路）は従来どおり ja_text 必須
+  //   - 上記いずれでもヒント情報がゼロなら 400
+  const hasRecent = Boolean(recentMessages && recentMessages.length > 0);
+  const canOpener = timing === "before_chat";
+  const canContinue = timing === "during_chat" && hasRecent;
+  const canTranslate = jaText.length > 0;
+  if (!canOpener && !canContinue && !canTranslate) {
+    return Response.json({ error: "ja_text または recent_messages が必要です" }, { status: 400 });
   }
   if (jaText.length > MAX_JA_LENGTH) {
     return Response.json({ error: "ja_text が長すぎます" }, { status: 400 });
