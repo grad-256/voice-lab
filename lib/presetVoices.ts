@@ -33,12 +33,11 @@ export interface PresetVoice {
 }
 
 /**
- * 暫定登録：枠 A（男性 20 代）/ B（男性 30 代）/ C（男性 40〜50 代）/
- *           D（女性 20 代前半）/ E（女性 30 代）/ G（中性 20〜30 代）/
- *           H（中性 30〜40 代）。
+ * 全 8 枠登録済み：A（男性 20 代）/ B（男性 30 代）/ C（男性 40〜50 代）/
+ *                D（女性 20 代前半）/ E（女性 30 代）/ F（女性 40〜50 代）/
+ *                G（中性 20〜30 代）/ H（中性 30〜40 代）。
  *
  * attributes は試聴サンプルでの最終調整前の概算値（試聴後に微調整前提）。
- * 残りは枠 F（女性 40〜50 代）のみ未登録。
  */
 export const PRESET_VOICES: readonly PresetVoice[] = [
   {
@@ -99,6 +98,18 @@ export const PRESET_VOICES: readonly PresetVoice[] = [
       tempo: 0.5,
       gender: 0.85,
       age: 0.5,
+    },
+  },
+  {
+    voiceId: "dGku3wKAuA20JBmsCsXv",
+    slot: "F",
+    description: "女性・40〜50代・温度感のある中低域",
+    attributes: {
+      pitch: 0.55,
+      brightness: 0.5,
+      tempo: 0.5,
+      gender: 0.85,
+      age: 0.7,
     },
   },
   {
