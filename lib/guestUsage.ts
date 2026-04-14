@@ -4,7 +4,9 @@
  * SSR（typeof localStorage === "undefined"）に対応
  */
 
-export const GUEST_LIMIT = 5;
+// Sprint 0 の Q2 で確定した統合カウント上限（mvp-scope.md 7.Q2）
+// 旧値 5 では、分身声作成・フレーズ再生・対話 1 往復の最低到達すら困難なため 10 に引き上げ。
+export const GUEST_LIMIT = 10;
 export const STORAGE_KEY = "vl_guest_count";
 
 // GUEST_LIMIT に加算される 4 種のイベント（mvp-scope.md 7.Q2）

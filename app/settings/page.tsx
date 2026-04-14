@@ -54,6 +54,20 @@ export default function SettingsPage() {
         <h1 className="text-xl font-semibold text-white">設定</h1>
       </div>
 
+      {/* 分身の声セクション */}
+      <section className="border border-gray-800 rounded-xl p-6 bg-gray-900/30 mb-4">
+        <h2 className="text-base font-semibold text-white mb-1">分身の声</h2>
+        <p className="text-sm text-gray-400 mb-4">
+          録音から似た声を選び直せます。選び直すと、場面再生の声が変わります。
+        </p>
+        <Link
+          href="/settings/voice"
+          className="inline-block px-4 py-2 bg-emerald-900/40 border border-emerald-800/60 text-emerald-200 text-sm rounded-lg hover:bg-emerald-900/60 transition-colors"
+        >
+          分身の声を作る・選び直す
+        </Link>
+      </section>
+
       {/* ログアウトセクション */}
       <section className="border border-gray-800 rounded-xl p-6 bg-gray-900/30 mb-4">
         <h2 className="text-base font-semibold text-white mb-1">ログアウト</h2>

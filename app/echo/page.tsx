@@ -1,83 +1,66 @@
 "use client";
 
-// 静的プリレンダリングを無効化（クライアント専用 API を使うため）
+// 静的プリレンダリングを無効化（Supabase / 音声再生など client API を使うため）
 export const dynamic = "force-dynamic";
 
-import { ConsentCheckbox } from "@/app/components/echo/ConsentCheckbox";
-import { VoiceCandidateCard } from "@/app/components/echo/VoiceCandidateCard";
+import { VoicePlayButton } from "@/app/components/VoicePlayButton";
 import {
-  VoiceRecorder,
-  type VoiceRecorderCompletePayload,
-} from "@/app/components/echo/VoiceRecorder";
-import { extractPitchHz, extractSpectralCentroid } from "@/lib/audioFeatures";
-import { decodeRecordingToMono } from "@/lib/decodeRecording";
+  GUEST_LIMIT,
+  getGuestCount,
+  incrementGuestCount,
+  isGuestLimitReached,
+} from "@/lib/guestUsage";
+import {
+  PRESET_SCENES,
+  type PresetScene,
+  getSceneById,
+  isSceneCompleted,
+} from "@/lib/presetScenes";
 import { PRESET_VOICES, type PresetVoice } from "@/lib/presetVoices";
 import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { type VoiceMatchResult, normalizeFeatures, rankVoices } from "@/lib/voiceMatcher";
-import { getGuestSelectedVoiceId, setGuestSelectedVoiceId } from "@/lib/voiceSessionStorage";
+import { getGuestSelectedVoiceId } from "@/lib/voiceSessionStorage";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import posthog from "posthog-js";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 /**
- * `/echo` ルート — 「分身の声」作成画面（Sprint 1 / mvp-scope.md 7.Q9）。
+ * `/echo` ルート — 分身の声で英フレーズを聞く独立画面（Sprint 2 / mvp-scope.md 7.Q9）。
  *
- * フロー：
- *   consent → ready → 録音 → analyzing → candidates → select → done
+ * 構成：
+ *   ヘッダー + 現在の分身の声 + タブ（プリセット場面 / 保存したフレーズ）
+ *   場面タブ：カード一覧 → 場面詳細（3 フレーズ + 字幕トグル + ナビボタン）
+ *   保存タブ：Sprint 5 まではプレースホルダ
  *
- * 録音 Blob は `decodeAudioData` 後に即破棄。
- * 特徴量ベクトルは候補ランキング後に state から消去（mvp-scope.md 3.10 節）。
+ * 分身の声作成フローは `/settings/voice` に分離（Sprint 2 で移設）。
  */
 
-type EchoStatus = "consent" | "ready" | "analyzing" | "candidates" | "extract-failed";
-type SaveStatus = "idle" | "saving" | "saved" | "error";
-// null = 認証チェック未完了 / true = 認証済み / false = ゲスト
 type AuthMode = boolean | null;
+type Tab = "scenes" | "saved";
 
-// 分析中 UI の最低表示時間（ms）。実際の抽出が早すぎても急にカードが出ないようにする。
-// mvp-scope.md Q8：「分析中アニメーション 2〜3 秒」を満たす最小値
-const MIN_ANALYZING_MS = 2000;
-
-interface CurrentVoiceInfo {
+interface CurrentVoice {
   voice: PresetVoice;
-  /** 保存元（auth: voice_sessions / guest: localStorage） */
   source: "auth" | "guest";
 }
 
 export default function EchoPage() {
-  const [consented, setConsented] = useState(false);
-  const [status, setStatus] = useState<EchoStatus>("consent");
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [matches, setMatches] = useState<VoiceMatchResult[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState<PresetVoice | null>(null);
-  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
-
-  // 永続化関連
   const [authMode, setAuthMode] = useState<AuthMode>(null);
-  const [currentVoice, setCurrentVoice] = useState<CurrentVoiceInfo | null>(null);
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const [saveErrorMsg, setSaveErrorMsg] = useState<string | null>(null);
+  const [currentVoice, setCurrentVoice] = useState<CurrentVoice | null>(null);
+  const [tab, setTab] = useState<Tab>("scenes");
+  const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
+  const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
+  // ゲストの統合カウント。`/app` と同じく state で保持し、再生のたびに live 更新する
+  const [guestCount, setGuestCount] = useState(0);
 
-  // useEffect deps から analyze 関数を独立にするため、最新版を ref で持つ
-  const analyzeRef = useRef<((blob: Blob) => Promise<void>) | null>(null);
-
-  // ページ離脱時の保険：万一残った matches も破棄
-  useEffect(() => {
-    return () => {
-      setMatches([]);
-    };
-  }, []);
-
-  // マウント時に既存選択を取得（auth: GET /api/voice-session / guest: localStorage）
+  // マウント時に auth 状態と selected_voice_id を解決
   useEffect(() => {
     let cancelled = false;
 
-    const resolveCurrentVoice = (voiceId: string | null, source: "auth" | "guest") => {
+    const resolveVoice = (voiceId: string | null, source: "auth" | "guest") => {
       if (!voiceId) {
         setCurrentVoice(null);
         return;
       }
       const found = PRESET_VOICES.find((v) => v.voiceId === voiceId);
-      // PRESET_VOICES に存在しない voice_id（過去の選択 / 別環境のデータ）は表示しない
       setCurrentVoice(found ? { voice: found, source } : null);
     };
 
@@ -96,9 +79,8 @@ export default function EchoPage() {
             if (cancelled) return;
             if (res.ok) {
               const json = (await res.json()) as { voiceId: string | null };
-              resolveCurrentVoice(json.voiceId, "auth");
+              resolveVoice(json.voiceId, "auth");
             } else {
-              // 認証あり・取得失敗は致命ではない（既存表示が出ないだけ）
               setCurrentVoice(null);
             }
           } catch {
@@ -106,13 +88,19 @@ export default function EchoPage() {
           }
         } else {
           setAuthMode(false);
-          resolveCurrentVoice(getGuestSelectedVoiceId(), "guest");
+          resolveVoice(getGuestSelectedVoiceId(), "guest");
+          setGuestCount(getGuestCount());
+          // ゲスト上限に既に到達していればモーダルを出す（他ページからの遷移ケース）
+          if (isGuestLimitReached()) {
+            setShowGuestLimitModal(true);
+            posthog.capture("guest_limit_reached");
+          }
         }
       } catch {
         if (cancelled) return;
-        // Supabase 初期化失敗（env 未設定等）はゲスト扱いで継続
         setAuthMode(false);
-        resolveCurrentVoice(getGuestSelectedVoiceId(), "guest");
+        resolveVoice(getGuestSelectedVoiceId(), "guest");
+        setGuestCount(getGuestCount());
       }
     })();
 
@@ -121,388 +109,153 @@ export default function EchoPage() {
     };
   }, []);
 
-  const handleConsentChange = useCallback((checked: boolean) => {
-    setConsented(checked);
-    setErrorMsg(null);
-    setStatus((prev) => {
-      // 分析中・候補表示中・抽出失敗表示中はチェック変更で巻き戻さない
-      // （extract-failed の「録音し直す」導線を保持するため）
-      if (prev === "analyzing" || prev === "candidates" || prev === "extract-failed") {
-        return prev;
-      }
-      return checked ? "ready" : "consent";
-    });
-  }, []);
-
-  const analyze = useCallback(async (blob: Blob) => {
-    setStatus("analyzing");
-    setErrorMsg(null);
-    setMatches([]);
-    setSelectedVoice(null);
-
-    const startedAt = Date.now();
-
-    // 録音 Blob は decodeAudioData 後に明示破棄する（mvp-scope.md 3.10 節「即破棄」）。
-    // クロージャ捕捉でも GC が走らないため、let で受けて null 代入で参照を切る。
-    let mutableBlob: Blob | null = blob;
-
-    try {
-      const { samples, sampleRate } = await decodeRecordingToMono(mutableBlob);
-      // ここで Blob の役目は完了。参照を即破棄する（後続の MIN_ANALYZING_MS 待ちで残らないように）
-      mutableBlob = null;
-
-      const pitch = extractPitchHz(samples, sampleRate);
-      const centroid = extractSpectralCentroid(samples, sampleRate);
-
-      // Issue #25 のような bias 問題が再発した時のため、抽出値をブラウザコンソールに出す。
-      // 録音データそのものは出さないので、プライバシー観点では数値のみで安全。
-      console.log("[echo features]", {
-        pitchHz: pitch.pitchHz,
-        pitchVoicedFrames: pitch.voicedFrameCount,
-        centroidHz: centroid.centroidHz,
-        centroidVoicedFrames: centroid.voicedFrameCount,
-        sampleRate,
-      });
-
-      if (pitch.pitchHz === null && centroid.centroidHz === null) {
-        setStatus("extract-failed");
-        setErrorMsg(
-          "声の特徴をうまく取れませんでした。マイクから少し離れて、ふつうの会話くらいの声で録り直してください。"
-        );
-        // try 内で早期 return しても finally で参照断ちを保証する
-        mutableBlob = null;
-        return;
-      }
-
-      const target = normalizeFeatures({
-        pitchHz: pitch.pitchHz,
-        centroidHz: centroid.centroidHz,
-      });
-      const ranked = rankVoices(target, PRESET_VOICES);
-
-      // 分析中アニメーションの最低表示時間を守る
-      const elapsed = Date.now() - startedAt;
-      if (elapsed < MIN_ANALYZING_MS) {
-        await new Promise((r) => setTimeout(r, MIN_ANALYZING_MS - elapsed));
-      }
-
-      setMatches(ranked);
-      setStatus("candidates");
-    } catch (err) {
-      console.error("echo analyze error:", err);
-      setStatus("extract-failed");
-      setErrorMsg(
-        err instanceof Error
-          ? `音声の解析に失敗しました：${err.message}`
-          : "音声の解析に失敗しました"
-      );
-    } finally {
-      // decode 失敗・抽出失敗のいずれの経路でも Blob 参照を確実に切る
-      mutableBlob = null;
-    }
-  }, []);
-
-  useEffect(() => {
-    analyzeRef.current = analyze;
-  }, [analyze]);
-
-  const handleRecordComplete = useCallback((payload: VoiceRecorderCompletePayload) => {
-    // payload を捕捉せず Blob だけ analyze に渡す（呼び出し側スコープから即時解放）
-    analyzeRef.current?.(payload.blob);
-  }, []);
-
-  const handleRecordError = useCallback((message: string) => {
-    setErrorMsg(message);
-  }, []);
-
-  const handleRetry = useCallback(() => {
-    setMatches([]);
-    setSelectedVoice(null);
-    setErrorMsg(null);
-    // 保存ステータスもリセット（過去の保存自体は currentVoice として残す）
-    setSaveStatus("idle");
-    setSaveErrorMsg(null);
-    setStatus(consented ? "ready" : "consent");
-  }, [consented]);
-
-  const handleSelectVoice = useCallback(
-    async (voice: PresetVoice) => {
-      // 保存中の二重押下を弾く
-      if (saveStatus === "saving") return;
-
-      setSelectedVoice(voice);
-      setSaveStatus("saving");
-      setSaveErrorMsg(null);
-
-      try {
-        if (authMode === true) {
-          const res = await fetch("/api/voice-session", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ selectedVoiceId: voice.voiceId }),
-          });
-          if (!res.ok) {
-            const json = (await res.json().catch(() => ({}))) as { error?: string };
-            throw new Error(json.error ?? "分身の声の保存に失敗しました");
-          }
-        } else if (authMode === false) {
-          setGuestSelectedVoiceId(voice.voiceId);
-        } else {
-          // 認証チェック未完了の状態で押された場合は安全側に倒す
-          throw new Error("初期化中です。少し待ってからもう一度お試しください");
-        }
-
-        setCurrentVoice({ voice, source: authMode ? "auth" : "guest" });
-        setSaveStatus("saved");
-      } catch (err) {
-        console.error("voice-session save error:", err);
-        setSaveStatus("error");
-        setSaveErrorMsg(err instanceof Error ? err.message : "分身の声の保存に失敗しました");
-      }
-    },
-    [authMode, saveStatus]
+  const selectedScene = useMemo(
+    () => (selectedSceneId ? getSceneById(selectedSceneId) : undefined),
+    [selectedSceneId]
   );
 
-  const handlePreviewStart = useCallback((voiceId: string) => {
-    setPlayingVoiceId(voiceId);
+  const handleSelectScene = useCallback((scene: PresetScene) => {
+    setSelectedSceneId(scene.id);
+    posthog.capture("scene_selected", { scene_id: scene.id });
   }, []);
 
-  const handlePreviewEnd = useCallback(() => {
-    setPlayingVoiceId(null);
+  const handleBackToScenes = useCallback(() => {
+    setSelectedSceneId(null);
   }, []);
+
+  const voiceId = currentVoice?.voice.voiceId ?? null;
+  const isGuest = authMode === false;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-5 py-8">
       <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">分身の声を作る</h1>
+        <h1 className="text-2xl font-bold text-white">場面で聞く</h1>
         <nav className="flex items-center gap-3 text-sm">
           <Link href="/" className="text-gray-400 hover:text-white transition-colors">
             トップ
           </Link>
           <span className="text-gray-700">|</span>
           <Link href="/app" className="text-gray-400 hover:text-white transition-colors">
-            会話に戻る
+            会話
+          </Link>
+          <span className="text-gray-700">|</span>
+          <Link href="/settings/voice" className="text-gray-400 hover:text-white transition-colors">
+            分身の声
           </Link>
         </nav>
       </header>
 
-      {currentVoice && (
-        <CurrentVoicePanel
+      {currentVoice ? (
+        <CurrentVoiceBanner
           voice={currentVoice.voice}
           source={currentVoice.source}
           isAuth={authMode === true}
         />
+      ) : authMode !== null ? (
+        <NoVoiceCta />
+      ) : null}
+
+      {/* タブ */}
+      <div className="flex border-b border-gray-800">
+        <TabButton active={tab === "scenes"} onClick={() => setTab("scenes")}>
+          プリセット場面
+        </TabButton>
+        <TabButton active={tab === "saved"} onClick={() => setTab("saved")}>
+          保存したフレーズ
+        </TabButton>
+      </div>
+
+      {tab === "scenes" ? (
+        selectedScene ? (
+          <SceneDetail
+            scene={selectedScene}
+            voiceId={voiceId}
+            isGuest={isGuest}
+            onBack={handleBackToScenes}
+            onPlayStart={() => {
+              if (!isGuest) return true;
+              // 上限到達後のクリックは即キャンセル（/app と同じ挙動）
+              if (isGuestLimitReached()) {
+                setShowGuestLimitModal(true);
+                posthog.capture("guest_limit_reached");
+                return false;
+              }
+              const newCount = incrementGuestCount("phrase_play");
+              setGuestCount(newCount);
+              posthog.capture("guest_usage_incremented", {
+                event: "phrase_play",
+                count: newCount,
+              });
+              // この回で上限に達したら、モーダルを出し再生はキャンセル（/app パターン）
+              if (newCount >= GUEST_LIMIT) {
+                setShowGuestLimitModal(true);
+                return false;
+              }
+              return true;
+            }}
+            guestCount={guestCount}
+          />
+        ) : (
+          <SceneList
+            scenes={PRESET_SCENES}
+            onSelect={handleSelectScene}
+            hasVoice={voiceId !== null}
+          />
+        )
+      ) : (
+        <SavedPlaceholder />
       )}
 
-      <ConsentCheckbox
-        checked={consented}
-        onChange={handleConsentChange}
-        disabled={status === "analyzing" || status === "candidates"}
-      />
-
-      <section className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">
-        {status === "analyzing" && <AnalyzingPanel />}
-
-        {status === "candidates" && (
-          <CandidatesPanel
-            matches={matches}
-            selected={selectedVoice}
-            playingVoiceId={playingVoiceId}
-            saveStatus={saveStatus}
-            saveErrorMsg={saveErrorMsg}
-            isAuth={authMode === true}
-            onSelect={handleSelectVoice}
-            onPreviewStart={handlePreviewStart}
-            onPreviewEnd={handlePreviewEnd}
-            onRetry={handleRetry}
-          />
-        )}
-
-        {status === "extract-failed" && (
-          <div className="flex flex-col items-center gap-4 text-center">
-            <p className="text-base text-rose-200">{errorMsg}</p>
-            <button
-              type="button"
-              onClick={handleRetry}
-              className="rounded-full bg-rose-500 hover:bg-rose-400 px-6 py-2 text-sm font-medium text-white"
-            >
-              録音し直す
-            </button>
-          </div>
-        )}
-
-        {(status === "consent" || status === "ready") && (
-          <VoiceRecorder
-            disabled={!consented}
-            onComplete={handleRecordComplete}
-            onError={handleRecordError}
-          />
-        )}
-      </section>
-
-      {errorMsg && status !== "extract-failed" && (
-        <p
-          className="rounded-xl bg-rose-950/60 border border-rose-900 p-3 text-sm text-rose-200"
-          role="alert"
-        >
-          {errorMsg}
-        </p>
-      )}
-
-      {!consented && status === "consent" && (
+      {isGuest && !showGuestLimitModal && (
         <p className="text-center text-xs text-gray-500">
-          録音を始めるには、上の同意にチェックを入れてください。
+          ゲストモード（無料体験 {guestCount}/{GUEST_LIMIT}）
         </p>
       )}
+
+      {showGuestLimitModal && <GuestLimitModal />}
     </main>
   );
 }
 
 // -------------------------------------------------------
-// 内部コンポーネント
+// 共通パーツ
 // -------------------------------------------------------
 
-function AnalyzingPanel() {
-  // 単純スピナー禁止（mvp-scope.md Q8）。3 段階のフェードでテキストを切り替える
-  const [phase, setPhase] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setPhase((p) => (p + 1) % 3), 700);
-    return () => clearInterval(id);
-  }, []);
-
-  const messages = [
-    "声を聴いています…",
-    "あなたの声の特徴を取り出しています…",
-    "似た声を探しています…",
-  ];
-
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex flex-col items-center gap-5 py-8 text-center">
-      <div className="flex gap-1.5">
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className={`h-2 w-2 rounded-full transition-colors ${
-              phase === i ? "bg-rose-400" : "bg-gray-700"
-            }`}
-          />
-        ))}
-      </div>
-      <p className="text-sm text-gray-300" aria-live="polite">
-        {messages[phase]}
-      </p>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+        active ? "border-rose-400 text-white" : "border-transparent text-gray-400 hover:text-white"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
-interface CandidatesPanelProps {
-  matches: VoiceMatchResult[];
-  selected: PresetVoice | null;
-  playingVoiceId: string | null;
-  saveStatus: SaveStatus;
-  saveErrorMsg: string | null;
-  isAuth: boolean;
-  onSelect: (voice: PresetVoice) => void;
-  onPreviewStart: (voiceId: string) => void;
-  onPreviewEnd: () => void;
-  onRetry: () => void;
-}
+// -------------------------------------------------------
+// 現在の分身の声 / 未作成 CTA
+// -------------------------------------------------------
 
-function CandidatesPanel({
-  matches,
-  selected,
-  playingVoiceId,
-  saveStatus,
-  saveErrorMsg,
+function CurrentVoiceBanner({
+  voice,
+  source,
   isAuth,
-  onSelect,
-  onPreviewStart,
-  onPreviewEnd,
-  onRetry,
-}: CandidatesPanelProps) {
-  if (matches.length === 0) {
-    return <div className="text-center text-sm text-gray-400">候補が見つかりませんでした。</div>;
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="text-center">
-        <p className="text-base text-white">あなたに近い声を {matches.length} 件見つけました</p>
-        <p className="mt-1 text-xs text-gray-500">
-          試聴して気に入った声を「この声にする」で選んでください
-        </p>
-      </div>
-
-      <ul className="flex flex-col gap-3">
-        {matches.map((m, idx) => (
-          <li key={m.voice.voiceId}>
-            <VoiceCandidateCard
-              voice={m.voice}
-              score={m.score}
-              rank={idx + 1}
-              onSelect={onSelect}
-              selected={selected?.voiceId === m.voice.voiceId}
-              onPreviewStart={onPreviewStart}
-              onPreviewEnd={onPreviewEnd}
-              otherIsPlaying={playingVoiceId !== null && playingVoiceId !== m.voice.voiceId}
-            />
-          </li>
-        ))}
-      </ul>
-
-      <div className="flex items-center justify-center pt-2">
-        <button
-          type="button"
-          onClick={onRetry}
-          className="text-sm text-gray-400 hover:text-white underline-offset-2 hover:underline"
-        >
-          録音し直す
-        </button>
-      </div>
-
-      {selected && saveStatus === "saving" && (
-        <p className="rounded-xl border border-gray-800 bg-gray-900/60 p-3 text-center text-sm text-gray-300">
-          「{selected.description}」を保存中…
-        </p>
-      )}
-
-      {selected && saveStatus === "saved" && (
-        <p className="rounded-xl border border-emerald-900 bg-emerald-950/30 p-3 text-center text-sm text-emerald-200">
-          「{selected.description}」を分身の声にしました。
-          {!isAuth && (
-            <>
-              <br />
-              <span className="text-xs text-emerald-300/80">
-                （ログインしていないため、お使いのブラウザにのみ保存されます）
-              </span>
-            </>
-          )}
-        </p>
-      )}
-
-      {selected && saveStatus === "error" && (
-        <p
-          className="rounded-xl border border-rose-900 bg-rose-950/40 p-3 text-center text-sm text-rose-200"
-          role="alert"
-        >
-          {saveErrorMsg ?? "分身の声の保存に失敗しました"}
-          <br />
-          <span className="text-xs text-rose-300/80">
-            「この声にする」をもう一度押すか、別の候補をお試しください。
-          </span>
-        </p>
-      )}
-    </div>
-  );
-}
-
-interface CurrentVoicePanelProps {
+}: {
   voice: PresetVoice;
   source: "auth" | "guest";
   isAuth: boolean;
-}
-
-function CurrentVoicePanel({ voice, source, isAuth }: CurrentVoicePanelProps) {
+}) {
   const savedLabel =
     source === "auth" || isAuth
       ? "アカウントに保存済み"
@@ -510,49 +263,299 @@ function CurrentVoicePanel({ voice, source, isAuth }: CurrentVoicePanelProps) {
 
   return (
     <section
-      className="relative overflow-hidden rounded-2xl border-2 border-emerald-500/70 bg-gradient-to-br from-emerald-950/60 via-emerald-900/30 to-gray-900/60 p-5 shadow-lg shadow-emerald-900/30"
+      className="rounded-xl border border-emerald-800/60 bg-emerald-950/20 px-4 py-3 text-sm"
       aria-label="現在の分身の声"
     >
-      {/* 左端のアクセントバー */}
-      <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-emerald-400 to-emerald-600" />
-
-      <div className="flex items-start gap-4 pl-2">
-        {/* チェックマークアイコン */}
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 ring-2 ring-emerald-400/60">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="h-6 w-6 text-emerald-300"
-            aria-hidden="true"
-          >
-            <path
-              fillRule="evenodd"
-              d="M16.704 5.296a1 1 0 0 1 0 1.408l-7.5 7.5a1 1 0 0 1-1.408 0l-3.5-3.5a1 1 0 1 1 1.408-1.408l2.796 2.796 6.796-6.796a1 1 0 0 1 1.408 0Z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300/90">
-            現在の分身の声
-          </p>
-          <p className="mt-1 text-xl font-bold text-white">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-wider text-emerald-300/80">現在の分身の声</p>
+          <p className="mt-0.5 truncate text-base font-semibold text-white">
             {voice.description}
-            <span className="ml-2 align-middle text-xs font-normal text-emerald-200/70">
-              枠 {voice.slot}
-            </span>
+            <span className="ml-2 text-xs text-emerald-200/60">枠 {voice.slot}</span>
           </p>
-          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs text-emerald-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            {savedLabel}
-          </p>
-          <p className="mt-3 text-xs text-emerald-200/70">
-            変更したい場合は、下の同意にチェックを入れてもう一度録音してください。
-          </p>
+          <p className="mt-1 text-xs text-emerald-200/70">{savedLabel}</p>
         </div>
+        <Link
+          href="/settings/voice"
+          className="shrink-0 rounded-lg border border-emerald-800/70 px-3 py-1.5 text-xs text-emerald-200 hover:bg-emerald-900/30 transition-colors"
+        >
+          選び直す
+        </Link>
       </div>
     </section>
+  );
+}
+
+function NoVoiceCta() {
+  return (
+    <section className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-5 text-center">
+      <p className="text-base text-white">まだ分身の声が作られていません</p>
+      <p className="mt-1 text-sm text-rose-200/80">
+        10〜15 秒の録音から、あなたの声に似た 8 つの候補を選べます。
+      </p>
+      <Link
+        href="/settings/voice"
+        className="mt-4 inline-block rounded-full bg-rose-500 hover:bg-rose-400 px-5 py-2 text-sm font-medium text-white shadow-lg shadow-rose-900/40 transition-colors"
+      >
+        分身の声を作る
+      </Link>
+    </section>
+  );
+}
+
+// -------------------------------------------------------
+// 場面カード一覧
+// -------------------------------------------------------
+
+function SceneList({
+  scenes,
+  onSelect,
+  hasVoice,
+}: {
+  scenes: readonly PresetScene[];
+  onSelect: (scene: PresetScene) => void;
+  hasVoice: boolean;
+}) {
+  return (
+    <section className="flex flex-col gap-3">
+      {!hasVoice && (
+        <p className="rounded-lg border border-gray-800 bg-gray-900/60 p-3 text-xs text-gray-400">
+          分身の声を作成すると、各場面のフレーズを再生できるようになります。
+        </p>
+      )}
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {scenes.map((scene) => (
+          <li key={scene.id}>
+            <button
+              type="button"
+              onClick={() => onSelect(scene)}
+              className="w-full rounded-2xl border border-gray-800 bg-gray-900/60 p-4 text-left hover:border-rose-700 hover:bg-gray-900 transition-colors"
+            >
+              <p className="text-base font-semibold text-white">{scene.title}</p>
+              <p className="mt-1.5 text-xs text-gray-400 line-clamp-2">{scene.situationJa}</p>
+              <p className="mt-2 text-xs text-rose-300/80">{scene.phrases.length} フレーズ</p>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+// -------------------------------------------------------
+// 場面詳細
+// -------------------------------------------------------
+
+function SceneDetail({
+  scene,
+  voiceId,
+  isGuest,
+  onBack,
+  onPlayStart,
+  guestCount,
+}: {
+  scene: PresetScene;
+  voiceId: string | null;
+  isGuest: boolean;
+  onBack: () => void;
+  /** `false` で再生キャンセル（ゲスト上限などのゲートに使う） */
+  onPlayStart: (phraseId: string) => boolean | undefined;
+  /** 親が state で保持する統合カウント。live 表示に使う */
+  guestCount: number;
+}) {
+  const [playedIds, setPlayedIds] = useState<Set<string>>(new Set());
+  const [showSubtitles, setShowSubtitles] = useState(true);
+  const [completedFired, setCompletedFired] = useState(false);
+
+  // 場面が変わったら再生履歴と scene_completed 発火フラグをリセットする。
+  // scene.id は body で参照しないが、依存配列に入れて scene 切り替えトリガーとする。
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scene.id をトリガーとして明示的に使う
+  useEffect(() => {
+    setPlayedIds(new Set());
+    setCompletedFired(false);
+  }, [scene.id]);
+
+  const handlePlayEnd = useCallback(
+    (phraseId: string) => {
+      setPlayedIds((prev) => {
+        if (prev.has(phraseId)) return prev;
+        const next = new Set(prev);
+        next.add(phraseId);
+        // 完了判定 + scene_completed 発火
+        if (!completedFired && isSceneCompleted(scene, next)) {
+          posthog.capture("scene_completed", { scene_id: scene.id });
+          setCompletedFired(true);
+        }
+        return next;
+      });
+    },
+    [scene, completedFired]
+  );
+
+  // 「次のフレーズ」：未再生の最初のフレーズへスクロール。全部再生済みなら何もしない。
+  const handleNextPhrase = useCallback(() => {
+    const next = scene.phrases.find((p) => !playedIds.has(p.phraseId));
+    if (!next) return;
+    const el = document.getElementById(`phrase-${next.phraseId}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [scene.phrases, playedIds]);
+
+  const allPlayed = playedIds.size >= scene.phrases.length;
+
+  return (
+    <section className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-sm text-gray-400 hover:text-white transition-colors"
+        >
+          ← 別の場面へ
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowSubtitles((v) => !v)}
+          className="text-xs rounded-full border border-gray-700 px-3 py-1 text-gray-300 hover:border-gray-500 transition-colors"
+          aria-pressed={showSubtitles}
+        >
+          字幕 {showSubtitles ? "ON" : "OFF"}
+        </button>
+      </div>
+
+      <header className="rounded-2xl border border-gray-800 bg-gray-900/60 p-5">
+        <h2 className="text-xl font-bold text-white">{scene.title}</h2>
+        <p className="mt-2 text-sm text-gray-300">{scene.situationJa}</p>
+        <p className="mt-1 text-xs text-gray-500">{scene.emotionJa}</p>
+      </header>
+
+      <ul className="flex flex-col gap-3">
+        {scene.phrases.map((phrase, idx) => {
+          const played = playedIds.has(phrase.phraseId);
+          return (
+            <li
+              key={phrase.phraseId}
+              id={`phrase-${phrase.phraseId}`}
+              className={`rounded-2xl border p-4 transition-colors ${
+                played
+                  ? "border-emerald-800/50 bg-emerald-950/20"
+                  : "border-gray-800 bg-gray-900/60"
+              }`}
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-xs text-gray-500">フレーズ {idx + 1}</span>
+                {played && <span className="text-xs text-emerald-300">聴きました</span>}
+              </div>
+              <p className="mt-1.5 text-lg font-semibold text-white">{phrase.enText}</p>
+              {showSubtitles && <p className="mt-1 text-xs text-gray-400">{phrase.jaIntent}</p>}
+              <div className="mt-3">
+                <VoicePlayButton
+                  phraseId={phrase.phraseId}
+                  enText={phrase.enText}
+                  voiceId={voiceId}
+                  sceneId={scene.id}
+                  onPlayStart={onPlayStart}
+                  onPlayEnd={handlePlayEnd}
+                  label={played ? "▶ もう一度聞く" : undefined}
+                />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+        <button
+          type="button"
+          onClick={handleNextPhrase}
+          disabled={allPlayed}
+          className="rounded-full border border-gray-700 bg-gray-900/60 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-2 text-sm text-white transition-colors"
+        >
+          次のフレーズへ
+        </button>
+        <button
+          type="button"
+          onClick={onBack}
+          className="rounded-full border border-gray-700 bg-gray-900/60 hover:bg-gray-800 px-5 py-2 text-sm text-white transition-colors"
+        >
+          別の場面へ
+        </button>
+      </div>
+
+      {voiceId === null && (
+        <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-center text-sm text-rose-200">
+          先に{" "}
+          <Link href="/settings/voice" className="underline hover:text-white">
+            分身の声を作る
+          </Link>{" "}
+          と、このフレーズを再生できます。
+        </p>
+      )}
+
+      {isGuest && (
+        <p className="text-center text-xs text-gray-500">
+          ゲストモード（無料体験 {guestCount}/{GUEST_LIMIT}）
+        </p>
+      )}
+    </section>
+  );
+}
+
+// -------------------------------------------------------
+// 保存タブ（Sprint 5 で中身追加）
+// -------------------------------------------------------
+
+function SavedPlaceholder() {
+  return (
+    <section className="rounded-2xl border border-dashed border-gray-800 bg-gray-900/30 p-8 text-center">
+      <p className="text-base text-white">保存したフレーズ</p>
+      <p className="mt-2 text-sm text-gray-400">
+        会話画面の「これ言えなかった」で保存したフレーズが、ここに並びます。
+      </p>
+      <p className="mt-3 text-xs text-gray-500">もうすぐ使えます（Sprint 5）</p>
+    </section>
+  );
+}
+
+// -------------------------------------------------------
+// ゲスト上限モーダル（/app と同系デザイン）
+// -------------------------------------------------------
+
+function GuestLimitModal() {
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 max-w-sm w-full text-center space-y-4">
+        <div className="text-2xl">🎉</div>
+        <h2 className="text-lg font-semibold text-white">{GUEST_LIMIT}回分の体験が終わりました</h2>
+        <p className="text-gray-400 text-base">
+          続けるにはログインが必要です。ログインするとフレーズ保存や会話履歴も引き継げます。
+        </p>
+        <div className="flex flex-col gap-2">
+          <Link
+            href="/login"
+            onClick={() =>
+              posthog.capture("signup_cta_clicked", {
+                source: "guest_limit_modal",
+                action: "login",
+              })
+            }
+            className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-base font-medium transition-colors"
+          >
+            ログインする
+          </Link>
+          <Link
+            href="/login?mode=signup"
+            onClick={() =>
+              posthog.capture("signup_cta_clicked", {
+                source: "guest_limit_modal",
+                action: "signup",
+              })
+            }
+            className="w-full py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-base font-medium transition-colors"
+          >
+            新規登録（無料）
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }
