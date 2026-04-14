@@ -9,7 +9,6 @@ import PulseBg from "@/app/components/lp/PulseBg";
 import ScrollReveal from "@/app/components/lp/ScrollReveal";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 const SAMPLE_PERSONAS = [
   {
@@ -109,7 +108,8 @@ export default async function LandingPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (user) redirect("/app");
+  // ログイン済みでも LP は閲覧可能。ナビゲーションだけログイン状態に応じて切り替える
+  const isAuthenticated = !!user;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white overflow-x-hidden">
@@ -120,18 +120,29 @@ export default async function LandingPage() {
             My<span className="text-indigo-400">VoiceLab</span>
           </span>
           <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5"
-            >
-              ログイン
-            </Link>
-            <Link
-              href="/app"
-              className="text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors"
-            >
-              無料で試す
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                href="/app"
+                className="text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors"
+              >
+                ホームへ
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5"
+                >
+                  ログイン
+                </Link>
+                <Link
+                  href="/app"
+                  className="text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors"
+                >
+                  無料で試す
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>

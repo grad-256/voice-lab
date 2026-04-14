@@ -12,7 +12,9 @@ import {
 import { extractPitchHz, extractSpectralCentroid } from "@/lib/audioFeatures";
 import { decodeRecordingToMono } from "@/lib/decodeRecording";
 import { PRESET_VOICES, type PresetVoice } from "@/lib/presetVoices";
+import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { type VoiceMatchResult, normalizeFeatures, rankVoices } from "@/lib/voiceMatcher";
+import { getGuestSelectedVoiceId, setGuestSelectedVoiceId } from "@/lib/voiceSessionStorage";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -27,10 +29,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
  */
 
 type EchoStatus = "consent" | "ready" | "analyzing" | "candidates" | "extract-failed";
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+// null = 認証チェック未完了 / true = 認証済み / false = ゲスト
+type AuthMode = boolean | null;
 
 // 分析中 UI の最低表示時間（ms）。実際の抽出が早すぎても急にカードが出ないようにする。
 // mvp-scope.md Q8：「分析中アニメーション 2〜3 秒」を満たす最小値
 const MIN_ANALYZING_MS = 2000;
+
+interface CurrentVoiceInfo {
+  voice: PresetVoice;
+  /** 保存元（auth: voice_sessions / guest: localStorage） */
+  source: "auth" | "guest";
+}
 
 export default function EchoPage() {
   const [consented, setConsented] = useState(false);
@@ -40,6 +51,12 @@ export default function EchoPage() {
   const [selectedVoice, setSelectedVoice] = useState<PresetVoice | null>(null);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
 
+  // 永続化関連
+  const [authMode, setAuthMode] = useState<AuthMode>(null);
+  const [currentVoice, setCurrentVoice] = useState<CurrentVoiceInfo | null>(null);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [saveErrorMsg, setSaveErrorMsg] = useState<string | null>(null);
+
   // useEffect deps から analyze 関数を独立にするため、最新版を ref で持つ
   const analyzeRef = useRef<((blob: Blob) => Promise<void>) | null>(null);
 
@@ -47,6 +64,60 @@ export default function EchoPage() {
   useEffect(() => {
     return () => {
       setMatches([]);
+    };
+  }, []);
+
+  // マウント時に既存選択を取得（auth: GET /api/voice-session / guest: localStorage）
+  useEffect(() => {
+    let cancelled = false;
+
+    const resolveCurrentVoice = (voiceId: string | null, source: "auth" | "guest") => {
+      if (!voiceId) {
+        setCurrentVoice(null);
+        return;
+      }
+      const found = PRESET_VOICES.find((v) => v.voiceId === voiceId);
+      // PRESET_VOICES に存在しない voice_id（過去の選択 / 別環境のデータ）は表示しない
+      setCurrentVoice(found ? { voice: found, source } : null);
+    };
+
+    (async () => {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (cancelled) return;
+
+        if (user) {
+          setAuthMode(true);
+          try {
+            const res = await fetch("/api/voice-session", { method: "GET" });
+            if (cancelled) return;
+            if (res.ok) {
+              const json = (await res.json()) as { voiceId: string | null };
+              resolveCurrentVoice(json.voiceId, "auth");
+            } else {
+              // 認証あり・取得失敗は致命ではない（既存表示が出ないだけ）
+              setCurrentVoice(null);
+            }
+          } catch {
+            setCurrentVoice(null);
+          }
+        } else {
+          setAuthMode(false);
+          resolveCurrentVoice(getGuestSelectedVoiceId(), "guest");
+        }
+      } catch {
+        if (cancelled) return;
+        // Supabase 初期化失敗（env 未設定等）はゲスト扱いで継続
+        setAuthMode(false);
+        resolveCurrentVoice(getGuestSelectedVoiceId(), "guest");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -138,14 +209,49 @@ export default function EchoPage() {
     setMatches([]);
     setSelectedVoice(null);
     setErrorMsg(null);
+    // 保存ステータスもリセット（過去の保存自体は currentVoice として残す）
+    setSaveStatus("idle");
+    setSaveErrorMsg(null);
     setStatus(consented ? "ready" : "consent");
   }, [consented]);
 
-  const handleSelectVoice = useCallback((voice: PresetVoice) => {
-    setSelectedVoice(voice);
-    // MVP 段階では DB に保存しない（Sprint 後半で /api/voice-session を追加）。
-    // 現状は state 保持のみ。
-  }, []);
+  const handleSelectVoice = useCallback(
+    async (voice: PresetVoice) => {
+      // 保存中の二重押下を弾く
+      if (saveStatus === "saving") return;
+
+      setSelectedVoice(voice);
+      setSaveStatus("saving");
+      setSaveErrorMsg(null);
+
+      try {
+        if (authMode === true) {
+          const res = await fetch("/api/voice-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ selectedVoiceId: voice.voiceId }),
+          });
+          if (!res.ok) {
+            const json = (await res.json().catch(() => ({}))) as { error?: string };
+            throw new Error(json.error ?? "分身の声の保存に失敗しました");
+          }
+        } else if (authMode === false) {
+          setGuestSelectedVoiceId(voice.voiceId);
+        } else {
+          // 認証チェック未完了の状態で押された場合は安全側に倒す
+          throw new Error("初期化中です。少し待ってからもう一度お試しください");
+        }
+
+        setCurrentVoice({ voice, source: authMode ? "auth" : "guest" });
+        setSaveStatus("saved");
+      } catch (err) {
+        console.error("voice-session save error:", err);
+        setSaveStatus("error");
+        setSaveErrorMsg(err instanceof Error ? err.message : "分身の声の保存に失敗しました");
+      }
+    },
+    [authMode, saveStatus]
+  );
 
   const handlePreviewStart = useCallback((voiceId: string) => {
     setPlayingVoiceId(voiceId);
@@ -170,6 +276,14 @@ export default function EchoPage() {
         </nav>
       </header>
 
+      {currentVoice && (
+        <CurrentVoicePanel
+          voice={currentVoice.voice}
+          source={currentVoice.source}
+          isAuth={authMode === true}
+        />
+      )}
+
       <ConsentCheckbox
         checked={consented}
         onChange={handleConsentChange}
@@ -184,6 +298,9 @@ export default function EchoPage() {
             matches={matches}
             selected={selectedVoice}
             playingVoiceId={playingVoiceId}
+            saveStatus={saveStatus}
+            saveErrorMsg={saveErrorMsg}
+            isAuth={authMode === true}
             onSelect={handleSelectVoice}
             onPreviewStart={handlePreviewStart}
             onPreviewEnd={handlePreviewEnd}
@@ -272,6 +389,9 @@ interface CandidatesPanelProps {
   matches: VoiceMatchResult[];
   selected: PresetVoice | null;
   playingVoiceId: string | null;
+  saveStatus: SaveStatus;
+  saveErrorMsg: string | null;
+  isAuth: boolean;
   onSelect: (voice: PresetVoice) => void;
   onPreviewStart: (voiceId: string) => void;
   onPreviewEnd: () => void;
@@ -282,6 +402,9 @@ function CandidatesPanel({
   matches,
   selected,
   playingVoiceId,
+  saveStatus,
+  saveErrorMsg,
+  isAuth,
   onSelect,
   onPreviewStart,
   onPreviewEnd,
@@ -327,15 +450,99 @@ function CandidatesPanel({
         </button>
       </div>
 
-      {selected && (
+      {selected && saveStatus === "saving" && (
+        <p className="rounded-xl border border-gray-800 bg-gray-900/60 p-3 text-center text-sm text-gray-300">
+          「{selected.description}」を保存中…
+        </p>
+      )}
+
+      {selected && saveStatus === "saved" && (
         <p className="rounded-xl border border-emerald-900 bg-emerald-950/30 p-3 text-center text-sm text-emerald-200">
           「{selected.description}」を分身の声にしました。
+          {!isAuth && (
+            <>
+              <br />
+              <span className="text-xs text-emerald-300/80">
+                （ログインしていないため、お使いのブラウザにのみ保存されます）
+              </span>
+            </>
+          )}
+        </p>
+      )}
+
+      {selected && saveStatus === "error" && (
+        <p
+          className="rounded-xl border border-rose-900 bg-rose-950/40 p-3 text-center text-sm text-rose-200"
+          role="alert"
+        >
+          {saveErrorMsg ?? "分身の声の保存に失敗しました"}
           <br />
-          <span className="text-xs text-emerald-300/80">
-            （現バージョンではこの選択は端末内のみ。次回起動時には再度選び直してください）
+          <span className="text-xs text-rose-300/80">
+            「この声にする」をもう一度押すか、別の候補をお試しください。
           </span>
         </p>
       )}
     </div>
+  );
+}
+
+interface CurrentVoicePanelProps {
+  voice: PresetVoice;
+  source: "auth" | "guest";
+  isAuth: boolean;
+}
+
+function CurrentVoicePanel({ voice, source, isAuth }: CurrentVoicePanelProps) {
+  const savedLabel =
+    source === "auth" || isAuth
+      ? "アカウントに保存済み"
+      : "ブラウザに保存（ログインで引き継ぎ可能）";
+
+  return (
+    <section
+      className="relative overflow-hidden rounded-2xl border-2 border-emerald-500/70 bg-gradient-to-br from-emerald-950/60 via-emerald-900/30 to-gray-900/60 p-5 shadow-lg shadow-emerald-900/30"
+      aria-label="現在の分身の声"
+    >
+      {/* 左端のアクセントバー */}
+      <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-emerald-400 to-emerald-600" />
+
+      <div className="flex items-start gap-4 pl-2">
+        {/* チェックマークアイコン */}
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 ring-2 ring-emerald-400/60">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="h-6 w-6 text-emerald-300"
+            aria-hidden="true"
+          >
+            <path
+              fillRule="evenodd"
+              d="M16.704 5.296a1 1 0 0 1 0 1.408l-7.5 7.5a1 1 0 0 1-1.408 0l-3.5-3.5a1 1 0 1 1 1.408-1.408l2.796 2.796 6.796-6.796a1 1 0 0 1 1.408 0Z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300/90">
+            現在の分身の声
+          </p>
+          <p className="mt-1 text-xl font-bold text-white">
+            {voice.description}
+            <span className="ml-2 align-middle text-xs font-normal text-emerald-200/70">
+              枠 {voice.slot}
+            </span>
+          </p>
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs text-emerald-200">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            {savedLabel}
+          </p>
+          <p className="mt-3 text-xs text-emerald-200/70">
+            変更したい場合は、下の同意にチェックを入れてもう一度録音してください。
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }
