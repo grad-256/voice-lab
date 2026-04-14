@@ -28,6 +28,7 @@ ChatGPT との差別化：「AI と話す」ではなく「AI で作った"他�
 | 対話AI | Claude Haiku（`claude-haiku-4-5-20251001`） | テキスト → 返答 |
 | TTS | ElevenLabs（`eleven_turbo_v2_5`） | テキスト → 音声 |
 | ホスティング | Cloudflare Pages（予定） | `@cloudflare/next-on-pages` |
+| リポジトリ構成 | **pnpm workspaces モノレポ** | `apps/web` / `apps/api` / `packages/shared`（Phase 2 で再編）。詳細は `docs/monorepo-structure.md` |
 | DB | なし（Phase 1 途中） | 会話履歴は React state のみ |
 
 ---
@@ -182,7 +183,9 @@ Anthropic Labs の研究（[Harness design for long-running application developm
 | **planner** | 仕様書展開 | 1行プロンプト → スプリント計画 |
 | **evaluator** | 品質レビュー | 実装完了後のテスト・合否判定 |
 | **pdm** | プロダクト戦略 | 優先度・KPI・ユーザージャーニー分析 |
-| **marketer** | 訴求設計 | コピー・プライシング・感情設計 |
+| **marketer** | 訴求設計 | コピー・プライシング・感情設計（とっさの英語ペルソナ） |
+| **branding** | ブランド統一 | 世界観・トーン・ビジュアル一貫性の維持 |
+| **legal-checker** | 法的チェック | 特商法・プラポリ・利用規約・AI規約整合性・ボイスクローン法務 |
 | **frontend** | フロントエンド実装 | UI・ページ・クライアントロジック（Next.js / Tailwind） |
 | **backend** | バックエンド実装 | API Routes・外部API統合・Supabase操作 |
 | **infrastructure** | インフラ管理 | Cloudflare Pages・Supabase設定・デプロイ・CI/CD |
