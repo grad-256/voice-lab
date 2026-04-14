@@ -440,6 +440,12 @@ function HomeInner() {
             href="/echo"
             className="text-sm text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded"
           >
+            場面で聞く
+          </Link>
+          <Link
+            href="/settings/voice"
+            className="text-sm text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded"
+          >
             分身の声
           </Link>
           <Link
