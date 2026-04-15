@@ -95,8 +95,9 @@ function HomeInner() {
   // フィードバック状態（メッセージ ID → 'positive' | 'negative'）
   const [feedback, setFeedback] = useState<Record<string, "positive" | "negative">>({});
 
-  // サジェスト出現タイミング（Sprint 6 で UI から変更可能にする予定。DB デフォルトは both）
-  const [suggestTiming] = useState<"before_chat" | "during_chat" | "both">("both");
+  // サジェストパネルの表示フラグ（Sprint 6 改訂：プル型）。
+  // ユーザーが「フレーズのヒント」ボタンを押したときだけ true になる。
+  const [showSuggestPanel, setShowSuggestPanel] = useState(false);
 
   // [ このフレーズで話す ] で指定された「次発話として扱うフレーズ」。
   // 送信時に phrase_id 直接突合に使い、送信後にクリアする。
@@ -465,22 +466,30 @@ function HomeInner() {
     () => messages.map((m) => ({ role: m.role, content: m.text })),
     [messages]
   );
-  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-  // `before_chat` / `during_chat` の表示条件。録音・処理中は出さない。
+  // Sprint 6 改訂：プル型サジェスト。ユーザーが明示的にボタンを押した時のみパネルを開く。
+  // 録音・処理中は出さない（UX：録音中に操作できても混乱する）。
   const isIdle = status === "idle" && !transcribing;
-  const showBeforeChat =
-    persona !== null &&
-    messages.length === 0 &&
-    isIdle &&
-    (suggestTiming === "before_chat" || suggestTiming === "both");
-  const showDuringChat =
-    persona !== null &&
-    lastMessage?.role === "assistant" &&
-    isIdle &&
-    (suggestTiming === "during_chat" || suggestTiming === "both");
+  const canRequestSuggest = persona !== null && isIdle;
+  // パネル側に渡す timing：会話がまだ無ければ `before_chat`（オープナー）、
+  // あれば `during_chat`（次の一言）。本文は既存 `/api/suggest` をそのまま利用。
+  const suggestTiming: "before_chat" | "during_chat" =
+    messages.length === 0 ? "before_chat" : "during_chat";
 
   const handlePrefill = useCallback((phrase: SuggestPhrase) => {
     setPendingPrefill(phrase);
+    // プレフィル後はパネルを閉じる（ユーザーは録音ボタンへ視線を戻すため）
+    setShowSuggestPanel(false);
+  }, []);
+
+  const handleRequestSuggest = useCallback(() => {
+    setShowSuggestPanel(true);
+    posthog.capture("suggest_requested", {
+      timing: messages.length === 0 ? "before_chat" : "during_chat",
+    });
+  }, [messages.length]);
+
+  const handleCloseSuggest = useCallback(() => {
+    setShowSuggestPanel(false);
   }, []);
 
   // ────────────────────────────────────────────────
@@ -624,18 +633,6 @@ function HomeInner() {
           </div>
         )}
 
-        {/* 会話開始前のサジェスト（mvp-scope.md 3.4 節 / Sprint 4） */}
-        <SuggestPanel
-          timing="before_chat"
-          active={showBeforeChat}
-          personaId={persona?.id ?? null}
-          recentMessages={recentMessages}
-          hintJaText=""
-          voiceId={selectedVoiceId ?? persona?.voice_id ?? null}
-          isGuest={isGuest}
-          onPrefill={handlePrefill}
-        />
-
         {/* メッセージ一覧 */}
         {messages.map((msg) => (
           <div
@@ -716,16 +713,19 @@ function HomeInner() {
           </div>
         ))}
 
-        {/* 会話中サジェスト（キャラ返答後・入力待ちの間だけ表示。mvp-scope.md 3.4 節 / Sprint 4） */}
+        {/* オンデマンドサジェスト（Sprint 6 改訂 / プル型）
+            ユーザーが「フレーズのヒント」ボタンを押したときだけ展開する。
+            `timing` は会話履歴の有無で `before_chat` / `during_chat` を切替。 */}
         <SuggestPanel
-          timing="during_chat"
-          active={showDuringChat}
+          timing={suggestTiming}
+          active={showSuggestPanel}
           personaId={persona?.id ?? null}
           recentMessages={recentMessages}
           hintJaText=""
           voiceId={selectedVoiceId ?? persona?.voice_id ?? null}
           isGuest={isGuest}
           onPrefill={handlePrefill}
+          onClose={handleCloseSuggest}
         />
 
         {/* Whisper認識中：ユーザー側プレースホルダー */}
@@ -799,6 +799,20 @@ function HomeInner() {
         </div>
       )}
 
+      {/* フレーズのヒント（Sprint 6 改訂：プル型サジェスト） */}
+      {canRequestSuggest && !showSuggestPanel && (
+        <div className="flex justify-center pb-1">
+          <button
+            type="button"
+            onClick={handleRequestSuggest}
+            className="rounded-full border border-indigo-700/60 bg-indigo-950/40 hover:bg-indigo-900/60 px-4 py-1.5 text-xs text-indigo-200 transition-colors"
+            aria-label="英語のフレーズのヒントをもらう"
+          >
+            💡 フレーズのヒント
+          </button>
+        </div>
+      )}
+
       {/* 録音ボタン */}
       <div className="py-6 flex flex-col items-center gap-3">
         <p className="text-sm text-gray-500">{statusLabel[status]}</p>
@@ -822,8 +836,11 @@ function HomeInner() {
           disabled={isButtonDisabled}
           type="button"
           onClick={() => {
-            if (status === "idle") startRecording();
-            else if (status === "recording") stopRecording();
+            if (status === "idle") {
+              // 録音開始時はサジェストパネルを閉じる（視線を録音ボタンに戻す / プル型 UX）
+              setShowSuggestPanel(false);
+              startRecording();
+            } else if (status === "recording") stopRecording();
           }}
           className={`
             w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200
