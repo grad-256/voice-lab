@@ -3,6 +3,7 @@
 // 静的プリレンダリングを無効化（Supabase / 音声再生など client API を使うため）
 export const dynamic = "force-dynamic";
 
+import { SavedPhrasesTab } from "@/app/components/SavedPhrasesTab";
 import { VoicePlayButton } from "@/app/components/VoicePlayButton";
 import {
   GUEST_LIMIT,
@@ -171,6 +172,7 @@ export default function EchoPage() {
             scene={selectedScene}
             voiceId={voiceId}
             isGuest={isGuest}
+            isAuth={authMode === true}
             onBack={handleBackToScenes}
             onPlayStart={() => {
               if (!isGuest) return true;
@@ -203,7 +205,7 @@ export default function EchoPage() {
           />
         )
       ) : (
-        <SavedPlaceholder />
+        <SavedPhrasesTab authMode={authMode} voiceId={voiceId} />
       )}
 
       {isGuest && !showGuestLimitModal && (
@@ -350,6 +352,7 @@ function SceneDetail({
   scene,
   voiceId,
   isGuest,
+  isAuth,
   onBack,
   onPlayStart,
   guestCount,
@@ -357,6 +360,8 @@ function SceneDetail({
   scene: PresetScene;
   voiceId: string | null;
   isGuest: boolean;
+  /** 認証済みなら保存ボタンを有効化。false はゲスト／解決前。 */
+  isAuth: boolean;
   onBack: () => void;
   /** `false` で再生キャンセル（ゲスト上限などのゲートに使う） */
   onPlayStart: (phraseId: string) => boolean | undefined;
@@ -447,7 +452,7 @@ function SceneDetail({
               </div>
               <p className="mt-1.5 text-lg font-semibold text-white">{phrase.enText}</p>
               {showSubtitles && <p className="mt-1 text-xs text-gray-400">{phrase.jaIntent}</p>}
-              <div className="mt-3">
+              <div className="mt-3 flex flex-wrap items-center gap-3">
                 <VoicePlayButton
                   phraseId={phrase.phraseId}
                   enText={phrase.enText}
@@ -457,6 +462,12 @@ function SceneDetail({
                   onPlayStart={onPlayStart}
                   onPlayEnd={handlePlayEnd}
                   label={played ? "▶ もう一度聞く" : undefined}
+                />
+                <SavePresetPhraseButton
+                  phraseId={phrase.phraseId}
+                  enText={phrase.enText}
+                  jaIntent={phrase.jaIntent}
+                  isAuth={isAuth}
                 />
               </div>
             </li>
@@ -502,18 +513,85 @@ function SceneDetail({
 }
 
 // -------------------------------------------------------
-// 保存タブ（Sprint 5 で中身追加）
+// プリセット場面フレーズ → 保存（Sprint 5）
 // -------------------------------------------------------
 
-function SavedPlaceholder() {
+function SavePresetPhraseButton({
+  phraseId,
+  enText,
+  jaIntent,
+  isAuth,
+}: {
+  phraseId: string;
+  enText: string;
+  jaIntent: string;
+  isAuth: boolean;
+}) {
+  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  if (!isAuth) {
+    return (
+      <Link
+        href="/login"
+        className="text-xs text-gray-400 underline hover:text-white transition-colors"
+      >
+        保存するにはログイン
+      </Link>
+    );
+  }
+
+  const handleClick = async () => {
+    if (state === "saving" || state === "saved") return;
+    setState("saving");
+    setErrorMsg(null);
+    try {
+      const res = await fetch("/api/saved-phrases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          en_text: enText,
+          ja_text: jaIntent,
+          source: "preset",
+          phrase_id_ref: phraseId,
+        }),
+      });
+      if (res.status === 409) {
+        // 既に保存済み：UX 的には成功と同等（ユーザーの期待：保存されている）
+        setState("saved");
+        posthog.capture("phrase_saved_from_preset", { phrase_id: phraseId, already_saved: true });
+        return;
+      }
+      if (!res.ok) {
+        throw new Error("保存に失敗しました");
+      }
+      setState("saved");
+      posthog.capture("phrase_saved_from_preset", { phrase_id: phraseId });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "保存に失敗しました";
+      setState("error");
+      setErrorMsg(message);
+    }
+  };
+
+  const label = state === "saved" ? "保存済み" : state === "saving" ? "保存中…" : "保存する";
+
   return (
-    <section className="rounded-2xl border border-dashed border-gray-800 bg-gray-900/30 p-8 text-center">
-      <p className="text-base text-white">保存したフレーズ</p>
-      <p className="mt-2 text-sm text-gray-400">
-        会話画面の「これ言えなかった」で保存したフレーズが、ここに並びます。
-      </p>
-      <p className="mt-3 text-xs text-gray-500">もうすぐ使えます（Sprint 5）</p>
-    </section>
+    <div className="flex flex-col gap-1">
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={state === "saving" || state === "saved"}
+        className="rounded-full border border-gray-700 bg-gray-900/60 hover:bg-gray-800 disabled:opacity-60 disabled:cursor-default px-4 py-2 text-xs text-gray-200 transition-colors"
+      >
+        {label}
+      </button>
+      {errorMsg && (
+        <p className="text-xs text-rose-300" role="alert">
+          {errorMsg}
+        </p>
+      )}
+    </div>
   );
 }
 
