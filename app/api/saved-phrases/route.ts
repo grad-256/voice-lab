@@ -13,8 +13,8 @@ import { createClient } from "@/lib/supabase/server";
  *   - RLS：auth.uid() = user_id（GET / DELETE も RLS 依存で他ユーザー行にはアクセス不可）
  */
 
-type Source = "preset" | "user" | "suggest";
-const VALID_SOURCES: Source[] = ["preset", "user", "suggest"];
+type Source = "preset" | "user" | "suggest" | "scene-ai";
+const VALID_SOURCES: Source[] = ["preset", "user", "suggest", "scene-ai"];
 
 const MAX_EN_LENGTH = 500;
 const MAX_JA_LENGTH = 500;

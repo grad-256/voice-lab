@@ -37,7 +37,7 @@ export interface VoicePlayButtonProps {
    * `recent_played_phrases` に記録する際の出所タグ。
    * 突合ロジック（phrase_used_in_chat）で `source` をそのまま利用する。
    */
-  source: "preset" | "user" | "suggest" | "saved";
+  source: "preset" | "user" | "suggest" | "saved" | "scene-ai";
   /**
    * PostHog 発火・`/api/speak` 呼び出し前に呼ばれる。
    * `false` を返すと再生をキャンセルする（ゲスト上限到達などで親側が中断したい場合）。
