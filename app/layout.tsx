@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP, Plus_Jakarta_Sans } from "next/font/google";
+import { DebugConsole } from "./components/DebugConsole";
 import PostHogProvider from "./components/PostHogProvider";
 import { AuthMigrationListener } from "./components/auth/AuthMigrationListener";
 import "./globals.css";
@@ -53,6 +54,8 @@ export default function RootLayout({
         </PostHogProvider>
         {/* ゲスト → 認証ユーザー移行のトリガ。UI は通常レンダーされない（移行成功時のみトースト表示） */}
         <AuthMigrationListener />
+        {/* `?debug=1` でモバイル DevTools（eruda）を起動。実機デバッグ専用 */}
+        <DebugConsole />
       </body>
     </html>
   );
