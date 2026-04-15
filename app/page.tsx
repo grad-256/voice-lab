@@ -22,7 +22,7 @@ const SAMPLE_PERSONAS = [
     name: "Alex",
     initial: "A",
     style: "丁寧・ビジネスライク",
-    description: "ビジネス英語・面接対策が得意。プロフェッショナルな場面の練習に最適。",
+    description: "面接・プレゼン・ビジネス会話が得意。本番前に英語の言い回しを試す相手に。",
     color: "from-blue-500 to-cyan-600",
   },
   {
@@ -31,6 +31,33 @@ const SAMPLE_PERSONAS = [
     style: "明るい・話題豊富",
     description: "旅行・日常会話が大好きなアウトドア派。テンポ良くリラックスして話せる。",
     color: "from-pink-500 to-rose-600",
+  },
+];
+
+const USE_CASES = [
+  {
+    icon: "🗣️",
+    hook: "毎日少しずつ",
+    title: "英会話の練習",
+    desc: "相手がいなくても、日常会話や旅行のフレーズを声に出して練習できる。毎日 5 分、続けられるペースで。",
+    gradient: "from-violet-900/40 to-indigo-900/40",
+    border: "border-violet-800/30",
+  },
+  {
+    icon: "💼",
+    hook: "来週、面接がある",
+    title: "面接のリハーサル",
+    desc: "志望動機や自己紹介を声に出して練習。本番前に、言葉を自分の口に馴染ませておきたいときに。",
+    gradient: "from-indigo-900/40 to-blue-900/40",
+    border: "border-indigo-800/30",
+  },
+  {
+    icon: "🎤",
+    hook: "明日、プレゼンがある",
+    title: "プレゼン前の声出し",
+    desc: "一人だと気合いが入らない、でも人前だと恥ずかしい。AI を相手に本番前に一度声に出してみる。",
+    gradient: "from-blue-900/40 to-cyan-900/40",
+    border: "border-blue-800/30",
   },
 ];
 
@@ -171,11 +198,11 @@ export default async function LandingPage() {
                 </h1>
 
                 <p className="mt-6 text-lg text-gray-400 leading-relaxed max-w-md">
+                  英会話も、面接も、プレゼンも。
+                  <br />
                   人前だと緊張する。練習相手がいない。
                   <br />
-                  そんな悩みを、AI が作ったあなた専用の
-                  <br />
-                  会話パートナーが解決します。
+                  そんなときに、AI が声で応えます。
                 </p>
 
                 <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
@@ -202,6 +229,36 @@ export default async function LandingPage() {
               <div className="flex-shrink-0 w-[272px]">
                 <ChatDemo />
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ────── Use Cases ────── */}
+        <section className="relative w-full border-t border-gray-800/50 overflow-hidden">
+          <div className="relative z-10 max-w-5xl mx-auto px-6 py-20">
+            <ScrollReveal className="text-center mb-14">
+              <p className="text-xs font-semibold tracking-widest text-indigo-400 uppercase mb-4">
+                Use Cases
+              </p>
+              <h2 className="text-3xl font-bold text-white mb-3">こんな場面で使えます</h2>
+              <p className="text-gray-500 text-sm">
+                英会話だけじゃない。声に出す練習が、一人でできる。
+              </p>
+            </ScrollReveal>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {USE_CASES.map((uc, i) => (
+                <ScrollReveal key={uc.title} delay={i * 100}>
+                  <div
+                    className={`bg-gradient-to-br ${uc.gradient} border ${uc.border} rounded-2xl p-6 h-full`}
+                  >
+                    <div className="text-3xl mb-3">{uc.icon}</div>
+                    <p className="text-xs font-bold text-indigo-300 mb-2">{uc.hook}</p>
+                    <h3 className="text-white font-semibold text-lg mb-2">{uc.title}</h3>
+                    <p className="text-gray-400 text-sm leading-relaxed">{uc.desc}</p>
+                  </div>
+                </ScrollReveal>
+              ))}
             </div>
           </div>
         </section>
@@ -259,7 +316,7 @@ export default async function LandingPage() {
                 {
                   icon: "🎭",
                   title: "キャラを選べる",
-                  desc: "性格も声も異なるパートナーから選択。日常会話・ビジネス・旅行など、目的に合わせて使い分け。",
+                  desc: "性格も声も異なるパートナーから選択。英会話・面接・プレゼンなど、目的に合わせて使い分け。",
                   gradient: "from-indigo-900/40 to-blue-900/40",
                   border: "border-indigo-800/30",
                 },
@@ -331,9 +388,9 @@ export default async function LandingPage() {
                 </span>
               </h2>
               <p className="text-gray-400 text-lg mb-10 max-w-md mx-auto">
-                アカウント不要。5往復まで無料。
+                英会話でも、面接前でも、プレゼン前でも。
                 <br />
-                まず体験して、続けたくなったら登録を。
+                アカウント不要・5往復まで無料で、まず一度声に出してみる。
               </p>
               <Link
                 href="/app"
