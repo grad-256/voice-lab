@@ -13,7 +13,8 @@ import { normalizeEnglish } from "./normalizeEnglish";
 
 export { normalizeEnglish };
 
-export const SUGGEST_MODEL = "claude-haiku-4-5-20251001";
+// Sprint 5 後：文脈適合度を優先して Sonnet 4.5 に昇格（/api/chat は Haiku 据え置き）
+export const SUGGEST_MODEL = "claude-sonnet-4-5";
 
 export type SuggestTiming = "before_chat" | "during_chat";
 

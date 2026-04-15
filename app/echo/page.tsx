@@ -11,18 +11,20 @@ import {
   incrementGuestCount,
   isGuestLimitReached,
 } from "@/lib/guestUsage";
-import {
-  PRESET_SCENES,
-  type PresetScene,
-  getSceneById,
-  isSceneCompleted,
-} from "@/lib/presetScenes";
+import { PRESET_SCENES, type PresetScene, getSceneById } from "@/lib/presetScenes";
 import { PRESET_VOICES, type PresetVoice } from "@/lib/presetVoices";
+import {
+  type SceneSuggestCacheEntry,
+  type SceneSuggestedPhrase,
+  cacheKeyFor,
+  isCacheEntryFresh,
+  isSceneCompletedFromPhrases,
+} from "@/lib/sceneSuggest";
 import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getGuestSelectedVoiceId } from "@/lib/voiceSessionStorage";
 import Link from "next/link";
 import posthog from "posthog-js";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 /**
  * `/echo` ルート — 分身の声で英フレーズを聞く独立画面（Sprint 2 / mvp-scope.md 7.Q9）。
@@ -335,7 +337,7 @@ function SceneList({
             >
               <p className="text-base font-semibold text-white">{scene.title}</p>
               <p className="mt-1.5 text-xs text-gray-400 line-clamp-2">{scene.situationJa}</p>
-              <p className="mt-2 text-xs text-rose-300/80">{scene.phrases.length} フレーズ</p>
+              <p className="mt-2 text-xs text-rose-300/80">AI が 3 フレーズを提案</p>
             </button>
           </li>
         ))}
@@ -347,6 +349,8 @@ function SceneList({
 // -------------------------------------------------------
 // 場面詳細
 // -------------------------------------------------------
+
+type FetchState = "idle" | "loading" | "ready" | "error";
 
 function SceneDetail({
   scene,
@@ -368,17 +372,107 @@ function SceneDetail({
   /** 親が state で保持する統合カウント。live 表示に使う */
   guestCount: number;
 }) {
+  const [phrases, setPhrases] = useState<SceneSuggestedPhrase[]>([]);
+  const [fetchState, setFetchState] = useState<FetchState>("idle");
+  const [isFallback, setIsFallback] = useState(false);
   const [playedIds, setPlayedIds] = useState<Set<string>>(new Set());
   const [showSubtitles, setShowSubtitles] = useState(true);
   const [completedFired, setCompletedFired] = useState(false);
 
-  // 場面が変わったら再生履歴と scene_completed 発火フラグをリセットする。
-  // scene.id は body で参照しないが、依存配列に入れて scene 切り替えトリガーとする。
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scene.id をトリガーとして明示的に使う
+  const abortRef = useRef<AbortController | null>(null);
+
+  const loadPhrases = useCallback(
+    async (options: { forceRefresh: boolean }) => {
+      // 前回の fetch は abort
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      const storageKey = cacheKeyFor(scene.id);
+
+      // キャッシュ参照（forceRefresh でスキップ）
+      if (!options.forceRefresh && typeof window !== "undefined") {
+        try {
+          const raw = window.sessionStorage.getItem(storageKey);
+          if (raw) {
+            const entry = JSON.parse(raw) as SceneSuggestCacheEntry;
+            if (
+              isCacheEntryFresh(entry) &&
+              Array.isArray(entry.phrases) &&
+              entry.phrases.length > 0
+            ) {
+              setPhrases(entry.phrases);
+              setIsFallback(entry.fallback === true);
+              setFetchState("ready");
+              return;
+            }
+          }
+        } catch {
+          // JSON 破損等はキャッシュ無視
+        }
+      }
+
+      setFetchState("loading");
+      try {
+        const res = await fetch("/api/scene-suggest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scene_id: scene.id,
+            situation_ja: scene.situationJa,
+            emotion_ja: scene.emotionJa,
+          }),
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          throw new Error("サジェストの生成に失敗しました");
+        }
+        const data = (await res.json()) as {
+          phrases: SceneSuggestedPhrase[];
+          fallback?: boolean;
+        };
+        if (controller.signal.aborted) return;
+        setPhrases(data.phrases ?? []);
+        setIsFallback(data.fallback === true);
+        setFetchState("ready");
+        if (typeof window !== "undefined") {
+          try {
+            const entry: SceneSuggestCacheEntry = {
+              phrases: data.phrases ?? [],
+              fallback: data.fallback === true,
+              fetched_at: Date.now(),
+            };
+            window.sessionStorage.setItem(storageKey, JSON.stringify(entry));
+          } catch {
+            // quota 等は無視（キャッシュは best-effort）
+          }
+        }
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        console.error("scene-suggest fetch error:", err);
+        setFetchState("error");
+      }
+    },
+    [scene.id, scene.situationJa, scene.emotionJa]
+  );
+
+  // 場面切替時：状態リセット + 再生成。abort で古い fetch を打ち切る。
   useEffect(() => {
     setPlayedIds(new Set());
     setCompletedFired(false);
-  }, [scene.id]);
+    setIsFallback(false);
+    void loadPhrases({ forceRefresh: false });
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, [loadPhrases]);
+
+  const handleRegenerate = useCallback(() => {
+    posthog.capture("scene_phrases_regenerated", { scene_id: scene.id });
+    setPlayedIds(new Set());
+    setCompletedFired(false);
+    void loadPhrases({ forceRefresh: true });
+  }, [loadPhrases, scene.id]);
 
   const handlePlayEnd = useCallback(
     (phraseId: string) => {
@@ -386,26 +480,24 @@ function SceneDetail({
         if (prev.has(phraseId)) return prev;
         const next = new Set(prev);
         next.add(phraseId);
-        // 完了判定 + scene_completed 発火
-        if (!completedFired && isSceneCompleted(scene, next)) {
+        if (!completedFired && isSceneCompletedFromPhrases(phrases, next)) {
           posthog.capture("scene_completed", { scene_id: scene.id });
           setCompletedFired(true);
         }
         return next;
       });
     },
-    [scene, completedFired]
+    [phrases, scene.id, completedFired]
   );
 
-  // 「次のフレーズ」：未再生の最初のフレーズへスクロール。全部再生済みなら何もしない。
   const handleNextPhrase = useCallback(() => {
-    const next = scene.phrases.find((p) => !playedIds.has(p.phraseId));
+    const next = phrases.find((p) => !playedIds.has(p.phrase_id));
     if (!next) return;
-    const el = document.getElementById(`phrase-${next.phraseId}`);
+    const el = document.getElementById(`phrase-${next.phrase_id}`);
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [scene.phrases, playedIds]);
+  }, [phrases, playedIds]);
 
-  const allPlayed = playedIds.size >= scene.phrases.length;
+  const allPlayed = phrases.length > 0 && playedIds.size >= phrases.length;
 
   return (
     <section className="flex flex-col gap-4">
@@ -433,67 +525,102 @@ function SceneDetail({
         <p className="mt-1 text-xs text-gray-500">{scene.emotionJa}</p>
       </header>
 
-      <ul className="flex flex-col gap-3">
-        {scene.phrases.map((phrase, idx) => {
-          const played = playedIds.has(phrase.phraseId);
-          return (
-            <li
-              key={phrase.phraseId}
-              id={`phrase-${phrase.phraseId}`}
-              className={`rounded-2xl border p-4 transition-colors ${
-                played
-                  ? "border-emerald-800/50 bg-emerald-950/20"
-                  : "border-gray-800 bg-gray-900/60"
-              }`}
-            >
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-xs text-gray-500">フレーズ {idx + 1}</span>
-                {played && <span className="text-xs text-emerald-300">聴きました</span>}
-              </div>
-              <p className="mt-1.5 text-lg font-semibold text-white">{phrase.enText}</p>
-              {showSubtitles && <p className="mt-1 text-xs text-gray-400">{phrase.jaIntent}</p>}
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <VoicePlayButton
-                  phraseId={phrase.phraseId}
-                  enText={phrase.enText}
-                  voiceId={voiceId}
-                  sceneId={scene.id}
-                  source="preset"
-                  onPlayStart={onPlayStart}
-                  onPlayEnd={handlePlayEnd}
-                  label={played ? "▶ もう一度聞く" : undefined}
-                />
-                <SavePresetPhraseButton
-                  phraseId={phrase.phraseId}
-                  enText={phrase.enText}
-                  jaIntent={phrase.jaIntent}
-                  isAuth={isAuth}
-                />
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+      {fetchState === "loading" && (
+        <p className="text-center text-sm text-gray-400">サジェストを生成中…</p>
+      )}
 
-      <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-        <button
-          type="button"
-          onClick={handleNextPhrase}
-          disabled={allPlayed}
-          className="rounded-full border border-gray-700 bg-gray-900/60 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-2 text-sm text-white transition-colors"
-        >
-          次のフレーズへ
-        </button>
-        <button
-          type="button"
-          onClick={onBack}
-          className="rounded-full border border-gray-700 bg-gray-900/60 hover:bg-gray-800 px-5 py-2 text-sm text-white transition-colors"
-        >
-          別の場面へ
-        </button>
-      </div>
+      {fetchState === "error" && (
+        <div className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-4 text-center">
+          <p className="text-sm text-rose-200">サジェストの生成に失敗しました。</p>
+          <button
+            type="button"
+            onClick={handleRegenerate}
+            className="mt-3 rounded-full bg-rose-500 hover:bg-rose-400 px-4 py-1.5 text-xs text-white transition-colors"
+          >
+            もう一度試す
+          </button>
+        </div>
+      )}
 
-      {voiceId === null && (
+      {fetchState === "ready" && isFallback && (
+        <p className="rounded-lg border border-amber-900/60 bg-amber-950/20 p-2 text-center text-xs text-amber-200">
+          AI 応答が取得できなかったため、基本フレーズを表示しています
+        </p>
+      )}
+
+      {fetchState === "ready" && phrases.length > 0 && (
+        <ul className="flex flex-col gap-3">
+          {phrases.map((phrase, idx) => {
+            const played = playedIds.has(phrase.phrase_id);
+            return (
+              <li
+                key={phrase.phrase_id}
+                id={`phrase-${phrase.phrase_id}`}
+                className={`rounded-2xl border p-4 transition-colors ${
+                  played
+                    ? "border-emerald-800/50 bg-emerald-950/20"
+                    : "border-gray-800 bg-gray-900/60"
+                }`}
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-xs text-gray-500">フレーズ {idx + 1}</span>
+                  {played && <span className="text-xs text-emerald-300">聴きました</span>}
+                </div>
+                <p className="mt-1.5 text-lg font-semibold text-white">{phrase.en_text}</p>
+                {showSubtitles && <p className="mt-1 text-xs text-gray-400">{phrase.ja_intent}</p>}
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <VoicePlayButton
+                    phraseId={phrase.phrase_id}
+                    enText={phrase.en_text}
+                    voiceId={voiceId}
+                    sceneId={scene.id}
+                    source="scene-ai"
+                    onPlayStart={onPlayStart}
+                    onPlayEnd={handlePlayEnd}
+                    label={played ? "▶ もう一度聞く" : undefined}
+                  />
+                  <SaveScenePhraseButton
+                    phraseId={phrase.phrase_id}
+                    enText={phrase.en_text}
+                    jaIntent={phrase.ja_intent}
+                    isAuth={isAuth}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {fetchState === "ready" && phrases.length > 0 && (
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <button
+            type="button"
+            onClick={handleNextPhrase}
+            disabled={allPlayed}
+            className="rounded-full border border-gray-700 bg-gray-900/60 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-2 text-sm text-white transition-colors"
+          >
+            次のフレーズへ
+          </button>
+          <button
+            type="button"
+            onClick={handleRegenerate}
+            disabled={fetchState !== "ready"}
+            className="rounded-full border border-gray-700 bg-gray-900/60 hover:bg-gray-800 px-5 py-2 text-sm text-white transition-colors"
+          >
+            他の言い方を見る
+          </button>
+          <button
+            type="button"
+            onClick={onBack}
+            className="rounded-full border border-gray-700 bg-gray-900/60 hover:bg-gray-800 px-5 py-2 text-sm text-white transition-colors"
+          >
+            別の場面へ
+          </button>
+        </div>
+      )}
+
+      {voiceId === null && fetchState === "ready" && (
         <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-center text-sm text-rose-200">
           先に{" "}
           <Link href="/settings/voice" className="underline hover:text-white">
@@ -513,10 +640,10 @@ function SceneDetail({
 }
 
 // -------------------------------------------------------
-// プリセット場面フレーズ → 保存（Sprint 5）
+// 動的生成フレーズ → 保存（Sprint 5 後 / source: "scene-ai"）
 // -------------------------------------------------------
 
-function SavePresetPhraseButton({
+function SaveScenePhraseButton({
   phraseId,
   enText,
   jaIntent,
@@ -552,21 +679,21 @@ function SavePresetPhraseButton({
         body: JSON.stringify({
           en_text: enText,
           ja_text: jaIntent,
-          source: "preset",
+          source: "scene-ai",
           phrase_id_ref: phraseId,
         }),
       });
       if (res.status === 409) {
         // 既に保存済み：UX 的には成功と同等（ユーザーの期待：保存されている）
         setState("saved");
-        posthog.capture("phrase_saved_from_preset", { phrase_id: phraseId, already_saved: true });
+        posthog.capture("phrase_saved_from_scene", { phrase_id: phraseId, already_saved: true });
         return;
       }
       if (!res.ok) {
         throw new Error("保存に失敗しました");
       }
       setState("saved");
-      posthog.capture("phrase_saved_from_preset", { phrase_id: phraseId });
+      posthog.capture("phrase_saved_from_scene", { phrase_id: phraseId });
     } catch (err) {
       const message = err instanceof Error ? err.message : "保存に失敗しました";
       setState("error");

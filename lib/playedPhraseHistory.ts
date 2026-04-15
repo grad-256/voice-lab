@@ -20,7 +20,7 @@ const MAX_ENTRIES = 50;
 export interface PlayedPhrase {
   phrase_id: string;
   en_text_normalized: string;
-  source: "preset" | "user" | "suggest" | "saved";
+  source: "preset" | "user" | "suggest" | "saved" | "scene-ai";
   played_at: number;
 }
 
@@ -70,7 +70,8 @@ export function pruneExpired(current: PlayedPhrase[], now: number = Date.now()):
       (p.source === "preset" ||
         p.source === "user" ||
         p.source === "suggest" ||
-        p.source === "saved") &&
+        p.source === "saved" ||
+        p.source === "scene-ai") &&
       now - p.played_at <= PLAYED_PHRASE_TTL_MS
   );
 }

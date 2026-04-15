@@ -3,7 +3,7 @@ export const runtime = "edge";
 /**
  * `/api/suggest` — 日本語テキストから英訳候補を生成する（mvp-scope.md 3.7 節 / Sprint 3）。
  *
- * - Claude Haiku (`claude-haiku-4-5-20251001`) を利用。
+ * - Claude Sonnet 4.5 (`claude-sonnet-4-5`) を利用（Sprint 5 後に Haiku から昇格・文脈適合度を優先）。
  * - 障害時（ネットワーク・5xx・429・JSON 破損）は `lib/suggest` のルールベースフォールバック 3 件。
  * - Sprint 4 で `recent_messages` / `timing` を入力拡張する前提。
  * - `/api/chat` への混入は禁止（決定事項 14 / mvp-scope.md 3.9）。
