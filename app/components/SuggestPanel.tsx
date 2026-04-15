@@ -46,6 +46,11 @@ export interface SuggestPanelProps {
   onSaved?: (phrase: SuggestPhrase) => void;
   /** サジェスト取得失敗時の補助通知（親で必要なら表示） */
   onError?: (message: string) => void;
+  /**
+   * Sprint 6 改訂：ユーザーがパネルを閉じたい時のコールバック。
+   * 未指定なら閉じるボタンを表示しない（後方互換）。
+   */
+  onClose?: () => void;
 }
 
 type FetchState =
@@ -60,19 +65,6 @@ type SaveState =
   | { kind: "saved"; phraseId: string }
   | { kind: "error"; phraseId: string; message: string };
 
-// active になったときに渡す「文脈の指紋」。これが変わったときだけ再取得する。
-function buildContextKey(
-  timing: SuggestTiming,
-  personaId: string | null | undefined,
-  recent: SuggestRecentMessage[]
-): string {
-  const tail = recent
-    .slice(-4)
-    .map((m) => `${m.role}:${m.content}`)
-    .join("|");
-  return `${timing}::${personaId ?? ""}::${tail}`;
-}
-
 export function SuggestPanel({
   timing,
   active,
@@ -84,33 +76,42 @@ export function SuggestPanel({
   onPrefill,
   onSaved,
   onError,
+  onClose,
 }: SuggestPanelProps) {
   const [fetchState, setFetchState] = useState<FetchState>({ kind: "idle" });
   const [saveState, setSaveState] = useState<SaveState>({ kind: "idle" });
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [clickedActions, setClickedActions] = useState<Set<string>>(new Set());
+  // 本パネルで 1 回 suggest_shown を発火済みか（再オープン時にリセット）
+  const shownFiredRef = useRef(false);
 
-  const lastContextKeyRef = useRef<string | null>(null);
-  const shownKeyRef = useRef<string | null>(null);
+  // 最新の props を ref で保持し、fetch effect の依存配列から外す。
+  // Sprint 6 改訂：プル型に転換したため、active が false→true の瞬間に一度だけ fetch し、
+  // パネルを開いたままでの会話進行（`recentMessages` 変化）では追フェッチしない。
+  const timingRef = useRef(timing);
+  const personaIdRef = useRef(personaId);
+  const recentMessagesRef = useRef(recentMessages);
+  const hintJaTextRef = useRef(hintJaText);
+  useEffect(() => {
+    timingRef.current = timing;
+    personaIdRef.current = personaId;
+    recentMessagesRef.current = recentMessages;
+    hintJaTextRef.current = hintJaText;
+  }, [timing, personaId, recentMessages, hintJaText]);
+
   // onError は stale を避けるため ref 経由で参照（依存から外すため）
   const onErrorRef = useRef(onError);
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
 
-  // active + 文脈変化 で再取得。abort controller で race を避ける。
+  // `active` のトグルでだけ fetch を走らせる。abort controller で race を避ける。
   useEffect(() => {
     if (!active) {
-      // 非表示に戻ったら次回 active で確実に再取得できるよう状態をクリア
       setFetchState((prev) => (prev.kind === "idle" ? prev : { kind: "idle" }));
-      lastContextKeyRef.current = null;
-      shownKeyRef.current = null;
+      shownFiredRef.current = false;
       return;
     }
-
-    const key = buildContextKey(timing, personaId, recentMessages);
-    if (lastContextKeyRef.current === key) return;
-    lastContextKeyRef.current = key;
 
     const controller = new AbortController();
     (async () => {
@@ -124,10 +125,10 @@ export function SuggestPanel({
           headers: { "Content-Type": "application/json" },
           signal: controller.signal,
           body: JSON.stringify({
-            ja_text: hintJaText ?? "",
-            persona_id: personaId ?? undefined,
-            recent_messages: recentMessages.slice(-6),
-            timing,
+            ja_text: hintJaTextRef.current ?? "",
+            persona_id: personaIdRef.current ?? undefined,
+            recent_messages: recentMessagesRef.current.slice(-6),
+            timing: timingRef.current,
           }),
         });
         if (!res.ok) {
@@ -151,20 +152,19 @@ export function SuggestPanel({
     })();
 
     return () => controller.abort();
-  }, [active, timing, personaId, recentMessages, hintJaText]);
+  }, [active]);
 
-  // ready になったタイミングで suggest_shown を 1 回だけ発火（同一文脈での重複防止）
+  // ready になったタイミングで suggest_shown を 1 回だけ発火（本オープンスコープ内）
   useEffect(() => {
     if (fetchState.kind !== "ready") return;
-    const key = lastContextKeyRef.current;
-    if (!key || shownKeyRef.current === key) return;
-    shownKeyRef.current = key;
+    if (shownFiredRef.current) return;
+    shownFiredRef.current = true;
     posthog.capture("suggest_shown", {
-      timing,
+      timing: timingRef.current,
       phrase_count: fetchState.phrases.length,
       fallback: fetchState.fallback,
     });
-  }, [fetchState, timing]);
+  }, [fetchState]);
 
   const captureClick = useCallback(
     (action: "play" | "prefill" | "save", phraseId: string) => {
@@ -250,9 +250,21 @@ export function SuggestPanel({
         <h3 className="text-xs font-medium uppercase tracking-wider text-indigo-300">
           {timing === "before_chat" ? "こう切り出してみる？" : "次の一言"}
         </h3>
-        {fetchState.kind === "ready" && fetchState.fallback && (
-          <span className="text-[10px] text-amber-400">汎用フレーズ</span>
-        )}
+        <div className="flex items-center gap-2">
+          {fetchState.kind === "ready" && fetchState.fallback && (
+            <span className="text-[10px] text-amber-400">汎用フレーズ</span>
+          )}
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-lg leading-none text-gray-400 hover:text-white"
+              aria-label="サジェストを閉じる"
+            >
+              ×
+            </button>
+          )}
+        </div>
       </div>
 
       {fetchState.kind === "loading" && (
