@@ -1,8 +1,13 @@
 export const runtime = "edge";
 
-import { type ConversationLevel, buildSystemPrompt, parseClaudeResponse } from "@/lib/chat";
+import {
+  type ConversationLevel,
+  buildDiarySystemPrompt,
+  buildSystemPrompt,
+  parseClaudeResponse,
+} from "@/lib/chat";
 
-// デフォルトのシステムプロンプト（キャラ未設定時のフォールバック）
+// デフォルトのシステムプロンプト（英会話モード・キャラ未設定時のフォールバック）
 const DEFAULT_SYSTEM_PROMPT = `
 You are Emma, a friendly English conversation partner from Canada.
 
@@ -20,23 +25,45 @@ type Message = {
 };
 
 type RequestBody = {
-  message: string;
+  message?: string;
   history: Message[];
   systemPrompt?: string;
   level?: ConversationLevel;
+  mode?: "english" | "diary";
+  assistantFirst?: boolean;
+  pastSummaries?: string[];
 };
 
 export async function POST(req: Request) {
   try {
-    const { message, history, systemPrompt, level } = (await req.json()) as RequestBody;
+    const body = (await req.json()) as RequestBody;
+    const { message, history, systemPrompt, level, mode, assistantFirst, pastSummaries } = body;
+    const isDiary = mode === "diary";
 
-    if (!message) {
+    // 英会話モード（既存）は message 必須。日記モードは assistant-first で message 空を許容する
+    if (!isDiary && !message) {
       return Response.json({ error: "メッセージが空です" }, { status: 400 });
     }
 
-    const messages: Message[] = [...history, { role: "user", content: message }];
+    // Anthropic API は空 messages を拒否するため、日記の assistant-first 起動時はダミー user を入れて挨拶を誘導する
+    let messages: Message[];
+    if (message) {
+      messages = [...history, { role: "user", content: message }];
+    } else if (isDiary && assistantFirst && history.length === 0) {
+      messages = [{ role: "user", content: "（セッション開始）" }];
+    } else {
+      messages = [...history];
+    }
 
-    // Anthropic Claude API（fetch で直接呼び出し）
+    // 空 messages で Anthropic に到達させない防御
+    if (messages.length === 0) {
+      return Response.json({ error: "メッセージが空です" }, { status: 400 });
+    }
+
+    const systemStr = isDiary
+      ? buildDiarySystemPrompt({ pastSummaries })
+      : buildSystemPrompt(systemPrompt ?? DEFAULT_SYSTEM_PROMPT, level ?? "intermediate");
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -47,7 +74,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 512,
-        system: buildSystemPrompt(systemPrompt ?? DEFAULT_SYSTEM_PROMPT, level ?? "intermediate"),
+        system: systemStr,
         messages,
       }),
     });
@@ -67,7 +94,6 @@ export async function POST(req: Request) {
 
     const raw = data.content[0]?.text ?? "";
 
-    // lib/chat の parseClaudeResponse でパース（コードフェンス対応済み）
     const { reply, translation } = parseClaudeResponse(raw);
     return Response.json({ text: reply, translation });
   } catch (err) {
