@@ -1,5 +1,7 @@
 "use client";
 
+// 動的セグメント [id] + クライアント描画のため、Cloudflare Pages 向けに Edge Runtime を明示する必要がある
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 import { createClient } from "@/lib/supabase/client";

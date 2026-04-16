@@ -89,16 +89,16 @@ export default async function LandingPage() {
             ) : (
               <>
                 <Link
-                  href="/login"
-                  className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5"
-                >
-                  ログイン
-                </Link>
-                <Link
                   href="/app"
                   className="text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors"
                 >
                   話しはじめる
+                </Link>
+                <Link
+                  href="/login"
+                  className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5"
+                >
+                  ログイン
                 </Link>
               </>
             )}
