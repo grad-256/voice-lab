@@ -27,10 +27,7 @@ export default function HubPage() {
           ← トップへ
         </Link>
         {isAuthed === false && (
-          <Link
-            href="/login"
-            className="text-gray-400 hover:text-white text-sm transition-colors"
-          >
+          <Link href="/login" className="text-gray-400 hover:text-white text-sm transition-colors">
             ログイン
           </Link>
         )}
@@ -49,9 +46,7 @@ export default function HubPage() {
         <h1 className="text-2xl sm:text-3xl font-semibold text-white mb-2">
           何について話しますか？
         </h1>
-        <p className="text-sm text-gray-400">
-          選んで、話しはじめる。
-        </p>
+        <p className="text-sm text-gray-400">選んで、話しはじめる。</p>
       </div>
 
       {/* 2 カード */}
@@ -65,8 +60,7 @@ export default function HubPage() {
             声の日記
           </h2>
           <p className="text-sm text-gray-400 leading-relaxed">
-            今日あったことを、AI と話しながら振り返る。
-            話した内容は、あとで読めるかたちで残ります。
+            今日あったことを、AI と話しながら振り返る。 話した内容は、あとで読めるかたちで残ります。
           </p>
         </Link>
 
@@ -79,8 +73,7 @@ export default function HubPage() {
             英会話
           </h2>
           <p className="text-sm text-gray-400 leading-relaxed">
-            英語で話す練習。好きなキャラクターと、
-            自分のペースでリアルタイムにやりとり。
+            英語で話す練習。好きなキャラクターと、 自分のペースでリアルタイムにやりとり。
           </p>
         </Link>
       </div>

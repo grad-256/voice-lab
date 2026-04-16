@@ -121,7 +121,7 @@ export default async function LandingPage() {
               </div>
 
               {/* 前置き（文脈・対象・シーン）— H1 の主役を食わないサイズに抑える */}
-              <p className="mt-8 text-lg sm:text-base text-gray-400 font-medium tracking-wide">
+              <p className="mt-8 text-sm sm:text-base text-gray-400 font-medium tracking-wide">
                 AI と、様々なシチュエーションで。
               </p>
 
@@ -140,22 +140,22 @@ export default async function LandingPage() {
                 <span className="text-gray-600">——</span> 話す練習相手が、ここにいる。
               </p>
 
-              <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <div className="mt-8 flex flex-row gap-3 w-full sm:w-auto">
                 <Link
                   href="/app"
-                  className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all text-base shadow-lg shadow-indigo-900/50 hover:shadow-indigo-900/70 hover:-translate-y-0.5"
+                  className="flex-1 sm:flex-none text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all text-sm sm:text-base shadow-lg shadow-indigo-900/50 hover:shadow-indigo-900/70 hover:-translate-y-0.5"
                 >
                   話しはじめる
                 </Link>
                 <Link
                   href="/login"
-                  className="px-8 py-3.5 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-700 text-gray-200 font-medium rounded-xl transition-colors text-base"
+                  className="flex-1 sm:flex-none text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-700 text-gray-200 font-medium rounded-xl transition-colors text-sm sm:text-base"
                 >
                   ログイン
                 </Link>
               </div>
 
-              <p className="mt-3 text-xs text-gray-600">登録不要・5往復まで無料</p>
+              <p className="mt-3 text-xs sm:text-sm text-gray-400">登録不要・10往復まで無料</p>
             </div>
 
             {/* ChatDemo は Hero 内で完結させ、途切れを防ぐ（Notion 流の自然な流れ） */}
@@ -171,9 +171,7 @@ export default async function LandingPage() {
           <div className="relative z-10 max-w-5xl mx-auto px-6 py-20">
             <ScrollReveal className="text-center mb-14">
               <p className="text-sm font-medium text-indigo-400 mb-3">使いかた</p>
-              <h2 className="text-3xl font-bold text-white">
-                話して、残して、可視化する。
-              </h2>
+              <h2 className="text-3xl font-bold text-white">話して、残して、可視化する。</h2>
             </ScrollReveal>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
@@ -183,13 +181,11 @@ export default async function LandingPage() {
                     <div className="w-full max-w-[240px] mb-5">
                       <step.Demo />
                     </div>
-                    <p className="text-xs font-bold text-indigo-500 tracking-widest mb-2">
+                    <p className="text-base font-bold text-indigo-500 tracking-widest mb-2">
                       {step.num}
                     </p>
                     <h3 className="text-white font-semibold text-lg mb-3">{step.title}</h3>
-                    <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
-                      {step.desc}
-                    </p>
+                    <p className="text-gray-400 text-sm leading-relaxed max-w-xs">{step.desc}</p>
                   </div>
                 </ScrollReveal>
               ))}
@@ -239,7 +235,7 @@ export default async function LandingPage() {
                 </span>
               </h2>
               <p className="text-gray-400 text-lg mb-10 max-w-md mx-auto">
-                登録不要・5往復まで無料。
+                登録不要・10往復まで無料。
                 <br />
                 まずは、声に出してみる。
               </p>

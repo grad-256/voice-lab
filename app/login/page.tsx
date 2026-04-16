@@ -297,7 +297,7 @@ function LoginPageInner() {
                 onClick={() => setShowGuestDialog(true)}
                 className="block w-full text-center py-2 text-base text-gray-400 hover:text-gray-200 transition-colors"
               >
-                ログインせずに試す（5往復まで無料）
+                ログインせずに試す（10往復まで無料）
               </button>
             </form>
           </>
@@ -310,7 +310,7 @@ function LoginPageInner() {
           <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 max-w-sm w-full space-y-4">
             <h2 className="text-lg font-semibold text-white">ゲストとして試す</h2>
             <ul className="text-gray-300 text-base space-y-2">
-              <li>・最大5往復まで無料体験できます</li>
+              <li>・最大10往復まで無料体験できます</li>
               <li>・会話履歴は保存されません</li>
               <li>・続けて使うにはアカウント登録が必要です</li>
             </ul>

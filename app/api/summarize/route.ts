@@ -43,7 +43,9 @@ export async function POST(req: Request) {
       return Response.json({ error: "ユーザーの発話がありません" }, { status: 400 });
     }
 
-    const convo = transcript.map((t) => `${t.role === "user" ? "User" : "AI"}: ${t.text}`).join("\n");
+    const convo = transcript
+      .map((t) => `${t.role === "user" ? "User" : "AI"}: ${t.text}`)
+      .join("\n");
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",

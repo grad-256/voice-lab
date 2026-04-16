@@ -21,7 +21,7 @@ export default function FeatureVoiceDemo() {
   }, []);
 
   return (
-    <div className="relative w-full h-[180px] rounded-2xl bg-gray-950 border border-gray-800/60 overflow-hidden flex flex-col items-center justify-center gap-3">
+    <div className="relative w-full h-[200px] rounded-2xl bg-gray-950 border border-gray-800/60 overflow-hidden flex flex-col items-center justify-center gap-3">
       {/* 波形バー */}
       <div className="flex items-end gap-[4px] h-10">
         {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -43,9 +43,7 @@ export default function FeatureVoiceDemo() {
         {active && <span className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />}
         <div
           className={`relative w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all ${
-            active
-              ? "bg-red-500 scale-110 shadow-red-900/60"
-              : "bg-indigo-600 shadow-indigo-900/50"
+            active ? "bg-red-500 scale-110 shadow-red-900/60" : "bg-indigo-600 shadow-indigo-900/50"
           }`}
         >
           <svg
@@ -59,7 +57,7 @@ export default function FeatureVoiceDemo() {
         </div>
       </div>
 
-      <p className={`text-[11px] transition-colors ${active ? "text-red-400" : "text-gray-600"}`}>
+      <p className={`text-xs transition-colors ${active ? "text-red-400" : "text-gray-600"}`}>
         {active ? "聞いています…" : "マイクを押して話す"}
       </p>
 

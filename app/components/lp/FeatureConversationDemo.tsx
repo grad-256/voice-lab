@@ -28,14 +28,14 @@ export default function FeatureConversationDemo() {
   }, [visible]);
 
   return (
-    <div className="relative w-full h-[180px] rounded-2xl bg-gray-950 border border-gray-800/60 overflow-hidden p-3 flex flex-col justify-end gap-1.5">
+    <div className="relative w-full h-[200px] rounded-2xl bg-gray-950 border border-gray-800/60 overflow-hidden p-3.5 flex flex-col justify-end gap-2">
       {BUBBLES.slice(0, visible).map((b, i) => (
         <div
           key={`${i}-${b.text}`}
           className={`flex ${b.role === "user" ? "justify-end" : "justify-start"} animate-fadeSlideUp`}
         >
           <div
-            className={`max-w-[78%] px-2.5 py-1.5 rounded-xl text-[10px] leading-snug ${
+            className={`max-w-[78%] px-3 py-1.5 rounded-xl text-xs leading-snug ${
               b.role === "user"
                 ? "bg-indigo-600 text-white rounded-tr-sm"
                 : "bg-gray-800 text-gray-100 rounded-tl-sm"

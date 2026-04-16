@@ -115,19 +115,19 @@ export default function ChatDemo() {
             )}
           </div>
           <div className="leading-tight">
-            <p className="text-white font-semibold text-xs">MyVoiceLab</p>
-            <p className="text-gray-500 text-[10px]">対話パートナー</p>
+            <p className="text-white font-semibold text-sm">MyVoiceLab</p>
+            <p className="text-gray-500 text-xs">対話パートナー</p>
           </div>
           <span className="ml-auto flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[9px] text-gray-500">オンライン</span>
+            <span className="text-[10px] text-gray-500">オンライン</span>
           </span>
         </div>
 
         {/* メッセージエリア */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto py-3 space-y-3 scroll-smooth"
+          className="flex-1 overflow-y-auto py-3 space-y-3.5 scroll-smooth"
           style={{ scrollbarWidth: "none" }}
         >
           {messages.map((msg, i) => (
@@ -142,7 +142,7 @@ export default function ChatDemo() {
               )}
               <div className="max-w-[82%]">
                 <div
-                  className={`text-xs px-3 py-2 rounded-2xl leading-relaxed ${
+                  className={`text-sm px-3.5 py-2.5 rounded-2xl leading-relaxed ${
                     msg.role === "user"
                       ? "bg-indigo-600 text-white rounded-tr-sm"
                       : "bg-gray-800 text-gray-100 rounded-tl-sm"
@@ -190,7 +190,7 @@ export default function ChatDemo() {
           )}
 
           <p
-            className={`text-[10px] transition-colors ${
+            className={`text-xs transition-colors ${
               phase === "listening"
                 ? "text-red-400"
                 : phase === "thinking"
