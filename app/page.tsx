@@ -126,7 +126,7 @@ export default async function LandingPage() {
               </p>
 
               {/* メイン H1（動詞 2 連で印象を締める） */}
-              <h1 className="mt-3 text-xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
+              <h1 className="mt-3 text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
                 話す。
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-indigo-400 to-cyan-400">
                   可視化する。
