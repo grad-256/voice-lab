@@ -131,11 +131,7 @@ export async function DELETE(req: Request) {
     return Response.json({ error: "id は必須です" }, { status: 400 });
   }
 
-  const { data, error } = await supabase
-    .from("diary_entries")
-    .delete()
-    .eq("id", id)
-    .select("id");
+  const { data, error } = await supabase.from("diary_entries").delete().eq("id", id).select("id");
 
   if (error) {
     if (error.code === "22P02") {
@@ -154,7 +150,5 @@ export async function DELETE(req: Request) {
 function isTranscriptItem(x: unknown): x is TranscriptItem {
   if (typeof x !== "object" || x === null) return false;
   const obj = x as { role?: unknown; text?: unknown };
-  return (
-    (obj.role === "user" || obj.role === "assistant") && typeof obj.text === "string"
-  );
+  return (obj.role === "user" || obj.role === "assistant") && typeof obj.text === "string";
 }

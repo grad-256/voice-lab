@@ -72,10 +72,7 @@ export default function DiaryHistoryPage() {
   return (
     <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-6">
       <header className="flex items-center justify-between mb-6">
-        <Link
-          href="/app"
-          className="text-gray-400 hover:text-white text-sm transition-colors"
-        >
+        <Link href="/app" className="text-gray-400 hover:text-white text-sm transition-colors">
           ← 戻る
         </Link>
         <h1 className="text-base text-white font-medium">日記の履歴</h1>

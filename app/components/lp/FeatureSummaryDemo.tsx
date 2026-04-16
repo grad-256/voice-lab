@@ -27,20 +27,20 @@ export default function FeatureSummaryDemo() {
   }, [lineCount]);
 
   return (
-    <div className="relative w-full h-[180px] rounded-2xl bg-gray-950 border border-gray-800/60 overflow-hidden p-4">
-      <div className="text-[9px] text-gray-500 mb-1">2026-04-16</div>
-      <div className="text-xs text-white font-semibold mb-2 truncate">打ち合わせの振り返り</div>
+    <div className="relative w-full h-[200px] rounded-2xl bg-gray-950 border border-gray-800/60 overflow-hidden p-4">
+      <div className="text-xs text-gray-500 mb-1.5">2026-04-16</div>
+      <div className="text-sm text-white font-semibold mb-2.5 truncate">打ち合わせの振り返り</div>
       <div className="space-y-1.5">
         {LINES.slice(0, lineCount).map((l, i) => (
           <p
             key={`${i}-${l.slice(0, 8)}`}
-            className="text-[10px] text-gray-300 leading-relaxed animate-fadeSlideUp"
+            className="text-xs text-gray-300 leading-relaxed animate-fadeSlideUp"
           >
             {l}
           </p>
         ))}
         {lineCount < LINES.length && (
-          <span className="inline-block w-1 h-3 bg-indigo-400 animate-pulse align-middle" />
+          <span className="inline-block w-1 h-3.5 bg-indigo-400 animate-pulse align-middle" />
         )}
       </div>
     </div>

@@ -54,7 +54,9 @@ export function buildDiarySystemPrompt(options?: { pastSummaries?: string[] }): 
     options?.pastSummaries && options.pastSummaries.length > 0
       ? `\n\nRECENT DIARY CONTEXT (last few entries, most recent first):\n${options.pastSummaries
           .map((s, i) => `[${i + 1}] ${s}`)
-          .join("\n")}\n\nYou remember these. Naturally weave them in if relevant, but don't force them.`
+          .join(
+            "\n"
+          )}\n\nYou remember these. Naturally weave them in if relevant, but don't force them.`
       : "";
 
   return `You are a close, honest friend talking with the user in a casual voice conversation.

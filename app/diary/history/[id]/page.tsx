@@ -185,9 +185,7 @@ export default function DiaryDetailPage({
       {entry && (
         <>
           <div className="text-xs text-gray-500 mb-2">{formatDate(entry.created_at)}</div>
-          <h2 className="text-xl font-semibold text-white mb-4 leading-relaxed">
-            {entry.title}
-          </h2>
+          <h2 className="text-xl font-semibold text-white mb-4 leading-relaxed">{entry.title}</h2>
           <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap mb-6">
             {entry.summary}
           </p>
@@ -226,9 +224,7 @@ export default function DiaryDetailPage({
                   {entry.transcript.map((t, i) => (
                     <div
                       key={`${t.role}-${i}-${t.text.slice(0, 20)}`}
-                      className={`flex ${
-                        t.role === "user" ? "justify-end" : "justify-start"
-                      }`}
+                      className={`flex ${t.role === "user" ? "justify-end" : "justify-start"}`}
                     >
                       <div
                         className={`max-w-[80%] px-3 py-2 rounded-xl text-xs leading-relaxed whitespace-pre-wrap ${

@@ -178,8 +178,7 @@ export default function DiaryPage() {
     try {
       const AC =
         window.AudioContext ??
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       audioCtxRef.current = new AC();
     } catch {}
   }, []);
@@ -272,53 +271,50 @@ export default function DiaryPage() {
   }, [isGuest, playReply, ensureAudioContext, pastSummaries]);
 
   // 会話終了フロー：要約を生成してプレビュー。ユーザー発話ゼロなら破棄扱い。
-  const handleFinish = useCallback(
-    async () => {
-      if (finalizingRef.current) return;
-      const currentMessages = messages;
-      const userTurns = currentMessages.filter((m) => m.role === "user").length;
-      if (userTurns === 0) {
-        router.push("/app");
+  const handleFinish = useCallback(async () => {
+    if (finalizingRef.current) return;
+    const currentMessages = messages;
+    const userTurns = currentMessages.filter((m) => m.role === "user").length;
+    if (userTurns === 0) {
+      router.push("/app");
+      return;
+    }
+    finalizingRef.current = true;
+    setStatus("processing");
+    setErrorMsg(null);
+
+    try {
+      const res = await fetch("/api/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transcript: currentMessages.map((m) => ({ role: m.role, text: m.text })),
+        }),
+      });
+      if (!mountedRef.current) return;
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        setErrorMsg(
+          err.error === "SERVICE_QUOTA_EXCEEDED"
+            ? "AI の上限に達しました。少し時間をおいてお試しください。"
+            : "要約の生成に失敗しました。もう一度お試しください。"
+        );
+        setStatus("idle");
         return;
       }
-      finalizingRef.current = true;
-      setStatus("processing");
-      setErrorMsg(null);
-
-      try {
-        const res = await fetch("/api/summarize", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            transcript: currentMessages.map((m) => ({ role: m.role, text: m.text })),
-          }),
-        });
-        if (!mountedRef.current) return;
-        if (!res.ok) {
-          const err = (await res.json().catch(() => ({}))) as { error?: string };
-          setErrorMsg(
-            err.error === "SERVICE_QUOTA_EXCEEDED"
-              ? "AI の上限に達しました。少し時間をおいてお試しください。"
-              : "要約の生成に失敗しました。もう一度お試しください。"
-          );
-          setStatus("idle");
-          return;
-        }
-        const data = (await res.json()) as SummaryResult;
-        if (!mountedRef.current) return;
-        setSummaryResult(data);
-        setStatus("idle");
-      } catch (err) {
-        if (!mountedRef.current) return;
-        console.error("summarize error:", err);
-        setStatus("idle");
-        setErrorMsg("要約の生成に失敗しました。");
-      } finally {
-        finalizingRef.current = false;
-      }
-    },
-    [messages, router]
-  );
+      const data = (await res.json()) as SummaryResult;
+      if (!mountedRef.current) return;
+      setSummaryResult(data);
+      setStatus("idle");
+    } catch (err) {
+      if (!mountedRef.current) return;
+      console.error("summarize error:", err);
+      setStatus("idle");
+      setErrorMsg("要約の生成に失敗しました。");
+    } finally {
+      finalizingRef.current = false;
+    }
+  }, [messages, router]);
 
   // 要約を保存（ログイン済のみ）→ 履歴ページへ遷移
   const handleSaveSummary = useCallback(async () => {
@@ -366,11 +362,7 @@ export default function DiaryPage() {
       setErrorMsg(null);
       try {
         const fd = new FormData();
-        fd.append(
-          "audio",
-          blob,
-          `recording.${blob.type.split("/")[1]?.split(";")[0] ?? "webm"}`
-        );
+        fd.append("audio", blob, `recording.${blob.type.split("/")[1]?.split(";")[0] ?? "webm"}`);
         const trRes = await fetch("/api/transcribe", { method: "POST", body: fd });
         if (!trRes.ok) {
           setStatus("idle");
@@ -610,9 +602,7 @@ export default function DiaryPage() {
               >
                 <div
                   className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm leading-relaxed ${
-                    m.role === "user"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-800 text-gray-100"
+                    m.role === "user" ? "bg-indigo-600 text-white" : "bg-gray-800 text-gray-100"
                   }`}
                 >
                   {m.text}
@@ -655,8 +645,8 @@ export default function DiaryPage() {
                   <path d="M19 11a1 1 0 10-2 0 5 5 0 01-10 0 1 1 0 10-2 0 7 7 0 006 6.92V20H8a1 1 0 100 2h8a1 1 0 100-2h-3v-2.08A7 7 0 0019 11z" />
                 </svg>
               </button>
-              <span className="text-xs text-gray-500">{statusLabel}</span>
-              <span className="text-[10px] text-gray-600">
+              <span className="text-sm text-gray-300">{statusLabel}</span>
+              <span className="text-xs text-gray-400">
                 「終わり」と言うか、右上のボタンで日記になります
               </span>
             </div>
@@ -739,7 +729,8 @@ export default function DiaryPage() {
               {GUEST_LIMIT} 回話してくれてありがとう
             </h2>
             <p className="text-sm text-gray-400 mb-5 leading-relaxed">
-              ここから先は、登録すると続きが話せて、日記として保存できます。登録は 30 秒で終わります。
+              ここから先は、登録すると続きが話せて、日記として保存できます。登録は 30
+              秒で終わります。
             </p>
             <div className="flex gap-2">
               <Link
