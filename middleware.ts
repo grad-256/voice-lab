@@ -40,6 +40,8 @@ export async function middleware(request: NextRequest) {
   const publicPaths = [
     "/",
     "/app",
+    "/diary",
+    "/english",
     "/echo",
     "/settings/voice",
     "/login",

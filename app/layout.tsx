@@ -18,8 +18,9 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: "MyVoiceLab — AI 英会話パートナー",
-  description: "声で話しかけると AI が音声で返してくれる英会話練習アプリ",
+  title: "MyVoiceLab — AI と声で話して、残す",
+  description:
+    "AI と様々なシチュエーションで話し、話した内容を可視化する。声で生活する、新しいかたち。",
 };
 
 export const viewport: Viewport = {

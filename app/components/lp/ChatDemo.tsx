@@ -2,32 +2,24 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// 会話シナリオ（ループ）
-const CONVERSATION = [
-  { role: "user", text: "Hello! Can we practice English together?" },
-  {
-    role: "assistant",
-    text: "Of course! I'd love to help.",
-    translation: "もちろん！喜んでお手伝いします。",
-  },
-  { role: "user", text: "Great! What should we talk about?" },
-  {
-    role: "assistant",
-    text: "How about your hobbies?",
-    translation: "趣味について話しましょうか？",
-  },
-  { role: "user", text: "I like traveling and cooking!" },
-  {
-    role: "assistant",
-    text: "That's wonderful! Tell me more.",
-    translation: "素晴らしい！もっと教えてください。",
-  },
+type Role = "user" | "assistant";
+type Phase = "idle" | "listening" | "thinking" | "speaking";
+
+// 新方向「声で生活する」に沿った会話シナリオ（声の日記トーン）。
+// AI 先発（assistant-first）で切り出し、ユーザーが声で応える往復を表現する。
+const CONVERSATION: { role: Role; text: string }[] = [
+  { role: "assistant", text: "今日どうだった？" },
+  { role: "user", text: "打ち合わせでうまく言えなくて、ちょっと疲れた。" },
+  { role: "assistant", text: "具体的にはどのあたりが？" },
+  { role: "user", text: "新機能の優先度で意見が割れてて、言葉が出なかった。" },
+  { role: "assistant", text: "どの優先度がしっくりきそう？" },
 ];
 
-// メッセージが1つずつ出現 → 全部揃ったらリセットしてループ
+// 会話の進行に合わせた「AI が話している／聞いている／考えている」状態を演出する。
+// 実際のアプリ（/diary）のステート遷移と同じ語彙を LP で見せることで、使用感をプレビューする。
 export default function ChatDemo() {
   const [visibleCount, setVisibleCount] = useState(0);
-  const [showTyping, setShowTyping] = useState(false);
+  const [phase, setPhase] = useState<Phase>("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,91 +27,104 @@ export default function ChatDemo() {
 
     const showNext = (index: number) => {
       if (index >= CONVERSATION.length) {
-        // 全部表示 → 2秒待ってリセット
+        // 会話終了：少し余韻を残してループ
         timeout = setTimeout(() => {
           setVisibleCount(0);
-          setShowTyping(false);
-          timeout = setTimeout(() => showNext(0), 400);
-        }, 2800);
+          setPhase("idle");
+          timeout = setTimeout(() => showNext(0), 500);
+        }, 3000);
         return;
       }
 
       const msg = CONVERSATION[index];
 
       if (msg.role === "assistant") {
-        // AI はタイピングインジケーターを先に出す
-        setShowTyping(true);
+        // AI：考える → 話す の 2 段階
+        setPhase("thinking");
         timeout = setTimeout(() => {
-          setShowTyping(false);
+          setPhase("speaking");
           setVisibleCount(index + 1);
-          timeout = setTimeout(() => showNext(index + 1), 1200);
-        }, 1000);
+          // 発話時間はテキスト長に応じて調整
+          const speakingMs = Math.min(2400, 800 + msg.text.length * 80);
+          timeout = setTimeout(() => {
+            setPhase("idle");
+            timeout = setTimeout(() => showNext(index + 1), 400);
+          }, speakingMs);
+        }, 900);
       } else {
-        setVisibleCount(index + 1);
-        timeout = setTimeout(() => showNext(index + 1), 900);
+        // user：聞いている（録音中） → メッセージ出現
+        setPhase("listening");
+        timeout = setTimeout(() => {
+          setVisibleCount(index + 1);
+          setPhase("idle");
+          timeout = setTimeout(() => showNext(index + 1), 700);
+        }, 1400);
       }
     };
 
-    // 初回は少し間を置いてスタート
-    timeout = setTimeout(() => showNext(0), 600);
+    timeout = setTimeout(() => showNext(0), 700);
     return () => clearTimeout(timeout);
   }, []);
 
-  // visibleCount か showTyping が変わったら最下部へスクロール
+  // visibleCount / phase の更新ごとに末尾へスクロール
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    // visibleCount / showTyping を参照することで deps として正当化
     void visibleCount;
-    void showTyping;
+    void phase;
     el.scrollTop = el.scrollHeight;
-  }, [visibleCount, showTyping]);
+  }, [visibleCount, phase]);
 
   const messages = CONVERSATION.slice(0, visibleCount);
 
+  const phaseLabel =
+    phase === "listening"
+      ? "聞いています…"
+      : phase === "thinking"
+        ? "考えています…"
+        : phase === "speaking"
+          ? "話しています…"
+          : "マイクを押して話す";
+
   return (
     <div
-      className="w-full bg-gray-950 rounded-[32px] border border-gray-700/50 overflow-hidden flex flex-col h-[520px]"
+      className="w-full bg-gray-950 rounded-[36px] border border-gray-700/40 overflow-hidden flex flex-col h-[560px]"
       style={{
         boxShadow:
-          "0 0 0 6px #111827, 0 0 0 7px rgba(99,102,241,0.15), 0 32px 64px rgba(0,0,0,0.8)",
+          "0 0 0 7px #0b1020, 0 0 0 8px rgba(99,102,241,0.12), 0 40px 80px -20px rgba(0,0,0,0.9), 0 20px 40px -10px rgba(99,102,241,0.18)",
       }}
     >
       {/* ステータスバー */}
       <div className="px-5 pt-3 pb-1 flex justify-between items-center text-[10px] text-gray-600">
         <span>9:41</span>
-        <span>WiFi 100%</span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-1 h-1 rounded-full bg-gray-600" />
+          <span className="inline-block w-1 h-1 rounded-full bg-gray-600" />
+          <span className="inline-block w-1 h-1 rounded-full bg-gray-600" />
+        </span>
       </div>
 
       <div className="flex flex-col px-3 pb-5 flex-1 min-h-0">
-        {/* ヘッダー */}
+        {/* ヘッダー：ブランド名（特定ペルソナ・英会話訴求は廃止） */}
         <div className="flex items-center gap-2 py-2 border-b border-gray-800/50">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-            Y
+          <div className="relative w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0">
+            VL
+            {/* AI が話しているときはアバターの周囲に柔らかい光 */}
+            {phase === "speaking" && (
+              <span className="absolute inset-0 rounded-full ring-2 ring-indigo-400/60 animate-ping" />
+            )}
           </div>
-          <div>
-            <p className="text-white font-semibold text-xs leading-tight">Yuki</p>
-            <p className="text-gray-500 text-[10px]">英会話パートナー</p>
+          <div className="leading-tight">
+            <p className="text-white font-semibold text-xs">MyVoiceLab</p>
+            <p className="text-gray-500 text-[10px]">対話パートナー</p>
           </div>
-          {/* オンラインインジケーター */}
-          <span className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="ml-auto flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[9px] text-gray-500">オンライン</span>
+          </span>
         </div>
 
-        {/* レベル */}
-        <div className="flex gap-1 py-1.5 border-b border-gray-800/50">
-          {["初級", "中級", "上級"].map((l, i) => (
-            <div
-              key={l}
-              className={`flex-1 py-0.5 text-[11px] font-medium rounded text-center ${
-                i === 0 ? "bg-indigo-600 text-white" : "text-gray-600"
-              }`}
-            >
-              {l}
-            </div>
-          ))}
-        </div>
-
-        {/* メッセージエリア：固定高さ＋内部スクロール */}
+        {/* メッセージエリア */}
         <div
           ref={scrollRef}
           className="flex-1 overflow-y-auto py-3 space-y-3 scroll-smooth"
@@ -131,8 +136,8 @@ export default function ChatDemo() {
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-fadeSlideUp`}
             >
               {msg.role === "assistant" && (
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 mt-1 mr-1.5">
-                  Y
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-1 mr-1.5">
+                  VL
                 </div>
               )}
               <div className="max-w-[82%]">
@@ -144,29 +149,16 @@ export default function ChatDemo() {
                   }`}
                 >
                   {msg.text}
-                  {"translation" in msg && msg.translation && (
-                    <p className="mt-1.5 pt-1.5 border-t border-gray-700 text-[10px] text-gray-400">
-                      {msg.translation}
-                    </p>
-                  )}
                 </div>
-                {msg.role === "assistant" && (
-                  <div className="flex gap-1 mt-1 ml-1">
-                    <span className="px-1 py-0.5 rounded text-xs bg-indigo-900/50 text-indigo-300 ring-1 ring-indigo-500/60">
-                      👍
-                    </span>
-                    <span className="px-1 py-0.5 rounded text-xs text-gray-600">👎</span>
-                  </div>
-                )}
               </div>
             </div>
           ))}
 
-          {/* タイピングインジケーター */}
-          {showTyping && (
+          {/* AI が考えている：タイピングインジケーター */}
+          {phase === "thinking" && (
             <div className="flex justify-start gap-1.5 animate-fadeSlideUp">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 mt-1">
-                Y
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-1">
+                VL
               </div>
               <div className="bg-gray-800 px-3 py-2.5 rounded-2xl rounded-tl-sm flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
@@ -177,22 +169,72 @@ export default function ChatDemo() {
           )}
         </div>
 
-        {/* 録音ボタン */}
-        <div className="flex flex-col items-center gap-2 pt-1">
-          <p className="text-[10px] text-gray-600">タップして話しかける</p>
-          <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-900/60">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-5 h-5 text-white"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
+        {/* マイク UI ：状態ごとに見た目が変わる */}
+        <div className="flex flex-col items-center gap-2 pt-2">
+          {/* 音声波形ビジュアライザ（listening / speaking 時のみ出す） */}
+          {(phase === "listening" || phase === "speaking") && (
+            <div className="flex items-end gap-[3px] h-4">
+              {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+                <span
+                  key={i}
+                  className={`w-[3px] rounded-full ${
+                    phase === "listening" ? "bg-red-400" : "bg-indigo-400"
+                  }`}
+                  style={{
+                    height: `${30 + ((i * 13) % 70)}%`,
+                    animation: `voiceBar 0.9s ease-in-out ${i * 0.08}s infinite alternate`,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          <p
+            className={`text-[10px] transition-colors ${
+              phase === "listening"
+                ? "text-red-400"
+                : phase === "thinking"
+                  ? "text-indigo-300"
+                  : phase === "speaking"
+                    ? "text-indigo-300"
+                    : "text-gray-600"
+            }`}
+          >
+            {phaseLabel}
+          </p>
+
+          <div className="relative">
+            {/* 録音中のリングパルス */}
+            {phase === "listening" && (
+              <span className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />
+            )}
+            <div
+              className={`relative w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all ${
+                phase === "listening"
+                  ? "bg-red-500 scale-110 shadow-red-900/60"
+                  : "bg-indigo-600 shadow-indigo-900/60"
+              }`}
             >
-              <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21H9v2h6v-2h-2v-2.07A8.001 8.001 0 0 0 20 11h-2a6 6 0 0 1-12 0H4a8.001 8.001 0 0 0 7 7.93z" />
-            </svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-5 h-5 text-white"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21H9v2h6v-2h-2v-2.07A8.001 8.001 0 0 0 20 11h-2a6 6 0 0 1-12 0H4a8.001 8.001 0 0 0 7 7.93z" />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes voiceBar {
+          0% { transform: scaleY(0.4); }
+          100% { transform: scaleY(1); }
+        }
+      `}</style>
     </div>
   );
 }
