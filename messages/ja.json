@@ -1,0 +1,12 @@
+{
+  "common": {
+    "appName": "MyVoiceLab",
+    "tagline": "AI と声で話して、残す"
+  },
+  "footer": {
+    "terms": "利用規約",
+    "privacy": "プライバシーポリシー",
+    "noteAriaLabel": "note の MyVoiceLab マガジン",
+    "xAriaLabel": "X (旧 Twitter) の UCLab アカウント"
+  }
+}
