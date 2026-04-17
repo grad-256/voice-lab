@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP, Plus_Jakarta_Sans } from "next/font/google";
 import PostHogProvider from "./components/PostHogProvider";
+import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
 import { AuthMigrationListener } from "./components/auth/AuthMigrationListener";
 import { NoteIcon } from "./components/icons/note-icon";
 import { XIcon } from "./components/icons/x-icon";
@@ -23,10 +24,17 @@ export const metadata: Metadata = {
   title: "MyVoiceLab — AI と声で話して、残す",
   description:
     "AI と様々なシチュエーションで話し、話した内容を可視化する。声で生活する、新しいかたち。",
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/icon-180.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#4f46e5",
+  themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -75,6 +83,8 @@ export default function RootLayout({
         </PostHogProvider>
         {/* ゲスト → 認証ユーザー移行のトリガ。UI は通常レンダーされない（移行成功時のみトースト表示） */}
         <AuthMigrationListener />
+        {/* PWA Service Worker 登録（インストール可能判定のため必須） */}
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

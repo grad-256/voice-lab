@@ -70,6 +70,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // _next/static, _next/image, favicon.ico, api/, SW・マニフェスト・アイコンは除外
-    "/((?!_next/static|_next/image|favicon.ico|api/|sw\\.js|manifest\\.webmanifest|icon.*\\.png|icon\\.svg).*)",
+    // /icons/ 配下（PWA 用アイコン）も除外し未認証でも 200 を返す
+    "/((?!_next/static|_next/image|favicon.ico|api/|sw\\.js|manifest\\.webmanifest|icons/|icon.*\\.png|icon\\.svg).*)",
   ],
 };
