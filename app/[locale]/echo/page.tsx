@@ -2,6 +2,7 @@
 
 // 静的プリレンダリングを無効化（Supabase / 音声再生など client API を使うため）
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 import { SavedPhrasesTab } from "@/app/components/SavedPhrasesTab";
 import { VoicePlayButton } from "@/app/components/VoicePlayButton";

@@ -1,6 +1,7 @@
 "use client";
 
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 import { Link } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";

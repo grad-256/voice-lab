@@ -2,6 +2,7 @@
 
 // 静的プリレンダリングを無効化（Supabase クライアントはビルド時に初期化できないため）
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 import { SavePhraseModal } from "@/app/components/SavePhraseModal";
 import { SuggestPanel } from "@/app/components/SuggestPanel";

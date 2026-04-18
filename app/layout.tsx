@@ -1,3 +1,7 @@
+// Cloudflare Pages は非静的ルートの全てに Edge Runtime を要求する。
+// ルートレイアウトに宣言して root 経由のルートにも確実に行き渡らせる。
+export const runtime = "edge";
+
 import type { Metadata, Viewport } from "next";
 import { getLocale } from "next-intl/server";
 import { Noto_Sans_JP, Plus_Jakarta_Sans } from "next/font/google";

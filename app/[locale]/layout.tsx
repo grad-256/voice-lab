@@ -1,3 +1,7 @@
+// Cloudflare Pages は非静的ルートの全てに Edge Runtime を要求するため、
+// layout レベルで宣言して以下のページ全てに継承させる。
+export const runtime = "edge";
+
 import LocaleSwitcher from "@/app/components/LocaleSwitcher";
 import { NoteIcon } from "@/app/components/icons/note-icon";
 import { XIcon } from "@/app/components/icons/x-icon";
@@ -59,7 +63,5 @@ export default async function LocaleLayout({ children, params }: Props) {
   );
 }
 
-// 静的生成対象のロケール一覧を next-intl から取得して返す。
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
+// 備考：Edge Runtime と generateStaticParams は併用不可のため、SSG はしない。
+// Cloudflare Pages の Edge 側で毎リクエスト動的に描画する（キャッシュはエッジ側で効く）。

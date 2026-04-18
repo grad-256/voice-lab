@@ -1,4 +1,7 @@
 // プライバシーポリシーページ（静的）
+// Cloudflare Pages の非静的ルート要件を満たすため Edge Runtime を明示
+export const runtime = "edge";
+
 export default function PrivacyPage() {
   return (
     <main className="flex-1 w-full bg-gray-950 text-gray-300 px-4 py-16">

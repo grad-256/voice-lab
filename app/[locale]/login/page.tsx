@@ -2,6 +2,7 @@
 
 // 静的プリレンダリングを無効化（Supabase クライアントはビルド時に初期化できないため）
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 import { Link, useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";

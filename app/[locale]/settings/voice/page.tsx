@@ -2,6 +2,7 @@
 
 // 静的プリレンダリングを無効化（クライアント専用 API を使うため）
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 import { ConsentCheckbox } from "@/app/components/echo/ConsentCheckbox";
 import { VoiceCandidateCard } from "@/app/components/echo/VoiceCandidateCard";
