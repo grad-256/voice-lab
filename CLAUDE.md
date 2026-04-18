@@ -79,6 +79,7 @@ ELEVENLABS_VOICE_ID=...        # 省略時は Bella（EXAVITQu4vr4xnSDxMaL）
 # Cloudflare AI Gateway（香港ルーティング対策。両方セット時のみ有効）
 CF_ACCOUNT_ID=...              # Cloudflare Account ID
 CF_AI_GATEWAY_NAME=...         # Gateway slug（例：my-voice-lab）
+CF_AI_GATEWAY_TOKEN=cfut_...   # Authenticated Gateway モード時のトークン（任意）
 ```
 
 ---
@@ -97,6 +98,13 @@ OpenAI / Anthropic 呼び出しは `lib/aiGateway.ts` の `openaiEndpoint()` / `
 LLM に到達するため、Pages Functions が香港 DC で処理された場合でも OpenAI / Anthropic の地域ブロック
 （`unsupported_country_region_territory` / `forbidden`）を回避できる。
 環境変数が未設定なら直接 `api.openai.com` / `api.anthropic.com` を叩くフォールバックになる。
+
+### Authenticated Gateway モード
+Cloudflare Dashboard で「Authenticated Gateway」を ON にすると、全リクエストに
+`cf-aig-authorization: Bearer {CF_AI_GATEWAY_TOKEN}` が必須になる。
+`gatewayAuthHeaders()` ヘルパーが `CF_AI_GATEWAY_TOKEN` 環境変数を参照してヘッダを生成するので、
+各 API route は `fetch` の `headers` に `...gatewayAuthHeaders()` をスプレッドで混ぜる。
+トークン未設定なら空オブジェクトを返すため、Authentication OFF モードの gateway でもそのまま通る。
 
 ### ブラウザ音声フォーマットの自動選択
 Chrome → `audio/webm;codecs=opus` / Safari → `audio/mp4` / Firefox → `audio/ogg`

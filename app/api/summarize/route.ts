@@ -1,6 +1,6 @@
 export const runtime = "edge";
 
-import { anthropicEndpoint } from "@/lib/aiGateway";
+import { anthropicEndpoint, gatewayAuthHeaders } from "@/lib/aiGateway";
 
 // 声の日記：会話履歴から title + summary を生成する。
 // クライアント（/diary）が「終わり」で確定したときに呼び出し、
@@ -55,6 +55,7 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
         "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
         "anthropic-version": "2023-06-01",
+        ...gatewayAuthHeaders(),
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",

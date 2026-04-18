@@ -1,6 +1,6 @@
 export const runtime = "edge";
 
-import { openaiEndpoint } from "@/lib/aiGateway";
+import { gatewayAuthHeaders, openaiEndpoint } from "@/lib/aiGateway";
 import { getMimeExtension } from "@/lib/transcribe";
 
 export async function POST(req: Request) {
@@ -26,6 +26,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
+        ...gatewayAuthHeaders(),
       },
       body: openaiForm,
     });

@@ -47,3 +47,20 @@ export function anthropicEndpoint(path: string): string {
 export function isGatewayEnabled(): boolean {
   return getGatewayBase() !== null;
 }
+
+/**
+ * AI Gateway の Authenticated Gateway モードで必要となる認証ヘッダを返す。
+ *
+ * Cloudflare Dashboard の AI Gateway 設定で「Authenticated Gateway」を ON にしている場合、
+ * 全リクエストに `cf-aig-authorization: Bearer {CF_AI_GATEWAY_TOKEN}` が必須になる。
+ * Gateway 自体が未設定（`isGatewayEnabled()` が false）の場合は返す意味がないので空オブジェクトを返す
+ * （直接 api.openai.com / api.anthropic.com を叩くフォールバック経路では不要なヘッダ）。
+ * Gateway は設定されているがトークンが未設定の場合も空オブジェクトを返し、
+ * Authentication OFF モードの gateway でそのまま通るようにする（段階移行を壊さない）。
+ */
+export function gatewayAuthHeaders(): Record<string, string> {
+  if (!isGatewayEnabled()) return {};
+  const token = process.env.CF_AI_GATEWAY_TOKEN;
+  if (!token) return {};
+  return { "cf-aig-authorization": `Bearer ${token}` };
+}
