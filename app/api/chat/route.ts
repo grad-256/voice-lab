@@ -1,5 +1,6 @@
 export const runtime = "edge";
 
+import { anthropicEndpoint } from "@/lib/aiGateway";
 import {
   type ConversationLevel,
   buildDiarySystemPrompt,
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
       ? buildDiarySystemPrompt({ pastSummaries })
       : buildSystemPrompt(systemPrompt ?? DEFAULT_SYSTEM_PROMPT, level ?? "intermediate");
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch(anthropicEndpoint("messages"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
