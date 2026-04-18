@@ -1,5 +1,6 @@
 export const runtime = "edge";
 
+import { openaiEndpoint } from "@/lib/aiGateway";
 import { getMimeExtension } from "@/lib/transcribe";
 
 export async function POST(req: Request) {
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
     openaiForm.append("model", "whisper-1"); // 安定版
     // language 指定なし → 自動検出（日本語・英語どちらでも認識）
 
-    const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+    const response = await fetch(openaiEndpoint("audio/transcriptions"), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,

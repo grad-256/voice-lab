@@ -75,6 +75,10 @@ OPENAI_API_KEY=sk-...          # Whisper 音声認識
 ANTHROPIC_API_KEY=sk-ant-...   # Claude Haiku 対話AI
 ELEVENLABS_API_KEY=...         # ElevenLabs 音声生成
 ELEVENLABS_VOICE_ID=...        # 省略時は Bella（EXAVITQu4vr4xnSDxMaL）
+
+# Cloudflare AI Gateway（香港ルーティング対策。両方セット時のみ有効）
+CF_ACCOUNT_ID=...              # Cloudflare Account ID
+CF_AI_GATEWAY_NAME=...         # Gateway slug（例：my-voice-lab）
 ```
 
 ---
@@ -86,6 +90,13 @@ ELEVENLABS_VOICE_ID=...        # 省略時は Bella（EXAVITQu4vr4xnSDxMaL）
 export const runtime = "edge"; // 全 route.ts に必須
 ```
 Cloudflare Pages（Workers）との互換性のため。
+
+### AI Gateway 経由で LLM を叩く
+OpenAI / Anthropic 呼び出しは `lib/aiGateway.ts` の `openaiEndpoint()` / `anthropicEndpoint()` ヘルパーを
+通す。`CF_ACCOUNT_ID` と `CF_AI_GATEWAY_NAME` が揃っていれば Cloudflare AI Gateway 経由（米国 IP）で
+LLM に到達するため、Pages Functions が香港 DC で処理された場合でも OpenAI / Anthropic の地域ブロック
+（`unsupported_country_region_territory` / `forbidden`）を回避できる。
+環境変数が未設定なら直接 `api.openai.com` / `api.anthropic.com` を叩くフォールバックになる。
 
 ### ブラウザ音声フォーマットの自動選択
 Chrome → `audio/webm;codecs=opus` / Safari → `audio/mp4` / Firefox → `audio/ogg`

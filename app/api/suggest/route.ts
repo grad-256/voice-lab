@@ -9,6 +9,7 @@ export const runtime = "edge";
  * - `/api/chat` への混入は禁止（決定事項 14 / mvp-scope.md 3.9）。
  */
 
+import { anthropicEndpoint } from "@/lib/aiGateway";
 import {
   SUGGEST_MODEL,
   type SuggestPhrase,
@@ -87,7 +88,7 @@ export async function POST(req: Request) {
       timing,
     });
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch(anthropicEndpoint("messages"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

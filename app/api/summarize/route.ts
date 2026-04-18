@@ -1,5 +1,7 @@
 export const runtime = "edge";
 
+import { anthropicEndpoint } from "@/lib/aiGateway";
+
 // 声の日記：会話履歴から title + summary を生成する。
 // クライアント（/diary）が「終わり」で確定したときに呼び出し、
 // 結果を /api/diary に POST して保存する流れ。
@@ -47,7 +49,7 @@ export async function POST(req: Request) {
       .map((t) => `${t.role === "user" ? "User" : "AI"}: ${t.text}`)
       .join("\n");
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await fetch(anthropicEndpoint("messages"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
