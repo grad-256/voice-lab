@@ -1,10 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 // 「声で話す」機能ミニモック。
 // マイクボタンと波形ビジュアライザで、録音 → 聞いている状態を表現する。
 export default function FeatureVoiceDemo() {
+  const t = useTranslations("lp.voiceDemo");
   const [active, setActive] = useState(false);
 
   useEffect(() => {
@@ -58,7 +60,7 @@ export default function FeatureVoiceDemo() {
       </div>
 
       <p className={`text-xs transition-colors ${active ? "text-red-400" : "text-gray-600"}`}>
-        {active ? "聞いています…" : "マイクを押して話す"}
+        {active ? t("listening") : t("idle")}
       </p>
 
       <style jsx>{`

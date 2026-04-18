@@ -1,23 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Role = "user" | "assistant";
 type Phase = "idle" | "listening" | "thinking" | "speaking";
 
-// 新方向「声で生活する」に沿った会話シナリオ（声の日記トーン）。
-// AI 先発（assistant-first）で切り出し、ユーザーが声で応える往復を表現する。
-const CONVERSATION: { role: Role; text: string }[] = [
-  { role: "assistant", text: "今日どうだった？" },
-  { role: "user", text: "打ち合わせでうまく言えなくて、ちょっと疲れた。" },
-  { role: "assistant", text: "具体的にはどのあたりが？" },
-  { role: "user", text: "新機能の優先度で意見が割れてて、言葉が出なかった。" },
-  { role: "assistant", text: "どの優先度がしっくりきそう？" },
-];
-
 // 会話の進行に合わせた「AI が話している／聞いている／考えている」状態を演出する。
 // 実際のアプリ（/diary）のステート遷移と同じ語彙を LP で見せることで、使用感をプレビューする。
 export default function ChatDemo() {
+  const t = useTranslations("lp.chatDemo");
+  // 会話配列は messages JSON にロケール毎で保持し、t.raw で取り出す
+  const conversation = useMemo(() => t.raw("conversation") as { role: Role; text: string }[], [t]);
+
   const [visibleCount, setVisibleCount] = useState(0);
   const [phase, setPhase] = useState<Phase>("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -26,7 +21,7 @@ export default function ChatDemo() {
     let timeout: ReturnType<typeof setTimeout>;
 
     const showNext = (index: number) => {
-      if (index >= CONVERSATION.length) {
+      if (index >= conversation.length) {
         // 会話終了：少し余韻を残してループ
         timeout = setTimeout(() => {
           setVisibleCount(0);
@@ -36,7 +31,7 @@ export default function ChatDemo() {
         return;
       }
 
-      const msg = CONVERSATION[index];
+      const msg = conversation[index];
 
       if (msg.role === "assistant") {
         // AI：考える → 話す の 2 段階
@@ -64,7 +59,7 @@ export default function ChatDemo() {
 
     timeout = setTimeout(() => showNext(0), 700);
     return () => clearTimeout(timeout);
-  }, []);
+  }, [conversation]);
 
   // visibleCount / phase の更新ごとに末尾へスクロール
   useEffect(() => {
@@ -75,16 +70,16 @@ export default function ChatDemo() {
     el.scrollTop = el.scrollHeight;
   }, [visibleCount, phase]);
 
-  const messages = CONVERSATION.slice(0, visibleCount);
+  const messages = conversation.slice(0, visibleCount);
 
   const phaseLabel =
     phase === "listening"
-      ? "聞いています…"
+      ? t("phase.listening")
       : phase === "thinking"
-        ? "考えています…"
+        ? t("phase.thinking")
         : phase === "speaking"
-          ? "話しています…"
-          : "マイクを押して話す";
+          ? t("phase.speaking")
+          : t("phase.idle");
 
   return (
     <div
@@ -116,11 +111,11 @@ export default function ChatDemo() {
           </div>
           <div className="leading-tight">
             <p className="text-white font-semibold text-sm">MyVoiceLab</p>
-            <p className="text-gray-500 text-xs">対話パートナー</p>
+            <p className="text-gray-500 text-xs">{t("partner")}</p>
           </div>
           <span className="ml-auto flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] text-gray-500">オンライン</span>
+            <span className="text-[10px] text-gray-500">{t("online")}</span>
           </span>
         </div>
 

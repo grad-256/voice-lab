@@ -1,18 +1,27 @@
 // 404 ページ。Cloudflare Pages の Edge Runtime 要件を満たすために明示。
+// [locale] 配下では app/[locale]/not-found.tsx が優先表示される。
+// このファイルは [locale] に乗らないレアなルート（middleware 除外対象の 404 等）で表示される。
 export const runtime = "edge";
 
-export default function NotFound() {
+import { routing } from "@/i18n/routing";
+import { getLocale, getTranslations } from "next-intl/server";
+
+export default async function NotFound() {
+  // i18n/request.ts 側でロケール不正時は defaultLocale にフォールバック済み
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: "notFound" });
+  // localePrefix: "as-needed" の挙動に合わせる。defaultLocale は "/"、他ロケールは "/{locale}"
+  const homeHref = locale === routing.defaultLocale ? "/" : `/${locale}`;
+
   return (
     <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-24 text-center">
-      <h1 className="text-3xl font-bold text-white mb-3">ページが見つかりません</h1>
-      <p className="text-sm text-gray-400 mb-8">
-        お探しのページは存在しないか、移動した可能性があります。
-      </p>
+      <h1 className="text-3xl font-bold text-white mb-3">{t("title")}</h1>
+      <p className="text-sm text-gray-400 mb-8">{t("description")}</p>
       <a
-        href="/"
+        href={homeHref}
         className="inline-block px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors"
       >
-        トップへ戻る
+        {t("backHome")}
       </a>
     </main>
   );
