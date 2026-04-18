@@ -12,6 +12,7 @@ import {
 } from "@/lib/guestUsage";
 import { mapGetUserMediaError, pickBrowserMimeType } from "@/lib/recordingMime";
 import { createClient } from "@/lib/supabase/client";
+import { useLocale } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Role = "user" | "assistant";
@@ -79,6 +80,8 @@ function isEndCommand(text: string): boolean {
 
 export default function DiaryPage() {
   const router = useRouter();
+  // UI ロケール（ja/en）。Whisper の language ヒントと chat ルートのシステムプロンプトへ渡す。
+  const locale = useLocale();
 
   const [authStatus, setAuthStatus] = useState<AuthStatus>("unknown");
   const [isStarted, setIsStarted] = useState(false);
@@ -240,6 +243,7 @@ export default function DiaryPage() {
           mode: "diary",
           assistantFirst: true,
           pastSummaries,
+          locale,
         }),
       });
       if (!mountedRef.current) return;
@@ -268,7 +272,7 @@ export default function DiaryPage() {
     } finally {
       startingRef.current = false;
     }
-  }, [isGuest, playReply, ensureAudioContext, pastSummaries]);
+  }, [isGuest, playReply, ensureAudioContext, pastSummaries, locale]);
 
   // 会話終了フロー：要約を生成してプレビュー。ユーザー発話ゼロなら破棄扱い。
   const handleFinish = useCallback(async () => {
@@ -363,6 +367,8 @@ export default function DiaryPage() {
       try {
         const fd = new FormData();
         fd.append("audio", blob, `recording.${blob.type.split("/")[1]?.split(";")[0] ?? "webm"}`);
+        // UI ロケールを Whisper の language ヒントに連動させる（Track C-4）。
+        fd.append("language", locale);
         const trRes = await fetch("/api/transcribe", { method: "POST", body: fd });
         if (!trRes.ok) {
           setStatus("idle");
@@ -410,6 +416,7 @@ export default function DiaryPage() {
             history,
             mode: "diary",
             pastSummaries,
+            locale,
           }),
         });
         if (!mountedRef.current) return;
@@ -440,7 +447,7 @@ export default function DiaryPage() {
         }
       }
     },
-    [messages, isGuest, playReply, handleFinish, pastSummaries]
+    [messages, isGuest, playReply, handleFinish, pastSummaries, locale]
   );
 
   // stale closure 対策：最新の processAudio を ref に保持

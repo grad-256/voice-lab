@@ -279,6 +279,8 @@ function HomeInner() {
         // 1. Whisper: 音声 → テキスト
         const form = new FormData();
         form.append("audio", audioBlob, "audio.webm");
+        // UI ロケールを Whisper の language ヒントに連動させる（Track C-4）。
+        form.append("language", locale);
         const transcribeRes = await fetch("/api/transcribe", {
           method: "POST",
           body: form,
@@ -328,6 +330,7 @@ function HomeInner() {
             history,
             systemPrompt: persona?.style_prompt,
             level,
+            locale,
           }),
         });
         const { text: aiText, translation: aiTranslation, error: c_err } = await chatRes.json();
@@ -432,7 +435,7 @@ function HomeInner() {
         setStatus("idle");
       }
     },
-    [messages, persona, isGuest, level]
+    [messages, persona, isGuest, level, locale]
   );
 
   useEffect(() => {

@@ -3,6 +3,15 @@ export const runtime = "edge";
 import { gatewayAuthHeaders, openaiEndpoint } from "@/lib/aiGateway";
 import { getMimeExtension } from "@/lib/transcribe";
 
+// Track C-4：UI ロケールを Whisper の `language` ヒントに連動させる。
+// ja / en のみ許可し、それ以外は自動検出（未指定）にフォールバックする。
+type TranscribeLanguage = "ja" | "en";
+const ALLOWED_LANGUAGES: ReadonlySet<TranscribeLanguage> = new Set(["ja", "en"]);
+
+function isAllowedLanguage(value: string): value is TranscribeLanguage {
+  return (ALLOWED_LANGUAGES as ReadonlySet<string>).has(value);
+}
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -20,7 +29,14 @@ export async function POST(req: Request) {
     const openaiForm = new FormData();
     openaiForm.append("file", audio, `audio.${ext}`);
     openaiForm.append("model", "whisper-1"); // 安定版
-    // language 指定なし → 自動検出（日本語・英語どちらでも認識）
+
+    // クライアントから渡された UI ロケールを ISO-639-1 の language ヒントとして付与する。
+    // 指定があると Whisper の誤検出（英語発話を日本語と取り違えるなど）を抑制できる。
+    // 未指定・不正値は自動検出にフォールバック。
+    const languageRaw = formData.get("language");
+    if (typeof languageRaw === "string" && isAllowedLanguage(languageRaw)) {
+      openaiForm.append("language", languageRaw);
+    }
 
     const response = await fetch(openaiEndpoint("audio/transcriptions"), {
       method: "POST",

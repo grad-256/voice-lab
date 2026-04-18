@@ -2,6 +2,7 @@ export const runtime = "edge";
 
 import { anthropicEndpoint, gatewayAuthHeaders } from "@/lib/aiGateway";
 import {
+  type ChatLocale,
   type ConversationLevel,
   buildDiarySystemPrompt,
   buildSystemPrompt,
@@ -33,13 +34,16 @@ type RequestBody = {
   mode?: "english" | "diary";
   assistantFirst?: boolean;
   pastSummaries?: string[];
+  locale?: ChatLocale;
 };
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as RequestBody;
-    const { message, history, systemPrompt, level, mode, assistantFirst, pastSummaries } = body;
+    const { message, history, systemPrompt, level, mode, assistantFirst, pastSummaries, locale } =
+      body;
     const isDiary = mode === "diary";
+    const safeLocale: ChatLocale = locale === "en" ? "en" : "ja";
 
     // 英会話モード（既存）は message 必須。日記モードは assistant-first で message 空を許容する
     if (!isDiary && !message) {
@@ -62,8 +66,12 @@ export async function POST(req: Request) {
     }
 
     const systemStr = isDiary
-      ? buildDiarySystemPrompt({ pastSummaries })
-      : buildSystemPrompt(systemPrompt ?? DEFAULT_SYSTEM_PROMPT, level ?? "intermediate");
+      ? buildDiarySystemPrompt({ pastSummaries, locale: safeLocale })
+      : buildSystemPrompt(
+          systemPrompt ?? DEFAULT_SYSTEM_PROMPT,
+          level ?? "intermediate",
+          safeLocale
+        );
 
     const response = await fetch(anthropicEndpoint("messages"), {
       method: "POST",
