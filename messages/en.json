@@ -1,0 +1,12 @@
+{
+  "common": {
+    "appName": "MyVoiceLab",
+    "tagline": "Talk with AI. Keep your voice."
+  },
+  "footer": {
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "noteAriaLabel": "MyVoiceLab magazine on note",
+    "xAriaLabel": "UCLab on X (formerly Twitter)"
+  }
+}

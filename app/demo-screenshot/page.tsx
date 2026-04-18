@@ -1,6 +1,8 @@
 // スクリーンショット撮影用デモページ（LP 用画像素材）
 // URL を直接知っている人だけがアクセスできる非公開ページ
 
+export const runtime = "edge";
+
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

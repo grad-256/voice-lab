@@ -14,8 +14,8 @@
  */
 
 import { VoicePlayButton } from "@/app/components/VoicePlayButton";
+import { Link } from "@/i18n/routing";
 import type { SuggestPhrase, SuggestResponse } from "@/lib/suggest";
-import Link from "next/link";
 import posthog from "posthog-js";
 import { useCallback, useEffect, useRef, useState } from "react";
 

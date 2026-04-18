@@ -17,13 +17,13 @@
  */
 
 import { VoicePlayButton } from "@/app/components/VoicePlayButton";
+import { Link } from "@/i18n/routing";
 import type {
   SuggestPhrase,
   SuggestRecentMessage,
   SuggestResponse,
   SuggestTiming,
 } from "@/lib/suggest";
-import Link from "next/link";
 import posthog from "posthog-js";
 import { useCallback, useEffect, useRef, useState } from "react";
 
