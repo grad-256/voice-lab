@@ -6,7 +6,8 @@ export const runtime = "edge";
 
 import { useRouter } from "@/i18n/routing";
 import { VOICE_OPTIONS, createPersona } from "@/lib/personas";
-import { useState } from "react";
+import { useLocale } from "next-intl";
+import { useEffect, useState } from "react";
 
 // ────────────────────────────────────────────────
 // キャラ作成フォーム
@@ -42,6 +43,12 @@ const STYLE_PRESETS = [
 
 export default function NewPersonaPage() {
   const router = useRouter();
+  const locale = useLocale();
+
+  // /english 機能用の画面。EN UI で再設計するまで（Issue #56）、EN locale では /app にリダイレクト。
+  useEffect(() => {
+    if (locale === "en") router.replace("/app");
+  }, [locale, router]);
 
   const [name, setName] = useState("");
   const [stylePrompt, setStylePrompt] = useState<string>(STYLE_PRESETS[0].value);
@@ -67,6 +74,9 @@ export default function NewPersonaPage() {
       setLoading(false);
     }
   };
+
+  // EN locale では redirect 待ちの flash を避けるため何もレンダリングしない
+  if (locale === "en") return null;
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-8">

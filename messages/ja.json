@@ -3,10 +3,137 @@
     "appName": "MyVoiceLab",
     "tagline": "AI と声で話して、残す"
   },
+  "metadata": {
+    "title": "MyVoiceLab — AI と声で話して、残す",
+    "description": "AI と様々なシチュエーションで話し、話した内容を可視化する。声で生活する、新しいかたち。"
+  },
+  "nav": {
+    "ctaStart": "話しはじめる",
+    "ctaLogin": "ログイン",
+    "ctaHome": "ホームへ"
+  },
+  "lp": {
+    "hero": {
+      "badge": "登録不要・今すぐ体験できます",
+      "lead": "AI と、様々なシチュエーションで。",
+      "h1Part1": "話す。",
+      "h1Part2": "可視化する。",
+      "subCopy1": "声で生活する、新しいかたち。",
+      "subCopy2": "話す練習相手が、ここにいる。",
+      "ctaStart": "話しはじめる",
+      "ctaLogin": "ログイン",
+      "note": "登録不要・10往復まで無料"
+    },
+    "steps": {
+      "eyebrow": "使いかた",
+      "title": "話して、残して、可視化する。",
+      "items": {
+        "talk": {
+          "title": "声で話す",
+          "desc": "マイクを押して、思ったことをそのまま声にする。キーボードは要りません。"
+        },
+        "stack": {
+          "title": "会話が残る",
+          "desc": "AI とのやりとりは自動で記録されていきます。書き留めなくても、忘れない。"
+        },
+        "visualize": {
+          "title": "可視化される",
+          "desc": "対話が要約されて、あとで読める日記になります。話したことが、見える形に変わっていく。"
+        }
+      }
+    },
+    "features": {
+      "eyebrow": "できること",
+      "title": "声で話して、残して、見えるかたちに。",
+      "items": {
+        "voice": {
+          "title": "声で話す",
+          "desc": "AI との対話が、ボタンひとつではじまる。振り返りでも、壁打ちでも、雑談でも、声から入る。"
+        },
+        "conversation": {
+          "title": "会話が残る",
+          "desc": "話した内容は、読める記録として蓄積。書こうとしてやめるより、声のほうが続く。"
+        },
+        "summary": {
+          "title": "可視化される",
+          "desc": "AI が対話を要約。自分のことばが、あとから読めるかたちに整理されていきます。"
+        }
+      }
+    },
+    "cta": {
+      "titlePart1": "さあ、",
+      "titlePart2": "話しはじめよう。",
+      "bodyLine1": "登録不要・10往復まで無料。",
+      "bodyLine2": "まずは、声に出してみる。",
+      "button": "話しはじめる"
+    },
+    "chatDemo": {
+      "conversation": [
+        { "role": "assistant", "text": "今日どうだった？" },
+        { "role": "user", "text": "打ち合わせでうまく言えなくて、ちょっと疲れた。" },
+        { "role": "assistant", "text": "具体的にはどのあたりが？" },
+        { "role": "user", "text": "新機能の優先度で意見が割れてて、言葉が出なかった。" },
+        { "role": "assistant", "text": "どの優先度がしっくりきそう？" }
+      ],
+      "partner": "対話パートナー",
+      "online": "オンライン",
+      "phase": {
+        "listening": "聞いています…",
+        "thinking": "考えています…",
+        "speaking": "話しています…",
+        "idle": "マイクを押して話す"
+      }
+    },
+    "voiceDemo": {
+      "listening": "聞いています…",
+      "idle": "マイクを押して話す"
+    },
+    "conversationDemo": {
+      "bubbles": [
+        { "role": "assistant", "text": "今日どうだった？" },
+        { "role": "user", "text": "ちょっと疲れた。" },
+        { "role": "assistant", "text": "何があったの？" },
+        { "role": "user", "text": "言葉が出なくて。" }
+      ]
+    },
+    "summaryDemo": {
+      "title": "打ち合わせの振り返り",
+      "lines": [
+        "打ち合わせで優先度の意見が割れた。",
+        "言葉がうまく出ずに疲れを感じた。",
+        "自分の優先度は、体験を先に固めたい。"
+      ]
+    }
+  },
+  "hub": {
+    "backToTop": "← トップへ",
+    "login": "ログイン",
+    "settings": "設定",
+    "heading": "何について話しますか？",
+    "subheading": "選んで、話しはじめる。",
+    "diary": {
+      "title": "声の日記",
+      "desc": "今日あったことを、AI と話しながら振り返る。話した内容は、あとで読めるかたちで残ります。"
+    },
+    "english": {
+      "title": "英会話",
+      "desc": "英語で話す練習。好きなキャラクターと、自分のペースでリアルタイムにやりとり。"
+    },
+    "viewHistory": "過去の日記を見る →",
+    "guestStatusBefore": "ゲストとして体験中（",
+    "guestStatusLogin": "ログイン",
+    "guestStatusAfter": "で日記が保存できます）",
+    "loggedIn": "ログイン中"
+  },
   "footer": {
     "terms": "利用規約",
     "privacy": "プライバシーポリシー",
     "noteAriaLabel": "note の MyVoiceLab マガジン",
     "xAriaLabel": "X (旧 Twitter) の UCLab アカウント"
+  },
+  "notFound": {
+    "title": "ページが見つかりません",
+    "description": "お探しのページは存在しないか、移動した可能性があります。",
+    "backHome": "トップへ戻る"
   }
 }

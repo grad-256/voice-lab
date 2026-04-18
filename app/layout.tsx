@@ -3,7 +3,7 @@
 export const runtime = "edge";
 
 import type { Metadata, Viewport } from "next";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Noto_Sans_JP, Plus_Jakarta_Sans } from "next/font/google";
 import PostHogProvider from "./components/PostHogProvider";
 import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
@@ -23,18 +23,26 @@ const notoSansJP = Noto_Sans_JP({
   weight: ["400", "500", "700"],
 });
 
-export const metadata: Metadata = {
-  title: "MyVoiceLab — AI と声で話して、残す",
-  description:
-    "AI と様々なシチュエーションで話し、話した内容を可視化する。声で生活する、新しいかたち。",
-  icons: {
-    icon: [
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [{ url: "/icons/icon-180.png", sizes: "180x180", type: "image/png" }],
-  },
-};
+// ルートの metadata はロケール非依存（icons のみ）。
+// title / description はロケールに応じて差し替えたいので generateMetadata で動的に解決し、
+// ネスト側（`app/[locale]/layout.tsx`）の generateMetadata にマージ上書きされても問題ないようにする。
+export async function generateMetadata(): Promise<Metadata> {
+  // middleware が付与するヘッダから現在のロケールを取得。ロケール外ルート（/demo-screenshot 等）は
+  // デフォルトロケール（ja）にフォールバックする。
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: "metadata" });
+  return {
+    title: t("title"),
+    description: t("description"),
+    icons: {
+      icon: [
+        { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      apple: [{ url: "/icons/icon-180.png", sizes: "180x180", type: "image/png" }],
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#ffffff",

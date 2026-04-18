@@ -6,16 +6,24 @@ export const runtime = "edge";
 
 import { Link, useRouter } from "@/i18n/routing";
 import { type Persona, deletePersona, getPersonas } from "@/lib/personas";
+import { useLocale } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 
 // ────────────────────────────────────────────────
 // キャラ一覧画面
 // ────────────────────────────────────────────────
+// このページは /english 機能（日本人の英会話練習）専用のキャラクター選択画面。
+// /english を EN UI で再設計するまで（Issue #56）、EN locale では /app にリダイレクトする。
 export default function PersonasPage() {
   const router = useRouter();
+  const locale = useLocale();
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (locale === "en") router.replace("/app");
+  }, [locale, router]);
 
   const load = useCallback(async () => {
     try {
@@ -29,8 +37,12 @@ export default function PersonasPage() {
   }, []);
 
   useEffect(() => {
+    if (locale === "en") return;
     load();
-  }, [load]);
+  }, [load, locale]);
+
+  // EN locale では redirect 待ちの flash を避けるため何もレンダリングしない
+  if (locale === "en") return null;
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`「${name}」を削除しますか？`)) return;

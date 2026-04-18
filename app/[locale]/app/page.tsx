@@ -5,10 +5,16 @@ export const runtime = "edge";
 
 import { Link } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 export default function HubPage() {
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
+  const t = useTranslations("hub");
+  // /english は現状日本人向け（英会話練習）機能。EN UI では不整合なので非表示にする。
+  // 将来的に日本語話者向けプロダクトとして再構築する予定。
+  const locale = useLocale();
+  const showEnglish = locale === "ja";
 
   useEffect(() => {
     const supabase = createClient();
@@ -25,11 +31,11 @@ export default function HubPage() {
           href="/"
           className="text-gray-400 hover:text-white text-sm flex items-center gap-1 transition-colors"
         >
-          ← トップへ
+          {t("backToTop")}
         </Link>
         {isAuthed === false && (
           <Link href="/login" className="text-gray-400 hover:text-white text-sm transition-colors">
-            ログイン
+            {t("login")}
           </Link>
         )}
         {isAuthed === true && (
@@ -37,46 +43,46 @@ export default function HubPage() {
             href="/settings"
             className="text-gray-400 hover:text-white text-sm transition-colors"
           >
-            設定
+            {t("settings")}
           </Link>
         )}
       </header>
 
       {/* タイトル */}
       <div className="text-center mb-10">
-        <h1 className="text-2xl sm:text-3xl font-semibold text-white mb-2">
-          何について話しますか？
-        </h1>
-        <p className="text-sm text-gray-400">選んで、話しはじめる。</p>
+        <h1 className="text-2xl sm:text-3xl font-semibold text-white mb-2">{t("heading")}</h1>
+        <p className="text-sm text-gray-400">{t("subheading")}</p>
       </div>
 
-      {/* 2 カード */}
-      <div className="grid gap-4 sm:grid-cols-2 mb-10">
+      {/* カード：JA は 2 枚（声の日記 + 英会話）、EN は声の日記のみ中央寄せ */}
+      <div
+        className={`grid gap-4 mb-10 ${
+          showEnglish ? "sm:grid-cols-2" : "grid-cols-1 max-w-md mx-auto w-full"
+        }`}
+      >
         {/* 声の日記 */}
         <Link
           href="/diary"
           className="group relative block p-6 bg-gradient-to-br from-indigo-950/60 to-gray-900 border border-indigo-800/50 rounded-2xl hover:border-indigo-500 transition-all hover:-translate-y-0.5"
         >
           <h2 className="text-lg font-semibold text-white mb-2 group-hover:text-indigo-200 transition-colors">
-            声の日記
+            {t("diary.title")}
           </h2>
-          <p className="text-sm text-gray-400 leading-relaxed">
-            今日あったことを、AI と話しながら振り返る。 話した内容は、あとで読めるかたちで残ります。
-          </p>
+          <p className="text-sm text-gray-400 leading-relaxed">{t("diary.desc")}</p>
         </Link>
 
-        {/* 英会話 */}
-        <Link
-          href="/english"
-          className="group relative block p-6 bg-gradient-to-br from-emerald-950/60 to-gray-900 border border-emerald-800/50 rounded-2xl hover:border-emerald-500 transition-all hover:-translate-y-0.5"
-        >
-          <h2 className="text-lg font-semibold text-white mb-2 group-hover:text-emerald-200 transition-colors">
-            英会話
-          </h2>
-          <p className="text-sm text-gray-400 leading-relaxed">
-            英語で話す練習。好きなキャラクターと、 自分のペースでリアルタイムにやりとり。
-          </p>
-        </Link>
+        {/* 英会話（EN UI では非表示） */}
+        {showEnglish && (
+          <Link
+            href="/english"
+            className="group relative block p-6 bg-gradient-to-br from-emerald-950/60 to-gray-900 border border-emerald-800/50 rounded-2xl hover:border-emerald-500 transition-all hover:-translate-y-0.5"
+          >
+            <h2 className="text-lg font-semibold text-white mb-2 group-hover:text-emerald-200 transition-colors">
+              {t("english.title")}
+            </h2>
+            <p className="text-sm text-gray-400 leading-relaxed">{t("english.desc")}</p>
+          </Link>
+        )}
       </div>
 
       {/* ログイン済ユーザー向け：過去の日記へ */}
@@ -86,24 +92,24 @@ export default function HubPage() {
             href="/diary/history"
             className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
           >
-            過去の日記を見る →
+            {t("viewHistory")}
           </Link>
         </div>
       )}
 
       {/* ステータス */}
       <div className="mt-auto text-center text-xs text-gray-500">
-        {isAuthed === null && <span>　</span>}
+        {isAuthed === null && <span>&nbsp;</span>}
         {isAuthed === false && (
           <span>
-            ゲストとして体験中（{" "}
+            {t("guestStatusBefore")}
             <Link href="/login" className="text-indigo-400 hover:text-indigo-300 underline">
-              ログイン
-            </Link>{" "}
-            で日記が保存できます）
+              {t("guestStatusLogin")}
+            </Link>
+            {t("guestStatusAfter")}
           </span>
         )}
-        {isAuthed === true && <span>ログイン中</span>}
+        {isAuthed === true && <span>{t("loggedIn")}</span>}
       </div>
     </main>
   );

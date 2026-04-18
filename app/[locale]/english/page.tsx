@@ -27,6 +27,7 @@ import { matchPlayedPhrase, readPlayedPhrases } from "@/lib/playedPhraseHistory"
 import type { SuggestPhrase, SuggestRecentMessage } from "@/lib/suggest";
 import { createClient } from "@/lib/supabase/client";
 import { getGuestSelectedVoiceId } from "@/lib/voiceSessionStorage";
+import { useLocale } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -71,8 +72,14 @@ const GUEST_PERSONA: Persona = {
 // ────────────────────────────────────────────────
 function HomeInner() {
   const router = useRouter();
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const supabase = createClient();
+
+  // /english は日本人の英会話練習用。EN UI では Issue #56 で再設計するまで /app にリダイレクト。
+  useEffect(() => {
+    if (locale === "en") router.replace("/app");
+  }, [locale, router]);
 
   const [persona, setPersona] = useState<Persona | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -514,6 +521,9 @@ function HomeInner() {
   // ────────────────────────────────────────────────
   // レンダリング
   // ────────────────────────────────────────────────
+  // EN locale では redirect 待ちの flash を避けるため何もレンダリングしない
+  if (locale === "en") return null;
+
   return (
     <main className="flex flex-col h-screen w-full max-w-2xl mx-auto px-4 overflow-hidden">
       {/* ヘッダー */}

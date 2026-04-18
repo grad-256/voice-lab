@@ -1,12 +1,145 @@
 {
   "common": {
     "appName": "MyVoiceLab",
-    "tagline": "Talk with AI. Keep your voice."
+    "tagline": "Talk with AI. Keep every word."
+  },
+  "metadata": {
+    "title": "MyVoiceLab — Talk with AI, keep every word",
+    "description": "Talk with AI in any situation and turn what you said into something you can read. A new way to live — out loud."
+  },
+  "nav": {
+    "ctaStart": "Start talking",
+    "ctaLogin": "Log in",
+    "ctaHome": "Open app"
+  },
+  "lp": {
+    "hero": {
+      "badge": "No signup required — try it now",
+      "lead": "With AI, in any situation.",
+      "h1Part1": "Talk.",
+      "h1Part2": " See it take shape.",
+      "subCopy1": "A new way to live — out loud.",
+      "subCopy2": "A partner for practicing out loud, right here.",
+      "ctaStart": "Start talking",
+      "ctaLogin": "Log in",
+      "note": "No signup — free for your first 10 exchanges"
+    },
+    "steps": {
+      "eyebrow": "How it works",
+      "title": "Speak it. Keep it. See it.",
+      "items": {
+        "talk": {
+          "title": "Speak with your voice",
+          "desc": "Press the mic and say what's on your mind — no keyboard needed."
+        },
+        "stack": {
+          "title": "Your conversation stays",
+          "desc": "Every exchange with the AI is saved automatically. You don't have to take notes — nothing gets lost."
+        },
+        "visualize": {
+          "title": "See it take shape",
+          "desc": "The conversation is summarized into a diary you can read later. What you said becomes something you can see."
+        }
+      }
+    },
+    "features": {
+      "eyebrow": "What you can do",
+      "title": "Speak, keep it, and see it take shape.",
+      "items": {
+        "voice": {
+          "title": "Speak with your voice",
+          "desc": "Start an AI conversation with a single tap. Whether it's reflection, working through an idea, or just chatting — begin with your voice."
+        },
+        "conversation": {
+          "title": "Your conversation stays",
+          "desc": "What you said is kept as a readable record. Speaking carries on where writing gives up."
+        },
+        "summary": {
+          "title": "See it take shape",
+          "desc": "The AI summarizes your conversation. Your own words get organized into something you can read later."
+        }
+      }
+    },
+    "cta": {
+      "titlePart1": "Now,",
+      "titlePart2": " start talking.",
+      "bodyLine1": "No signup — free for your first 10 exchanges.",
+      "bodyLine2": "Just start by saying it out loud.",
+      "button": "Start talking"
+    },
+    "chatDemo": {
+      "conversation": [
+        { "role": "assistant", "text": "How was your day?" },
+        {
+          "role": "user",
+          "text": "I couldn't say what I wanted in a meeting — I'm a bit drained."
+        },
+        { "role": "assistant", "text": "What part was tough?" },
+        {
+          "role": "user",
+          "text": "We were split over priorities for a new feature, and I couldn't find the words."
+        },
+        { "role": "assistant", "text": "Which priority feels right to you?" }
+      ],
+      "partner": "Your conversation partner",
+      "online": "Online",
+      "phase": {
+        "listening": "Listening…",
+        "thinking": "Thinking…",
+        "speaking": "Speaking…",
+        "idle": "Press the mic to talk"
+      }
+    },
+    "voiceDemo": {
+      "listening": "Listening…",
+      "idle": "Press the mic to talk"
+    },
+    "conversationDemo": {
+      "bubbles": [
+        { "role": "assistant", "text": "How was your day?" },
+        { "role": "user", "text": "I'm a bit drained." },
+        { "role": "assistant", "text": "What happened?" },
+        { "role": "user", "text": "I couldn't find the words." }
+      ]
+    },
+    "summaryDemo": {
+      "title": "Reflecting on the meeting",
+      "lines": [
+        "We were divided on priorities in the meeting.",
+        "I felt drained — the words wouldn't come out.",
+        "For me, nailing down the experience comes first."
+      ]
+    }
+  },
+  "hub": {
+    "backToTop": "← Back to top",
+    "login": "Log in",
+    "settings": "Settings",
+    "heading": "What would you like to talk about?",
+    "subheading": "Pick one, and start talking.",
+    "diary": {
+      "title": "Voice diary",
+      "desc": "Reflect on your day by talking with AI. What you said is kept in a form you can read later."
+    },
+    "english": {
+      "title": "English conversation",
+      "desc": "Practice speaking English. Talk with a character you like, at your own pace, in real time."
+    },
+    "viewHistory": "View past diary entries →",
+    "guestStatusBefore": "Trying as a guest (",
+    "guestStatusLogin": "log in",
+    "guestStatusAfter": " to keep your diary)",
+    "loggedIn": "Logged in"
   },
   "footer": {
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "noteAriaLabel": "MyVoiceLab magazine on note",
     "xAriaLabel": "UCLab on X (formerly Twitter)"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist, or may have moved.",
+    "backHome": "Back to top"
   }
 }

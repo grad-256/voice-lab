@@ -6,6 +6,7 @@ import LocaleSwitcher from "@/app/components/LocaleSwitcher";
 import { NoteIcon } from "@/app/components/icons/note-icon";
 import { XIcon } from "@/app/components/icons/x-icon";
 import { Link, routing } from "@/i18n/routing";
+import type { Metadata } from "next";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -14,6 +15,21 @@ type Props = {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
 };
+
+// ロケールごとに metadata を切り替える。ルート layout の静的 metadata より優先される。
+export async function generateMetadata({
+  params,
+}: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) {
+    return {};
+  }
+  const t = await getTranslations({ locale, namespace: "metadata" });
+  return {
+    title: t("title"),
+    description: t("description"),
+  };
+}
 
 export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params;
