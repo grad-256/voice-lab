@@ -132,4 +132,46 @@ describe("POST /api/chat", () => {
     expect(callBody.messages).toHaveLength(3); // history 2 + 新規 1
     expect(callBody.messages[2].content).toBe("Second message");
   });
+
+  it("locale=en のとき system prompt に translation:null 指示が含まれる", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(mockAnthropicResponse('{"reply": "Hi!", "translation": null}'));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const req = new Request("http://localhost/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "Hello", history: [], locale: "en" }),
+    });
+
+    await POST(req);
+
+    const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(callBody.system).toContain('"translation": null');
+  });
+
+  it("locale=en + mode=diary のとき system prompt が英語オープナー指示になる", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(mockAnthropicResponse('{"reply": "Hey!", "translation": null}'));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const req = new Request("http://localhost/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        history: [],
+        mode: "diary",
+        assistantFirst: true,
+        locale: "en",
+      }),
+    });
+
+    await POST(req);
+
+    const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(callBody.system).toContain("greet the user casually in English");
+    expect(callBody.system).not.toContain("今日どうだった？");
+  });
 });

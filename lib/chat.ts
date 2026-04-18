@@ -5,6 +5,11 @@
 
 export type ConversationLevel = "beginner" | "intermediate" | "advanced";
 
+// i18n 対応（Track C-4）：システムプロンプトを UI ロケールと連動させる。
+// - ja: 従来どおり「英訳 + 日本語訳」の JSON を返す英会話パートナー
+// - en: 日本語訳は不要（`translation` は null）。日記モードの挨拶も英語化する
+export type ChatLocale = "ja" | "en";
+
 const LEVEL_INSTRUCTIONS: Record<ConversationLevel, string> = {
   beginner: `\
 === STRICT LEVEL RULE: BEGINNER (A1-A2) ===
@@ -34,22 +39,40 @@ Violating any of these rules is not allowed.
 };
 
 // JSON 返答の指示をシステムプロンプトに付加する（レベル指示を先頭に置く）
-export function buildSystemPrompt(base: string, level: ConversationLevel = "intermediate"): string {
+// locale === "en" のときは翻訳フィールドを要求しない（英語話者に日本語訳は不要）。
+export function buildSystemPrompt(
+  base: string,
+  level: ConversationLevel = "intermediate",
+  locale: ChatLocale = "ja"
+): string {
+  const outputFormat =
+    locale === "en"
+      ? `OUTPUT FORMAT — THIS OVERRIDES EVERYTHING ELSE:
+You MUST respond with ONLY a JSON object. No text before or after it. No code fences.
+{"reply": "<your English response>", "translation": null}`
+      : `OUTPUT FORMAT — THIS OVERRIDES EVERYTHING ELSE:
+You MUST respond with ONLY a JSON object. No text before or after it. No code fences.
+{"reply": "<your English response>", "translation": "<Japanese translation of your reply>"}`;
+
   return `${LEVEL_INSTRUCTIONS[level]}
 
 ${base}
 
-OUTPUT FORMAT — THIS OVERRIDES EVERYTHING ELSE:
-You MUST respond with ONLY a JSON object. No text before or after it. No code fences.
-{"reply": "<your English response>", "translation": "<Japanese translation of your reply>"}`;
+${outputFormat}`;
 }
 
 // 日記モード用のシステムプロンプト
 // - 雑談ベースの友人トーン。抽象的な話題で深掘りに切り替える
 // - 優等生化しない（ダメなことはダメと言う）
 // - 言語はユーザー発話に追従
+// - locale で起動時の挨拶言語を切り替える（ja は日本語オープナー、en は英語オープナー）
 // - 出力は JSON（translation は null 固定）で、既存のパースロジックを流用する
-export function buildDiarySystemPrompt(options?: { pastSummaries?: string[] }): string {
+export function buildDiarySystemPrompt(options?: {
+  pastSummaries?: string[];
+  locale?: ChatLocale;
+}): string {
+  const locale: ChatLocale = options?.locale ?? "ja";
+
   const pastContext =
     options?.pastSummaries && options.pastSummaries.length > 0
       ? `\n\nRECENT DIARY CONTEXT (last few entries, most recent first):\n${options.pastSummaries
@@ -58,6 +81,13 @@ export function buildDiarySystemPrompt(options?: { pastSummaries?: string[] }): 
             "\n"
           )}\n\nYou remember these. Naturally weave them in if relevant, but don't force them.`
       : "";
+
+  const opening =
+    locale === "en"
+      ? `OPENING:
+- When the conversation starts (empty history or the user's first turn is a session marker), greet the user casually in English and ask an open question like "How was your day?" or "How have you been?".`
+      : `OPENING:
+- When the conversation starts (empty history or the user's first turn is a session marker), greet the user casually in Japanese and ask an open question like "今日どうだった？" or "最近どう？".`;
 
   return `You are a close, honest friend talking with the user in a casual voice conversation.
 
@@ -75,8 +105,7 @@ LENGTH:
 - SHORT replies: 1-3 sentences. This is voice, not chat.
 - At most ONE follow-up question per reply.
 
-OPENING:
-- When the conversation starts (empty history or the user's first turn is a session marker), greet the user casually in Japanese and ask an open question like "今日どうだった？" or "最近どう？".${pastContext}
+${opening}${pastContext}
 
 OUTPUT FORMAT — THIS OVERRIDES EVERYTHING ELSE:
 You MUST respond with ONLY a JSON object. No text before or after it. No code fences.

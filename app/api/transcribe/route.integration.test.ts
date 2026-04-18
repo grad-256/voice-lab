@@ -110,4 +110,78 @@ describe("POST /api/transcribe", () => {
     const file = sentFormData.get("file") as File;
     expect(file.name).toBe("audio.mp4");
   });
+
+  it("language=en が渡されると Whisper への FormData に language が付与される", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ text: "hello" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const formData = new FormData();
+    formData.append("audio", makeAudioBlob("audio/webm;codecs=opus"));
+    formData.append("language", "en");
+    const req = new Request("http://localhost/api/transcribe", {
+      method: "POST",
+      body: formData,
+    });
+    await POST(req);
+
+    const sentFormData: FormData = fetchMock.mock.calls[0][1].body;
+    expect(sentFormData.get("language")).toBe("en");
+  });
+
+  it("language=ja が渡されても同様に language が付与される", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ text: "こんにちは" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const formData = new FormData();
+    formData.append("audio", makeAudioBlob("audio/webm"));
+    formData.append("language", "ja");
+    const req = new Request("http://localhost/api/transcribe", {
+      method: "POST",
+      body: formData,
+    });
+    await POST(req);
+
+    const sentFormData: FormData = fetchMock.mock.calls[0][1].body;
+    expect(sentFormData.get("language")).toBe("ja");
+  });
+
+  it("language が未指定なら Whisper の FormData には language が付かない（自動検出）", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ text: "auto" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const req = makeAudioRequest(makeAudioBlob("audio/webm"));
+    await POST(req);
+
+    const sentFormData: FormData = fetchMock.mock.calls[0][1].body;
+    expect(sentFormData.get("language")).toBeNull();
+  });
+
+  it("不正な language 値は無視されて language 未指定と同じ挙動になる", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ text: "ignored" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const formData = new FormData();
+    formData.append("audio", makeAudioBlob("audio/webm"));
+    formData.append("language", "fr"); // 許可リスト外
+    const req = new Request("http://localhost/api/transcribe", {
+      method: "POST",
+      body: formData,
+    });
+    await POST(req);
+
+    const sentFormData: FormData = fetchMock.mock.calls[0][1].body;
+    expect(sentFormData.get("language")).toBeNull();
+  });
 });
