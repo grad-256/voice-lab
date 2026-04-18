@@ -5,6 +5,7 @@ export const runtime = "edge";
 
 import { Link, useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 type DiaryItem = {
@@ -27,6 +28,7 @@ function formatDate(iso: string): string {
 
 export default function DiaryHistoryPage() {
   const router = useRouter();
+  const t = useTranslations("diary.history");
   const [items, setItems] = useState<DiaryItem[] | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -49,7 +51,7 @@ export default function DiaryHistoryPage() {
           return;
         }
         if (!res.ok) {
-          setErrorMsg("読み込みに失敗しました");
+          setErrorMsg(t("loadFailed"));
           setItems([]);
           return;
         }
@@ -58,7 +60,7 @@ export default function DiaryHistoryPage() {
       } catch (err) {
         console.error("diary history load error:", err);
         if (!aborted) {
-          setErrorMsg("読み込みに失敗しました");
+          setErrorMsg(t("loadFailed"));
           setItems([]);
         }
       }
@@ -67,20 +69,20 @@ export default function DiaryHistoryPage() {
     return () => {
       aborted = true;
     };
-  }, [router]);
+  }, [router, t]);
 
   return (
     <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-6">
       <header className="flex items-center justify-between mb-6">
         <Link href="/app" className="text-gray-400 hover:text-white text-sm transition-colors">
-          ← 戻る
+          {t("back")}
         </Link>
-        <h1 className="text-base text-white font-medium">日記の履歴</h1>
+        <h1 className="text-base text-white font-medium">{t("title")}</h1>
         <Link
           href="/diary"
           className="text-indigo-400 hover:text-indigo-300 text-sm transition-colors"
         >
-          新しく話す
+          {t("new")}
         </Link>
       </header>
 
@@ -91,17 +93,17 @@ export default function DiaryHistoryPage() {
       )}
 
       {items === null && !errorMsg && (
-        <div className="text-center text-gray-500 py-16 text-sm">読み込み中…</div>
+        <div className="text-center text-gray-500 py-16 text-sm">{t("loading")}</div>
       )}
 
       {items !== null && items.length === 0 && (
         <div className="text-center py-20">
-          <p className="text-gray-400 text-sm mb-4">まだ日記がありません</p>
+          <p className="text-gray-400 text-sm mb-4">{t("empty")}</p>
           <Link
             href="/diary"
             className="inline-block px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors"
           >
-            最初の日記を話す
+            {t("emptyCta")}
           </Link>
         </div>
       )}

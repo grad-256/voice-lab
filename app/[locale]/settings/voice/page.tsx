@@ -10,13 +10,14 @@ import {
   VoiceRecorder,
   type VoiceRecorderCompletePayload,
 } from "@/app/components/echo/VoiceRecorder";
-import { Link } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 import { extractPitchHz, extractSpectralCentroid } from "@/lib/audioFeatures";
 import { decodeRecordingToMono } from "@/lib/decodeRecording";
 import { PRESET_VOICES, type PresetVoice } from "@/lib/presetVoices";
 import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { type VoiceMatchResult, normalizeFeatures, rankVoices } from "@/lib/voiceMatcher";
 import { getGuestSelectedVoiceId, setGuestSelectedVoiceId } from "@/lib/voiceSessionStorage";
+import { useLocale } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
@@ -25,6 +26,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * Sprint 2 で `/echo` から移設（独立画面が場面再生専用になったため）。
  * フロー：consent → ready → 録音 → analyzing → candidates → select → done。
  * 録音 Blob は `decodeAudioData` 後に即破棄。特徴量ベクトルは候補ランキング後に state から消去（mvp-scope.md 3.10 節）。
+ *
+ * EN locale では /app にリダイレクトする。分身の声は /echo の再生機能のためだけに存在し、
+ * /echo を EN で非表示にするのに合わせてここも EN では封じる。
  */
 
 type EchoStatus = "consent" | "ready" | "analyzing" | "candidates" | "extract-failed";
@@ -43,6 +47,8 @@ interface CurrentVoiceInfo {
 }
 
 export default function EchoPage() {
+  const router = useRouter();
+  const locale = useLocale();
   const [consented, setConsented] = useState(false);
   const [status, setStatus] = useState<EchoStatus>("consent");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -59,6 +65,11 @@ export default function EchoPage() {
   // useEffect deps から analyze 関数を独立にするため、最新版を ref で持つ
   const analyzeRef = useRef<((blob: Blob) => Promise<void>) | null>(null);
 
+  // EN locale では /app にリダイレクト（/echo と同じ方針）
+  useEffect(() => {
+    if (locale === "en") router.replace("/app");
+  }, [locale, router]);
+
   // ページ離脱時の保険：万一残った matches も破棄
   useEffect(() => {
     return () => {
@@ -68,6 +79,7 @@ export default function EchoPage() {
 
   // マウント時に既存選択を取得（auth: GET /api/voice-session / guest: localStorage）
   useEffect(() => {
+    if (locale === "en") return;
     let cancelled = false;
 
     const resolveCurrentVoice = (voiceId: string | null, source: "auth" | "guest") => {
@@ -118,7 +130,7 @@ export default function EchoPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [locale]);
 
   const handleConsentChange = useCallback((checked: boolean) => {
     setConsented(checked);
@@ -269,6 +281,9 @@ export default function EchoPage() {
   const handlePreviewEnd = useCallback(() => {
     setPlayingVoiceId(null);
   }, []);
+
+  // EN locale では redirect 待ちの flash を避けるため何もレンダリングしない
+  if (locale === "en") return null;
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-5 py-8">

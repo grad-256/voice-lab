@@ -12,7 +12,7 @@ import {
 } from "@/lib/guestUsage";
 import { mapGetUserMediaError, pickBrowserMimeType } from "@/lib/recordingMime";
 import { createClient } from "@/lib/supabase/client";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Role = "user" | "assistant";
@@ -82,6 +82,7 @@ export default function DiaryPage() {
   const router = useRouter();
   // UI ロケール（ja/en）。Whisper の language ヒントと chat ルートのシステムプロンプトへ渡す。
   const locale = useLocale();
+  const t = useTranslations("diary");
 
   const [authStatus, setAuthStatus] = useState<AuthStatus>("unknown");
   const [isStarted, setIsStarted] = useState(false);
@@ -249,7 +250,7 @@ export default function DiaryPage() {
       if (!mountedRef.current) return;
       if (!res.ok) {
         setStatus("idle");
-        setErrorMsg("AI の準備に失敗しました。もう一度お試しください。");
+        setErrorMsg(t("errors.bootstrap"));
         setIsStarted(false);
         return;
       }
@@ -267,12 +268,12 @@ export default function DiaryPage() {
       if (!mountedRef.current) return;
       console.error("bootstrap error:", err);
       setStatus("idle");
-      setErrorMsg("AI の準備に失敗しました。");
+      setErrorMsg(t("errors.bootstrapShort"));
       setIsStarted(false);
     } finally {
       startingRef.current = false;
     }
-  }, [isGuest, playReply, ensureAudioContext, pastSummaries, locale]);
+  }, [isGuest, playReply, ensureAudioContext, pastSummaries, locale, t]);
 
   // 会話終了フロー：要約を生成してプレビュー。ユーザー発話ゼロなら破棄扱い。
   const handleFinish = useCallback(async () => {
@@ -299,9 +300,7 @@ export default function DiaryPage() {
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string };
         setErrorMsg(
-          err.error === "SERVICE_QUOTA_EXCEEDED"
-            ? "AI の上限に達しました。少し時間をおいてお試しください。"
-            : "要約の生成に失敗しました。もう一度お試しください。"
+          err.error === "SERVICE_QUOTA_EXCEEDED" ? t("errors.quotaExceeded") : t("errors.summarize")
         );
         setStatus("idle");
         return;
@@ -314,11 +313,11 @@ export default function DiaryPage() {
       if (!mountedRef.current) return;
       console.error("summarize error:", err);
       setStatus("idle");
-      setErrorMsg("要約の生成に失敗しました。");
+      setErrorMsg(t("errors.summarizeShort"));
     } finally {
       finalizingRef.current = false;
     }
-  }, [messages, router]);
+  }, [messages, router, t]);
 
   // 要約を保存（ログイン済のみ）→ 履歴ページへ遷移
   const handleSaveSummary = useCallback(async () => {
@@ -372,7 +371,7 @@ export default function DiaryPage() {
         const trRes = await fetch("/api/transcribe", { method: "POST", body: fd });
         if (!trRes.ok) {
           setStatus("idle");
-          setErrorMsg("音声の文字起こしに失敗しました。");
+          setErrorMsg(t("errors.transcribe"));
           return;
         }
         const trData = (await trRes.json()) as { text?: string; error?: string };
@@ -425,8 +424,8 @@ export default function DiaryPage() {
           const err = (await chatRes.json().catch(() => ({}))) as { error?: string };
           setErrorMsg(
             err.error === "SERVICE_QUOTA_EXCEEDED"
-              ? "AI の上限に達しました。少し時間をおいてお試しください。"
-              : "AI 応答の取得に失敗しました。"
+              ? t("errors.quotaExceeded")
+              : t("errors.chatFetch")
           );
           return;
         }
@@ -443,11 +442,11 @@ export default function DiaryPage() {
         console.error("processAudio error:", err);
         if (mountedRef.current) {
           setStatus("idle");
-          setErrorMsg("処理中にエラーが発生しました。");
+          setErrorMsg(t("errors.process"));
         }
       }
     },
-    [messages, isGuest, playReply, handleFinish, pastSummaries, locale]
+    [messages, isGuest, playReply, handleFinish, pastSummaries, locale, t]
   );
 
   // stale closure 対策：最新の processAudio を ref に保持
@@ -495,7 +494,7 @@ export default function DiaryPage() {
         const duration = Date.now() - startedAtRef.current;
         if (duration < MIN_RECORDING_MS) {
           setStatus("idle");
-          setErrorMsg("もう少し長く話してください（1.5秒以上）");
+          setErrorMsg(t("errors.tooShort"));
           return;
         }
 
@@ -509,7 +508,7 @@ export default function DiaryPage() {
       setErrorMsg(mapGetUserMediaError(err));
       setStatus("idle");
     }
-  }, [isGuest, ensureAudioContext]);
+  }, [isGuest, ensureAudioContext, t]);
 
   const stopRecording = useCallback(() => {
     const recorder = recorderRef.current;
@@ -528,12 +527,12 @@ export default function DiaryPage() {
 
   const statusLabel =
     status === "recording"
-      ? "聞いています…"
+      ? t("status.recording")
       : status === "processing"
-        ? "考えています…"
+        ? t("status.processing")
         : status === "speaking"
-          ? "話しています…"
-          : "タップして話す";
+          ? t("status.speaking")
+          : t("status.idle");
 
   const hasUserContent = messages.some((m) => m.role === "user");
 
@@ -545,9 +544,9 @@ export default function DiaryPage() {
           href="/app"
           className="text-gray-400 hover:text-white text-sm flex items-center gap-1 transition-colors"
         >
-          ← 戻る
+          {t("header.back")}
         </Link>
-        <h1 className="text-sm text-gray-400">声の日記</h1>
+        <h1 className="text-sm text-gray-400">{t("header.title")}</h1>
         {/* 終了ボタン：会話開始かつユーザー発話があるときは常時押せる。
            processing/speaking 中でも押せる（多重起動は finalizingRef でガード済） */}
         {isStarted && hasUserContent && !summaryResult ? (
@@ -556,7 +555,7 @@ export default function DiaryPage() {
             onClick={() => handleFinish()}
             className="text-xs text-gray-400 hover:text-white transition-colors"
           >
-            終わる
+            {t("header.finish")}
           </button>
         ) : (
           <div className="w-12" />
@@ -566,19 +565,22 @@ export default function DiaryPage() {
       {/* ゲスト残数（会話開始後のみ表示） */}
       {isStarted && isGuest && !summaryResult && (
         <div className="mb-3 text-center text-xs text-gray-500">
-          残り {Math.max(0, GUEST_LIMIT - guestCount)} / {GUEST_LIMIT} 回（ゲスト）
+          {t("guestRemaining", {
+            remaining: Math.max(0, GUEST_LIMIT - guestCount),
+            total: GUEST_LIMIT,
+          })}
         </div>
       )}
 
       {!isStarted ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-5 px-6 text-center">
           <h2 className="text-xl font-semibold text-white leading-relaxed">
-            今日のこと、声にしてみませんか。
+            {t("prompt.heading")}
           </h2>
           <p className="text-sm text-gray-400 leading-relaxed max-w-xs">
-            「はじめる」を押すと、AI から声で話しかけます。
+            {t("prompt.bodyLine1")}
             <br />
-            マイクへのアクセスを求められたら、許可してください。
+            {t("prompt.bodyLine2")}
           </p>
           <button
             type="button"
@@ -586,7 +588,7 @@ export default function DiaryPage() {
             disabled={status === "processing" || status === "speaking"}
             className="mt-2 px-10 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium rounded-full transition-colors"
           >
-            {status === "processing" ? "声を用意しています…" : "はじめる"}
+            {status === "processing" ? t("prompt.starting") : t("prompt.start")}
           </button>
           {errorMsg && <div className="mt-2 text-red-300 text-xs">{errorMsg}</div>}
           {authStatus === "authed" && (
@@ -594,7 +596,7 @@ export default function DiaryPage() {
               href="/diary/history"
               className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors mt-2"
             >
-              過去の日記を見る →
+              {t("prompt.viewHistory")}
             </Link>
           )}
         </div>
@@ -640,7 +642,7 @@ export default function DiaryPage() {
                       ? "bg-indigo-600 hover:bg-indigo-500"
                       : "bg-gray-700"
                 } disabled:cursor-not-allowed`}
-                aria-label={status === "recording" ? "録音停止" : "録音開始"}
+                aria-label={status === "recording" ? t("micAria.recording") : t("micAria.idle")}
               >
                 <svg
                   className="w-8 h-8 text-white"
@@ -653,9 +655,7 @@ export default function DiaryPage() {
                 </svg>
               </button>
               <span className="text-sm text-gray-300">{statusLabel}</span>
-              <span className="text-xs text-gray-400">
-                「終わり」と言うか、右上のボタンで日記になります
-              </span>
+              <span className="text-xs text-gray-400">{t("hint")}</span>
             </div>
           )}
         </>
@@ -665,7 +665,7 @@ export default function DiaryPage() {
       {summaryResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
-            <div className="text-xs text-gray-500 mb-1">今日の日記</div>
+            <div className="text-xs text-gray-500 mb-1">{t("summary.heading")}</div>
             <h2 className="text-lg font-semibold text-white mb-4 leading-relaxed">
               {summaryResult.title}
             </h2>
@@ -675,28 +675,28 @@ export default function DiaryPage() {
 
             {saveStatus === "error" && (
               <div className="mb-4 px-3 py-2 bg-red-900/60 border border-red-700 rounded-lg text-red-200 text-xs text-center">
-                保存に失敗しました。もう一度お試しください。
+                {t("errors.saveFailed")}
               </div>
             )}
 
             {authStatus === "guest" ? (
               <>
                 <p className="text-xs text-gray-400 mb-4 leading-relaxed">
-                  日記として残すには登録が必要です。登録は 30 秒で終わります。
+                  {t("summary.guestNote")}
                 </p>
                 <div className="flex gap-2">
                   <Link
                     href="/login"
                     className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg text-center transition-colors"
                   >
-                    登録して保存
+                    {t("summary.guestSave")}
                   </Link>
                   <button
                     type="button"
                     onClick={handleDiscard}
                     className="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg transition-colors"
                   >
-                    今回は捨てる
+                    {t("summary.guestDiscard")}
                   </button>
                 </div>
               </>
@@ -709,10 +709,10 @@ export default function DiaryPage() {
                   className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
                 >
                   {saveStatus === "saving"
-                    ? "保存しています…"
+                    ? t("summary.saving")
                     : saveStatus === "saved"
-                      ? "保存しました"
-                      : "保存する"}
+                      ? t("summary.saved")
+                      : t("summary.save")}
                 </button>
                 <button
                   type="button"
@@ -720,7 +720,7 @@ export default function DiaryPage() {
                   disabled={saveStatus === "saving" || saveStatus === "saved"}
                   className="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 text-sm rounded-lg transition-colors"
                 >
-                  捨てる
+                  {t("summary.discard")}
                 </button>
               </div>
             )}
@@ -733,25 +733,24 @@ export default function DiaryPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 max-w-sm w-full">
             <h2 className="text-lg font-semibold text-white mb-2">
-              {GUEST_LIMIT} 回話してくれてありがとう
+              {t("guestLimitModal.title", { limit: GUEST_LIMIT })}
             </h2>
             <p className="text-sm text-gray-400 mb-5 leading-relaxed">
-              ここから先は、登録すると続きが話せて、日記として保存できます。登録は 30
-              秒で終わります。
+              {t("guestLimitModal.desc")}
             </p>
             <div className="flex gap-2">
               <Link
                 href="/login"
                 className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg text-center transition-colors"
               >
-                登録する
+                {t("guestLimitModal.signup")}
               </Link>
               <button
                 type="button"
                 onClick={() => setShowLimitModal(false)}
                 className="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg transition-colors"
               >
-                あとで
+                {t("guestLimitModal.later")}
               </button>
             </div>
           </div>

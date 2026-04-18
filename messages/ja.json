@@ -135,5 +135,89 @@
     "title": "ページが見つかりません",
     "description": "お探しのページは存在しないか、移動した可能性があります。",
     "backHome": "トップへ戻る"
+  },
+  "diary": {
+    "header": {
+      "back": "← 戻る",
+      "title": "声の日記",
+      "finish": "終わる"
+    },
+    "guestRemaining": "残り {remaining} / {total} 回（ゲスト）",
+    "prompt": {
+      "heading": "今日のこと、声にしてみませんか。",
+      "bodyLine1": "「はじめる」を押すと、AI から声で話しかけます。",
+      "bodyLine2": "マイクへのアクセスを求められたら、許可してください。",
+      "start": "はじめる",
+      "starting": "声を用意しています…",
+      "viewHistory": "過去の日記を見る →"
+    },
+    "status": {
+      "recording": "聞いています…",
+      "processing": "考えています…",
+      "speaking": "話しています…",
+      "idle": "タップして話す"
+    },
+    "micAria": {
+      "recording": "録音停止",
+      "idle": "録音開始"
+    },
+    "hint": "「終わり」と言うか、右上のボタンで日記になります",
+    "errors": {
+      "bootstrap": "AI の準備に失敗しました。もう一度お試しください。",
+      "bootstrapShort": "AI の準備に失敗しました。",
+      "quotaExceeded": "AI の上限に達しました。少し時間をおいてお試しください。",
+      "summarize": "要約の生成に失敗しました。もう一度お試しください。",
+      "summarizeShort": "要約の生成に失敗しました。",
+      "chatFetch": "AI 応答の取得に失敗しました。",
+      "transcribe": "音声の文字起こしに失敗しました。",
+      "process": "処理中にエラーが発生しました。",
+      "tooShort": "もう少し長く話してください（1.5秒以上）",
+      "saveFailed": "保存に失敗しました。もう一度お試しください。"
+    },
+    "summary": {
+      "heading": "今日の日記",
+      "guestNote": "日記として残すには登録が必要です。登録は 30 秒で終わります。",
+      "guestSave": "登録して保存",
+      "guestDiscard": "今回は捨てる",
+      "saving": "保存しています…",
+      "saved": "保存しました",
+      "save": "保存する",
+      "discard": "捨てる"
+    },
+    "guestLimitModal": {
+      "title": "{limit} 回話してくれてありがとう",
+      "desc": "ここから先は、登録すると続きが話せて、日記として保存できます。登録は 30 秒で終わります。",
+      "signup": "登録する",
+      "later": "あとで"
+    },
+    "history": {
+      "back": "← 戻る",
+      "title": "日記の履歴",
+      "new": "新しく話す",
+      "loading": "読み込み中…",
+      "empty": "まだ日記がありません",
+      "emptyCta": "最初の日記を話す",
+      "loadFailed": "読み込みに失敗しました"
+    },
+    "detail": {
+      "back": "← 履歴",
+      "title": "日記",
+      "loading": "読み込み中…",
+      "notFound": "見つかりませんでした",
+      "loadFailed": "読み込みに失敗しました",
+      "play": "もう一度聞く",
+      "playing": "再生中…",
+      "delete": "削除",
+      "deleting": "削除中…",
+      "showTranscript": "▶ 元の会話を読む",
+      "hideTranscript": "▼ 元の会話を隠す",
+      "deleteConfirm": {
+        "title": "この日記を削除しますか？",
+        "desc": "削除すると元には戻せません。",
+        "confirm": "削除する",
+        "cancel": "やめる"
+      },
+      "deleteFailed": "削除に失敗しました"
+    }
   }
 }

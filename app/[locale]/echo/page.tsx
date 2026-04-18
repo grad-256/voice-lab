@@ -6,7 +6,7 @@ export const runtime = "edge";
 
 import { SavedPhrasesTab } from "@/app/components/SavedPhrasesTab";
 import { VoicePlayButton } from "@/app/components/VoicePlayButton";
-import { Link } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 import {
   GUEST_LIMIT,
   getGuestCount,
@@ -24,6 +24,7 @@ import {
 } from "@/lib/sceneSuggest";
 import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getGuestSelectedVoiceId } from "@/lib/voiceSessionStorage";
+import { useLocale } from "next-intl";
 import posthog from "posthog-js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -36,6 +37,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
  *   保存タブ：Sprint 5 まではプレースホルダ
  *
  * 分身の声作成フローは `/settings/voice` に分離（Sprint 2 で移設）。
+ *
+ * EN locale では /app にリダイレクトする。/echo は日本人の英語練習機能であり、
+ * EN UI で提供する意義がないため（Issue #56 と同じ方針）。
  */
 
 type AuthMode = boolean | null;
@@ -47,6 +51,8 @@ interface CurrentVoice {
 }
 
 export default function EchoPage() {
+  const router = useRouter();
+  const locale = useLocale();
   const [authMode, setAuthMode] = useState<AuthMode>(null);
   const [currentVoice, setCurrentVoice] = useState<CurrentVoice | null>(null);
   const [tab, setTab] = useState<Tab>("scenes");
@@ -55,8 +61,14 @@ export default function EchoPage() {
   // ゲストの統合カウント。`/app` と同じく state で保持し、再生のたびに live 更新する
   const [guestCount, setGuestCount] = useState(0);
 
+  // EN locale では /app にリダイレクト（/personas などと同じパターン）
+  useEffect(() => {
+    if (locale === "en") router.replace("/app");
+  }, [locale, router]);
+
   // マウント時に auth 状態と selected_voice_id を解決
   useEffect(() => {
+    if (locale === "en") return;
     let cancelled = false;
 
     const resolveVoice = (voiceId: string | null, source: "auth" | "guest") => {
@@ -111,7 +123,7 @@ export default function EchoPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [locale]);
 
   const selectedScene = useMemo(
     () => (selectedSceneId ? getSceneById(selectedSceneId) : undefined),
@@ -129,6 +141,9 @@ export default function EchoPage() {
 
   const voiceId = currentVoice?.voice.voiceId ?? null;
   const isGuest = authMode === false;
+
+  // EN locale では redirect 待ちの flash を避けるため何もレンダリングしない
+  if (locale === "en") return null;
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-5 py-8">

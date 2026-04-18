@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 
 import { Link, useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type TranscriptItem = { role: "user" | "assistant"; text: string };
@@ -35,6 +36,7 @@ export default function DiaryDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
+  const t = useTranslations("diary.detail");
   const [id, setId] = useState<string | null>(null);
   const [entry, setEntry] = useState<DiaryEntry | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -82,25 +84,25 @@ export default function DiaryDetailPage({
           return;
         }
         if (res.status === 404) {
-          setErrorMsg("見つかりませんでした");
+          setErrorMsg(t("notFound"));
           return;
         }
         if (!res.ok) {
-          setErrorMsg("読み込みに失敗しました");
+          setErrorMsg(t("loadFailed"));
           return;
         }
         const data = (await res.json()) as { item: DiaryEntry };
         if (!aborted && mountedRef.current) setEntry(data.item);
       } catch (err) {
         console.error("diary detail load error:", err);
-        if (!aborted && mountedRef.current) setErrorMsg("読み込みに失敗しました");
+        if (!aborted && mountedRef.current) setErrorMsg(t("loadFailed"));
       }
     };
     load();
     return () => {
       aborted = true;
     };
-  }, [id, router]);
+  }, [id, router, t]);
 
   const handlePlay = useCallback(async () => {
     if (!entry || playing) return;
@@ -143,7 +145,7 @@ export default function DiaryDetailPage({
       const res = await fetch(`/api/diary?id=${entry.id}`, { method: "DELETE" });
       if (!res.ok) {
         if (mountedRef.current) {
-          setErrorMsg("削除に失敗しました");
+          setErrorMsg(t("deleteFailed"));
           setDeleting(false);
         }
         return;
@@ -152,11 +154,11 @@ export default function DiaryDetailPage({
     } catch (err) {
       console.error("diary delete error:", err);
       if (mountedRef.current) {
-        setErrorMsg("削除に失敗しました");
+        setErrorMsg(t("deleteFailed"));
         setDeleting(false);
       }
     }
-  }, [entry, deleting, router]);
+  }, [entry, deleting, router, t]);
 
   return (
     <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-6">
@@ -165,9 +167,9 @@ export default function DiaryDetailPage({
           href="/diary/history"
           className="text-gray-400 hover:text-white text-sm transition-colors"
         >
-          ← 履歴
+          {t("back")}
         </Link>
-        <h1 className="text-sm text-gray-400">日記</h1>
+        <h1 className="text-sm text-gray-400">{t("title")}</h1>
         <div className="w-12" />
       </header>
 
@@ -178,7 +180,7 @@ export default function DiaryDetailPage({
       )}
 
       {!entry && !errorMsg && (
-        <div className="text-center text-gray-500 py-16 text-sm">読み込み中…</div>
+        <div className="text-center text-gray-500 py-16 text-sm">{t("loading")}</div>
       )}
 
       {entry && (
@@ -196,7 +198,7 @@ export default function DiaryDetailPage({
               disabled={playing}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
             >
-              {playing ? "再生中…" : "もう一度聞く"}
+              {playing ? t("playing") : t("play")}
             </button>
             <button
               type="button"
@@ -204,7 +206,7 @@ export default function DiaryDetailPage({
               disabled={deleting}
               className="px-4 py-2 bg-gray-800 hover:bg-red-900 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 hover:text-red-200 text-sm rounded-lg transition-colors"
             >
-              {deleting ? "削除中…" : "削除"}
+              {deleting ? t("deleting") : t("delete")}
             </button>
           </div>
 
@@ -215,24 +217,24 @@ export default function DiaryDetailPage({
                 onClick={() => setShowTranscript((v) => !v)}
                 className="text-xs text-gray-400 hover:text-white mb-3 transition-colors"
               >
-                {showTranscript ? "▼ 元の会話を隠す" : "▶ 元の会話を読む"}
+                {showTranscript ? t("hideTranscript") : t("showTranscript")}
               </button>
 
               {showTranscript && (
                 <div className="space-y-2 pb-10">
-                  {entry.transcript.map((t, i) => (
+                  {entry.transcript.map((item, i) => (
                     <div
-                      key={`${t.role}-${i}-${t.text.slice(0, 20)}`}
-                      className={`flex ${t.role === "user" ? "justify-end" : "justify-start"}`}
+                      key={`${item.role}-${i}-${item.text.slice(0, 20)}`}
+                      className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}
                     >
                       <div
                         className={`max-w-[80%] px-3 py-2 rounded-xl text-xs leading-relaxed whitespace-pre-wrap ${
-                          t.role === "user"
+                          item.role === "user"
                             ? "bg-indigo-700/60 text-white"
                             : "bg-gray-800 text-gray-200"
                         }`}
                       >
-                        {t.text}
+                        {item.text}
                       </div>
                     </div>
                   ))}
@@ -247,10 +249,8 @@ export default function DiaryDetailPage({
       {showDeleteConfirm && entry && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 max-w-sm w-full">
-            <h2 className="text-lg font-semibold text-white mb-2">この日記を削除しますか？</h2>
-            <p className="text-sm text-gray-400 mb-5 leading-relaxed">
-              削除すると元には戻せません。
-            </p>
+            <h2 className="text-lg font-semibold text-white mb-2">{t("deleteConfirm.title")}</h2>
+            <p className="text-sm text-gray-400 mb-5 leading-relaxed">{t("deleteConfirm.desc")}</p>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -258,7 +258,7 @@ export default function DiaryDetailPage({
                 disabled={deleting}
                 className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
               >
-                {deleting ? "削除中…" : "削除する"}
+                {deleting ? t("deleting") : t("deleteConfirm.confirm")}
               </button>
               <button
                 type="button"
@@ -266,7 +266,7 @@ export default function DiaryDetailPage({
                 disabled={deleting}
                 className="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-gray-300 text-sm rounded-lg transition-colors"
               >
-                やめる
+                {t("deleteConfirm.cancel")}
               </button>
             </div>
           </div>
