@@ -3,9 +3,9 @@
 // 静的プリレンダリングを無効化（Supabase クライアントはビルド時に初期化できないため）
 export const dynamic = "force-dynamic";
 
+import { Link, useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
 function EyeIcon({ open }: { open: boolean }) {

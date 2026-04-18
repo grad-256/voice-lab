@@ -2,6 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
+import { Link, useRouter } from "@/i18n/routing";
 import {
   GUEST_LIMIT,
   getGuestCount,
@@ -10,8 +11,6 @@ import {
 } from "@/lib/guestUsage";
 import { mapGetUserMediaError, pickBrowserMimeType } from "@/lib/recordingMime";
 import { createClient } from "@/lib/supabase/client";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Role = "user" | "assistant";

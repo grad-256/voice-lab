@@ -12,8 +12,8 @@ import ScrollReveal from "@/app/components/lp/ScrollReveal";
 import StepStack from "@/app/components/lp/StepStack";
 import StepTalk from "@/app/components/lp/StepTalk";
 import StepVisualize from "@/app/components/lp/StepVisualize";
+import { Link } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
 
 // 使いかた（How it works）— 話す → 残る → 可視化される の 3 ステップ
 const STEPS = [

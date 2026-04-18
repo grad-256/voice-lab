@@ -2,8 +2,8 @@
 
 export const dynamic = "force-dynamic";
 
+import { useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 function EyeIcon({ open }: { open: boolean }) {

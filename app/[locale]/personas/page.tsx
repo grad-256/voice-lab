@@ -3,9 +3,8 @@
 // 静的プリレンダリングを無効化（Supabase クライアントはビルド時に初期化できないため）
 export const dynamic = "force-dynamic";
 
+import { Link, useRouter } from "@/i18n/routing";
 import { type Persona, deletePersona, getPersonas } from "@/lib/personas";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 // ────────────────────────────────────────────────

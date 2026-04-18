@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 
 import { SavePhraseModal } from "@/app/components/SavePhraseModal";
 import { SuggestPanel } from "@/app/components/SuggestPanel";
+import { Link, useRouter } from "@/i18n/routing";
 import type { ConversationLevel } from "@/lib/chat";
 import {
   appendMessage,
@@ -25,8 +26,7 @@ import { matchPlayedPhrase, readPlayedPhrases } from "@/lib/playedPhraseHistory"
 import type { SuggestPhrase, SuggestRecentMessage } from "@/lib/suggest";
 import { createClient } from "@/lib/supabase/client";
 import { getGuestSelectedVoiceId } from "@/lib/voiceSessionStorage";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 

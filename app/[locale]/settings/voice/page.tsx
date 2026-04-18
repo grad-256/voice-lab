@@ -9,13 +9,13 @@ import {
   VoiceRecorder,
   type VoiceRecorderCompletePayload,
 } from "@/app/components/echo/VoiceRecorder";
+import { Link } from "@/i18n/routing";
 import { extractPitchHz, extractSpectralCentroid } from "@/lib/audioFeatures";
 import { decodeRecordingToMono } from "@/lib/decodeRecording";
 import { PRESET_VOICES, type PresetVoice } from "@/lib/presetVoices";
 import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { type VoiceMatchResult, normalizeFeatures, rankVoices } from "@/lib/voiceMatcher";
 import { getGuestSelectedVoiceId, setGuestSelectedVoiceId } from "@/lib/voiceSessionStorage";
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /**

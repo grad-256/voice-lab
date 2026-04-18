@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 
 import { SavedPhrasesTab } from "@/app/components/SavedPhrasesTab";
 import { VoicePlayButton } from "@/app/components/VoicePlayButton";
+import { Link } from "@/i18n/routing";
 import {
   GUEST_LIMIT,
   getGuestCount,
@@ -22,7 +23,6 @@ import {
 } from "@/lib/sceneSuggest";
 import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getGuestSelectedVoiceId } from "@/lib/voiceSessionStorage";
-import Link from "next/link";
 import posthog from "posthog-js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 

@@ -2,8 +2,8 @@
 
 export const dynamic = "force-dynamic";
 
+import { Link } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function HubPage() {
