@@ -9,7 +9,7 @@ export const runtime = "edge";
  * - `/api/chat` への混入は禁止（決定事項 14 / mvp-scope.md 3.9）。
  */
 
-import { anthropicEndpoint } from "@/lib/aiGateway";
+import { anthropicEndpoint, gatewayAuthHeaders } from "@/lib/aiGateway";
 import {
   SUGGEST_MODEL,
   type SuggestPhrase,
@@ -94,6 +94,7 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
         "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
         "anthropic-version": "2023-06-01",
+        ...gatewayAuthHeaders(),
       },
       body: JSON.stringify({
         model: SUGGEST_MODEL,
