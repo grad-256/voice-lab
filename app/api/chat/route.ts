@@ -50,12 +50,15 @@ export async function POST(req: Request) {
       return Response.json({ error: "メッセージが空です" }, { status: 400 });
     }
 
-    // Anthropic API は空 messages を拒否するため、日記の assistant-first 起動時はダミー user を入れて挨拶を誘導する
+    // Anthropic API は空 messages を拒否するため、日記の assistant-first 起動時はダミー user を入れて挨拶を誘導する。
+    // LANGUAGE: Mirror the user's language を優先する Claude に対して、セッションマーカーを
+    // UI ロケールと同言語にすることで OPENING の言語指示と矛盾させない。
+    const sessionMarker = safeLocale === "en" ? "(session start)" : "（セッション開始）";
     let messages: Message[];
     if (message) {
       messages = [...history, { role: "user", content: message }];
     } else if (isDiary && assistantFirst && history.length === 0) {
-      messages = [{ role: "user", content: "（セッション開始）" }];
+      messages = [{ role: "user", content: sessionMarker }];
     } else {
       messages = [...history];
     }

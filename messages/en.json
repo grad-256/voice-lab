@@ -141,5 +141,89 @@
     "title": "Page not found",
     "description": "The page you're looking for doesn't exist, or may have moved.",
     "backHome": "Back to top"
+  },
+  "diary": {
+    "header": {
+      "back": "← Back",
+      "title": "Voice diary",
+      "finish": "Finish"
+    },
+    "guestRemaining": "{remaining} / {total} left (guest)",
+    "prompt": {
+      "heading": "How about putting today into words?",
+      "bodyLine1": "When you press Start, the AI will begin by talking to you.",
+      "bodyLine2": "Allow microphone access when prompted.",
+      "start": "Start",
+      "starting": "Getting the voice ready…",
+      "viewHistory": "View past diary entries →"
+    },
+    "status": {
+      "recording": "Listening…",
+      "processing": "Thinking…",
+      "speaking": "Speaking…",
+      "idle": "Tap to talk"
+    },
+    "micAria": {
+      "recording": "Stop recording",
+      "idle": "Start recording"
+    },
+    "hint": "Say \"end\" or tap the button above to turn this into a diary entry",
+    "errors": {
+      "bootstrap": "Couldn't start the AI. Please try again.",
+      "bootstrapShort": "Couldn't start the AI.",
+      "quotaExceeded": "The AI is at its limit right now. Please try again in a little while.",
+      "summarize": "Couldn't generate a summary. Please try again.",
+      "summarizeShort": "Couldn't generate a summary.",
+      "chatFetch": "Couldn't get the AI's reply.",
+      "transcribe": "Couldn't transcribe your audio.",
+      "process": "Something went wrong while processing.",
+      "tooShort": "Please speak a little longer (at least 1.5 seconds)",
+      "saveFailed": "Couldn't save. Please try again."
+    },
+    "summary": {
+      "heading": "Today's diary",
+      "guestNote": "To keep this as a diary entry, you'll need an account. Sign-up takes 30 seconds.",
+      "guestSave": "Sign up and save",
+      "guestDiscard": "Discard this one",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "save": "Save",
+      "discard": "Discard"
+    },
+    "guestLimitModal": {
+      "title": "Thanks for talking {limit} times",
+      "desc": "From here on, signing up lets you keep talking and save your diary. Sign-up takes 30 seconds.",
+      "signup": "Sign up",
+      "later": "Later"
+    },
+    "history": {
+      "back": "← Back",
+      "title": "Past diary entries",
+      "new": "New entry",
+      "loading": "Loading…",
+      "empty": "No diary entries yet",
+      "emptyCta": "Start your first entry",
+      "loadFailed": "Couldn't load."
+    },
+    "detail": {
+      "back": "← History",
+      "title": "Diary",
+      "loading": "Loading…",
+      "notFound": "Not found",
+      "loadFailed": "Couldn't load.",
+      "play": "Play again",
+      "playing": "Playing…",
+      "delete": "Delete",
+      "deleting": "Deleting…",
+      "showTranscript": "▶ Read the original conversation",
+      "hideTranscript": "▼ Hide the original conversation",
+      "deleteConfirm": {
+        "title": "Delete this diary entry?",
+        "desc": "This action can't be undone.",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      },
+      "deleteFailed": "Couldn't delete."
+    }
   }
 }

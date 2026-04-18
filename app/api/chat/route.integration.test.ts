@@ -174,4 +174,53 @@ describe("POST /api/chat", () => {
     expect(callBody.system).toContain("greet the user casually in English");
     expect(callBody.system).not.toContain("今日どうだった？");
   });
+
+  // Claude の LANGUAGE: Mirror the user's language ルールは、具体的なユーザー発話（日本語の
+  // セッションマーカー）に引きずられて OPENING の英語指示を上書きしてしまう。セッションマーカー自体を
+  // UI ロケールに合わせた英語にしておくことで、EN UI で日本語オープナーが返ってしまうバグを防ぐ。
+  it("locale=en + mode=diary + assistantFirst のとき session marker が英語になる", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(mockAnthropicResponse('{"reply": "Hey!", "translation": null}'));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const req = new Request("http://localhost/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        history: [],
+        mode: "diary",
+        assistantFirst: true,
+        locale: "en",
+      }),
+    });
+
+    await POST(req);
+
+    const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(callBody.messages).toEqual([{ role: "user", content: "(session start)" }]);
+  });
+
+  it("locale=ja + mode=diary + assistantFirst のとき session marker は日本語のまま", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(mockAnthropicResponse('{"reply": "こんにちは", "translation": null}'));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const req = new Request("http://localhost/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        history: [],
+        mode: "diary",
+        assistantFirst: true,
+        locale: "ja",
+      }),
+    });
+
+    await POST(req);
+
+    const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(callBody.messages).toEqual([{ role: "user", content: "（セッション開始）" }]);
+  });
 });
