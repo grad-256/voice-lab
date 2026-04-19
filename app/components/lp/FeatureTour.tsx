@@ -19,9 +19,10 @@ type ChatBubble = { role: "assistant" | "user"; text: string };
 type HistoryEntry = { date: string; title: string; body: string };
 
 // スマホ風の丸角フレーム。中身は absolute inset-0 で縦長画面に収める。
+// モバイル時はカルーセル内で大きく、PC 時は 2×2 グリッドに収まるよう少し抑える。
 function PhoneFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-[340px] sm:max-w-[400px] md:max-w-[460px]">
+    <div className="mx-auto w-full max-w-[340px] sm:max-w-[320px] md:max-w-[360px]">
       <div className="relative rounded-[2.25rem] border-[8px] border-[var(--border-strong)] bg-[var(--bg)] shadow-2xl shadow-black/30 overflow-hidden aspect-[9/17]">
         {/* スマホのノッチ（上部中央の薄い黒バー） */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-4 bg-[var(--border-strong)] rounded-b-xl z-10" />
@@ -360,9 +361,57 @@ export default function FeatureTour() {
   // 先頭 3 件のみ使う（録音モックに 3 バブル並べる用）
   const recordingBubbles = conversation.slice(0, 3);
 
+  // スライド ID に対応するモックを描画。モバイル・PC 両方で再利用する。
+  const renderMock = (slide: SlideId) => {
+    if (slide === "recording") {
+      return (
+        <RecordingMock
+          caption={tTour("slides.recording.caption")}
+          bubbles={recordingBubbles}
+          headerBack={tDiary("header.back")}
+          headerTitle={tDiary("header.title")}
+          headerFinish={tDiary("header.finish")}
+        />
+      );
+    }
+    if (slide === "summary") {
+      return (
+        <SummaryMock
+          bubbles={recordingBubbles}
+          headerBack={tDiary("header.back")}
+          headerTitle={tDiary("header.title")}
+          heading={tDiary("summary.heading")}
+          summaryTitle={tTour("mock.summary.title")}
+          summaryBody={tTour("mock.summary.body")}
+          saveLabel={tDiary("summary.save")}
+          discardLabel={tDiary("summary.discard")}
+        />
+      );
+    }
+    if (slide === "history") {
+      return (
+        <HistoryMock
+          entries={historyEntries}
+          headerBack={tDiary("history.back")}
+          headerNew={tDiary("history.new")}
+          title={tDiary("history.title")}
+        />
+      );
+    }
+    return (
+      <DetailMock
+        headerBack={tDiary("detail.back")}
+        dateLine={tTour("mock.detail.dateLine")}
+        title={tTour("mock.detail.title")}
+        body={tTour("mock.detail.body")}
+        playLabel={tDiary("detail.play")}
+      />
+    );
+  };
+
   return (
     <div className="flex flex-col gap-8">
-      {/* セクション見出し */}
+      {/* セクション見出し（PC / モバイル共通） */}
       <div className="text-center">
         <h2 className="text-3xl font-bold text-[var(--fg)] mb-3">{tTour("title")}</h2>
         <p className="text-[var(--fg-muted)] text-sm sm:text-base leading-relaxed max-w-xl mx-auto">
@@ -370,81 +419,61 @@ export default function FeatureTour() {
         </p>
       </div>
 
-      {/* embla ビューポート：overflow-hidden + ref */}
-      <div className="overflow-hidden" ref={emblaRef}>
-        {/* コンテナ：flex で横並び。touch-pan-y で縦スクロールと両立 */}
-        <div className="flex touch-pan-y">
-          {SLIDES.map((slide) => (
-            <div key={slide} className="flex-[0_0_100%] min-w-0 px-3 py-2">
-              <PhoneFrame>
-                {slide === "recording" && (
-                  <RecordingMock
-                    caption={tTour("slides.recording.caption")}
-                    bubbles={recordingBubbles}
-                    headerBack={tDiary("header.back")}
-                    headerTitle={tDiary("header.title")}
-                    headerFinish={tDiary("header.finish")}
-                  />
-                )}
-                {slide === "summary" && (
-                  <SummaryMock
-                    bubbles={recordingBubbles}
-                    headerBack={tDiary("header.back")}
-                    headerTitle={tDiary("header.title")}
-                    heading={tDiary("summary.heading")}
-                    summaryTitle={tTour("mock.summary.title")}
-                    summaryBody={tTour("mock.summary.body")}
-                    saveLabel={tDiary("summary.save")}
-                    discardLabel={tDiary("summary.discard")}
-                  />
-                )}
-                {slide === "history" && (
-                  <HistoryMock
-                    entries={historyEntries}
-                    headerBack={tDiary("history.back")}
-                    headerNew={tDiary("history.new")}
-                    title={tDiary("history.title")}
-                  />
-                )}
-                {slide === "detail" && (
-                  <DetailMock
-                    headerBack={tDiary("detail.back")}
-                    dateLine={tTour("mock.detail.dateLine")}
-                    title={tTour("mock.detail.title")}
-                    body={tTour("mock.detail.body")}
-                    playLabel={tDiary("detail.play")}
-                  />
-                )}
-              </PhoneFrame>
-            </div>
-          ))}
+      {/* モバイル（< sm）：embla カルーセル + ドットナビ + アクティブ説明文 */}
+      <div className="flex flex-col gap-8 sm:hidden">
+        {/* embla ビューポート：overflow-hidden + ref */}
+        <div className="overflow-hidden" ref={emblaRef}>
+          {/* コンテナ：flex で横並び。touch-pan-y で縦スクロールと両立 */}
+          <div className="flex touch-pan-y">
+            {SLIDES.map((slide) => (
+              <div key={slide} className="flex-[0_0_100%] min-w-0 px-3 py-2">
+                <PhoneFrame>{renderMock(slide)}</PhoneFrame>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* キャプション：アクティブなスライドの説明文 */}
+        <p className="text-center text-sm text-[var(--fg-muted)] leading-relaxed max-w-xl mx-auto min-h-[4.5rem]">
+          {tTour(`slides.${activeSlide}.description`)}
+        </p>
+
+        {/* ドットナビ：タップ or クリックでジャンプ。autoplay は play() で再開 */}
+        <div className="flex items-center justify-center gap-2.5">
+          {SLIDES.map((slide, idx) => {
+            const isActive = idx === selectedIndex;
+            return (
+              <button
+                key={slide}
+                type="button"
+                onClick={() => scrollTo(idx)}
+                aria-label={tTour(`slides.${slide}.caption`)}
+                aria-current={isActive ? "true" : undefined}
+                className={`h-2 rounded-full transition-all ${
+                  isActive
+                    ? "w-8 bg-[var(--accent)]"
+                    : "w-2 bg-[var(--border-strong)] hover:bg-[var(--fg-subtle)]"
+                }`}
+              />
+            );
+          })}
         </div>
       </div>
 
-      {/* キャプション：アクティブなスライドの説明文 */}
-      <p className="text-center text-sm text-[var(--fg-muted)] leading-relaxed max-w-xl mx-auto min-h-[4.5rem] sm:min-h-[3.5rem]">
-        {tTour(`slides.${activeSlide}.description`)}
-      </p>
-
-      {/* ドットナビ：タップ or クリックでジャンプ。autoplay は play() で再開 */}
-      <div className="flex items-center justify-center gap-2.5">
-        {SLIDES.map((slide, idx) => {
-          const isActive = idx === selectedIndex;
-          return (
-            <button
-              key={slide}
-              type="button"
-              onClick={() => scrollTo(idx)}
-              aria-label={tTour(`slides.${slide}.caption`)}
-              aria-current={isActive ? "true" : undefined}
-              className={`h-2 rounded-full transition-all ${
-                isActive
-                  ? "w-8 bg-[var(--accent)]"
-                  : "w-2 bg-[var(--border-strong)] hover:bg-[var(--fg-subtle)]"
-              }`}
-            />
-          );
-        })}
+      {/* PC（>= sm）：2×2 グリッド。4 枚同時表示・スワイプ / 自動再生 / ドットなし。
+          各フレームの下に caption + description を個別に配置する */}
+      <div className="hidden sm:grid sm:grid-cols-2 sm:gap-8 md:gap-12 max-w-5xl mx-auto">
+        {SLIDES.map((slide) => (
+          <div key={slide} className="flex flex-col items-center gap-4">
+            <PhoneFrame>{renderMock(slide)}</PhoneFrame>
+            <p className="text-xs font-medium tracking-widest-tabular uppercase text-[var(--accent)]">
+              {tTour(`slides.${slide}.caption`)}
+            </p>
+            <p className="text-sm text-[var(--fg-muted)] leading-relaxed text-center max-w-xs">
+              {tTour(`slides.${slide}.description`)}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );
