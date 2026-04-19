@@ -83,39 +83,39 @@ export default function ChatDemo() {
 
   return (
     <div
-      className="w-full bg-gray-950 rounded-[36px] border border-gray-700/40 overflow-hidden flex flex-col h-[560px]"
+      className="w-full bg-[var(--bg)] rounded-[36px] border border-[var(--border-strong)] overflow-hidden flex flex-col h-[560px]"
       style={{
         boxShadow:
-          "0 0 0 7px #0b1020, 0 0 0 8px rgba(99,102,241,0.12), 0 40px 80px -20px rgba(0,0,0,0.9), 0 20px 40px -10px rgba(99,102,241,0.18)",
+          "0 0 0 7px rgba(0,0,0,0.6), 0 0 0 8px rgba(74,122,156,0.12), 0 40px 80px -20px rgba(0,0,0,0.9), 0 20px 40px -10px rgba(0,0,0,0.4)",
       }}
     >
       {/* ステータスバー */}
-      <div className="px-5 pt-3 pb-1 flex justify-between items-center text-[10px] text-gray-600">
+      <div className="px-5 pt-3 pb-1 flex justify-between items-center text-[10px] text-[var(--fg-subtle)]">
         <span>9:41</span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-1 h-1 rounded-full bg-gray-600" />
-          <span className="inline-block w-1 h-1 rounded-full bg-gray-600" />
-          <span className="inline-block w-1 h-1 rounded-full bg-gray-600" />
+          <span className="inline-block w-1 h-1 rounded-full bg-[var(--fg-subtle)]" />
+          <span className="inline-block w-1 h-1 rounded-full bg-[var(--fg-subtle)]" />
+          <span className="inline-block w-1 h-1 rounded-full bg-[var(--fg-subtle)]" />
         </span>
       </div>
 
       <div className="flex flex-col px-3 pb-5 flex-1 min-h-0">
         {/* ヘッダー：ブランド名（特定ペルソナ・英会話訴求は廃止） */}
-        <div className="flex items-center gap-2 py-2 border-b border-gray-800/50">
+        <div className="flex items-center gap-2 py-2 border-b border-[var(--border)]">
           <div className="relative w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0">
             VL
             {/* AI が話しているときはアバターの周囲に柔らかい光 */}
             {phase === "speaking" && (
-              <span className="absolute inset-0 rounded-full ring-2 ring-indigo-400/60 animate-ping" />
+              <span className="absolute inset-0 rounded-full ring-2 ring-[var(--accent-strong)]/60 animate-ping" />
             )}
           </div>
           <div className="leading-tight">
-            <p className="text-white font-semibold text-sm">MyVoiceLab</p>
-            <p className="text-gray-500 text-xs">{t("partner")}</p>
+            <p className="text-[var(--fg)] font-semibold text-sm">MyVoiceLab</p>
+            <p className="text-[var(--fg-subtle)] text-xs">{t("partner")}</p>
           </div>
           <span className="ml-auto flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] text-gray-500">{t("online")}</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-strong)] animate-pulse" />
+            <span className="text-[10px] text-[var(--fg-subtle)]">{t("online")}</span>
           </span>
         </div>
 
@@ -139,8 +139,8 @@ export default function ChatDemo() {
                 <div
                   className={`text-sm px-3.5 py-2.5 rounded-2xl leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-gray-700 text-white rounded-tr-sm"
-                      : "bg-gray-800 text-gray-100 rounded-tl-sm"
+                      ? "bg-[var(--accent)]/30 text-[var(--fg)] rounded-tr-sm"
+                      : "bg-[var(--bg-elevated)] text-[var(--fg)] rounded-tl-sm"
                   }`}
                 >
                   {msg.text}
@@ -155,10 +155,10 @@ export default function ChatDemo() {
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-1">
                 VL
               </div>
-              <div className="bg-gray-800 px-3 py-2.5 rounded-2xl rounded-tl-sm flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
-                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
-                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
+              <div className="bg-[var(--bg-elevated)] px-3 py-2.5 rounded-2xl rounded-tl-sm flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-[var(--fg-subtle)] rounded-full animate-bounce [animation-delay:0ms]" />
+                <span className="w-1.5 h-1.5 bg-[var(--fg-subtle)] rounded-full animate-bounce [animation-delay:150ms]" />
+                <span className="w-1.5 h-1.5 bg-[var(--fg-subtle)] rounded-full animate-bounce [animation-delay:300ms]" />
               </div>
             </div>
           )}
@@ -173,7 +173,7 @@ export default function ChatDemo() {
                 <span
                   key={i}
                   className={`w-[3px] rounded-full ${
-                    phase === "listening" ? "bg-red-400" : "bg-indigo-400"
+                    phase === "listening" ? "bg-[var(--accent-strong)]" : "bg-[var(--accent)]"
                   }`}
                   style={{
                     height: `${30 + ((i * 13) % 70)}%`,
@@ -187,27 +187,21 @@ export default function ChatDemo() {
           <p
             className={`text-xs transition-colors ${
               phase === "listening"
-                ? "text-red-400"
-                : phase === "thinking"
-                  ? "text-indigo-300"
-                  : phase === "speaking"
-                    ? "text-indigo-300"
-                    : "text-gray-600"
+                ? "text-[var(--accent-strong)]"
+                : phase === "thinking" || phase === "speaking"
+                  ? "text-[var(--accent-strong)]"
+                  : "text-[var(--fg-subtle)]"
             }`}
           >
             {phaseLabel}
           </p>
 
           <div className="relative">
-            {/* 録音中のリングパルス */}
-            {phase === "listening" && (
-              <span className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />
-            )}
             <div
               className={`relative w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all ${
                 phase === "listening"
-                  ? "bg-red-500 scale-110 shadow-red-900/60"
-                  : "bg-gray-700 shadow-gray-900/60"
+                  ? "bg-[var(--accent)] scale-105 shadow-black/40 animate-breathe"
+                  : "bg-[var(--bg-elevated)] shadow-black/30"
               }`}
             >
               <svg

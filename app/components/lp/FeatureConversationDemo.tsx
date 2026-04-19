@@ -28,7 +28,7 @@ export default function FeatureConversationDemo() {
   }, [visible, bubbles.length]);
 
   return (
-    <div className="relative w-full h-[200px] rounded-2xl bg-gray-950 border border-gray-800/60 overflow-hidden p-3.5 flex flex-col justify-end gap-2">
+    <div className="relative w-full h-[200px] rounded-2xl bg-[var(--bg)] border border-[var(--border)] overflow-hidden p-3.5 flex flex-col justify-end gap-2">
       {bubbles.slice(0, visible).map((b, i) => (
         <div
           key={`${i}-${b.text}`}
@@ -37,8 +37,8 @@ export default function FeatureConversationDemo() {
           <div
             className={`max-w-[78%] px-3 py-1.5 rounded-xl text-xs leading-snug ${
               b.role === "user"
-                ? "bg-gray-700 text-white rounded-tr-sm"
-                : "bg-gray-800 text-gray-100 rounded-tl-sm"
+                ? "bg-[var(--accent)]/30 text-[var(--fg)] rounded-tr-sm"
+                : "bg-[var(--bg-elevated)] text-[var(--fg-muted)] rounded-tl-sm"
             }`}
           >
             {b.text}

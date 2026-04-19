@@ -15,54 +15,54 @@
   "lp": {
     "hero": {
       "badge": "No signup required — try it now",
-      "lead": "With AI, in any situation.",
-      "h1Part1": "Talk.",
-      "h1Part2": " See it take shape.",
-      "subCopy1": "A new way to live — out loud.",
-      "subCopy2": "A partner for practicing out loud, right here.",
+      "lead": "Talk your day into a diary.",
+      "h1Part1": "Just talk.",
+      "h1Part2": " It becomes a diary.",
+      "subCopy1": "On days when writing feels too heavy, your voice keeps going.",
+      "subCopy2": "Say what happened today, and it turns into a diary you can read later.",
       "ctaStart": "Start talking",
       "ctaLogin": "Log in",
       "note": "No signup — free for your first 10 exchanges"
     },
     "steps": {
       "eyebrow": "How it works",
-      "title": "Speak it. Keep it. See it.",
+      "title": "Just talk. It becomes a diary.",
       "items": {
         "talk": {
-          "title": "Speak with your voice",
-          "desc": "Press the mic and say what's on your mind — no keyboard needed."
+          "title": "Press the mic and talk about your day",
+          "desc": "Just say what's on your mind. No keyboard needed."
         },
         "stack": {
-          "title": "Your conversation stays",
-          "desc": "Every exchange with the AI is saved automatically. You don't have to take notes — nothing gets lost."
+          "title": "The AI listens and shapes it into a diary",
+          "desc": "It hears you out, replies naturally, and keeps the conversation going with you."
         },
         "visualize": {
-          "title": "See it take shape",
-          "desc": "The conversation is summarized into a diary you can read later. What you said becomes something you can see."
+          "title": "Read it back later to reflect",
+          "desc": "Your conversations are summarized and saved as diary entries you can revisit anytime."
         }
       }
     },
     "features": {
       "eyebrow": "What you can do",
-      "title": "Speak, keep it, and see it take shape.",
+      "title": "A new kind of diary — done entirely by voice.",
       "items": {
         "voice": {
-          "title": "Speak with your voice",
-          "desc": "Start an AI conversation with a single tap. Whether it's reflection, working through an idea, or just chatting — begin with your voice."
+          "title": "Voice is all you need",
+          "desc": "Skip the keyboard. Just press the mic and talk. Pick from three calm voices to read your diary back to you."
         },
         "conversation": {
-          "title": "Your conversation stays",
-          "desc": "What you said is kept as a readable record. Speaking carries on where writing gives up."
+          "title": "Your conversation becomes a diary",
+          "desc": "The AI listens and replies naturally. That back-and-forth is turned into a readable diary entry on its own."
         },
         "summary": {
-          "title": "See it take shape",
-          "desc": "The AI summarizes your conversation. Your own words get organized into something you can read later."
+          "title": "Revisit it on your own time",
+          "desc": "Browse past entries at a glance, or open a single one to reread. A quiet place to meet the thoughts you had, again."
         }
       }
     },
     "cta": {
       "titlePart1": "Now,",
-      "titlePart2": " start talking.",
+      "titlePart2": " talk about your day.",
       "bodyLine1": "No signup — free for your first 10 exchanges.",
       "bodyLine2": "Just start by saying it out loud.",
       "button": "Start talking"
