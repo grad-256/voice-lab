@@ -45,7 +45,7 @@ export default function FeatureVoiceDemo() {
         {active && <span className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />}
         <div
           className={`relative w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all ${
-            active ? "bg-red-500 scale-110 shadow-red-900/60" : "bg-indigo-600 shadow-indigo-900/50"
+            active ? "bg-red-500 scale-110 shadow-red-900/60" : "bg-gray-700 shadow-gray-900/50"
           }`}
         >
           <svg

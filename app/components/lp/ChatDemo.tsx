@@ -139,7 +139,7 @@ export default function ChatDemo() {
                 <div
                   className={`text-sm px-3.5 py-2.5 rounded-2xl leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-indigo-600 text-white rounded-tr-sm"
+                      ? "bg-gray-700 text-white rounded-tr-sm"
                       : "bg-gray-800 text-gray-100 rounded-tl-sm"
                   }`}
                 >
@@ -207,7 +207,7 @@ export default function ChatDemo() {
               className={`relative w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all ${
                 phase === "listening"
                   ? "bg-red-500 scale-110 shadow-red-900/60"
-                  : "bg-indigo-600 shadow-indigo-900/60"
+                  : "bg-gray-700 shadow-gray-900/60"
               }`}
             >
               <svg

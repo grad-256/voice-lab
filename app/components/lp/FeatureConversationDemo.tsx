@@ -37,7 +37,7 @@ export default function FeatureConversationDemo() {
           <div
             className={`max-w-[78%] px-3 py-1.5 rounded-xl text-xs leading-snug ${
               b.role === "user"
-                ? "bg-indigo-600 text-white rounded-tr-sm"
+                ? "bg-gray-700 text-white rounded-tr-sm"
                 : "bg-gray-800 text-gray-100 rounded-tl-sm"
             }`}
           >

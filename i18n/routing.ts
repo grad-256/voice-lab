@@ -5,8 +5,8 @@ import { defineRouting } from "next-intl/routing";
 export const routing = defineRouting({
   locales: ["ja", "en"],
   defaultLocale: "ja",
-  // デフォルトロケール（ja）の URL はプリフィクスなしで維持（例：/echo は変わらず）
-  // 英語のみ /en プリフィクスが付く（例：/en/echo）
+  // デフォルトロケール（ja）の URL はプリフィクスなしで維持（例：/diary は変わらず）
+  // 英語のみ /en プリフィクスが付く（例：/en/diary）
   localePrefix: "as-needed",
 });
 

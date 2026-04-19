@@ -8,20 +8,18 @@ const intlMiddleware = createIntlMiddleware(routing);
 
 // ゲストでもアクセスできる完全一致パスの allowlist（locale プリフィクスを除いた裸のパス）。
 // ここに「ない」ものは認証必須。
-// 例：/diary は公開（録音開始可）だが /diary/history は未掲載 → 認証必須。
-//     /settings/voice は公開（ゲストの分身の声作成）だが /settings は未掲載 → 認証必須。
+// 例：/diary は公開（ゲストも録音開始可）だが /diary/history は未掲載 → 認証必須。
 const publicPaths = new Set<string>([
   "/",
   "/app",
   "/diary",
-  "/english",
-  "/echo",
-  "/settings/voice",
   "/login",
   "/privacy",
   "/terms",
   "/reset-password",
 ]);
+
+// `/me` 以下（声選択・パスワード変更など）は認証必須なので publicPaths に入れない
 
 function stripLocale(pathname: string): string {
   const segments = pathname.split("/").filter(Boolean);

@@ -4,17 +4,28 @@ description: |
   VoiceLab の Agent Team を起動するスキル。
   「チームを起動して」「チームで実装して」「フルチームで進めて」「並行で進めて」
   「バックグラウンドで調べて」「裏で走らせて」「定期的に確認して」などのトリガーで使うこと。
+  **Masaru さんは tmux split で進捗を見たい人なので、何も指定がない場合は必ずパターン A（tmux split）を使う。**
   タスクの性質に応じて 3 つの実行パターン（A: 並列チーム / B: バックグラウンド / C: スケジュール）を
   使い分ける。Claude Code の native Agent Teams API（TeamCreate / TaskCreate / SendMessage）と
   Agent ツール（run_in_background / isolation: worktree）を使う。
 ---
 
-# VoiceLab Agent Team 起動スキル v2
+# VoiceLab Agent Team 起動スキル v3
 
 VoiceLab の開発チームを分散起動して並列実行します。
-v2 では **3 つの実行パターン** を使い分けます。
+v3 では **デフォルトはパターン A（tmux split）**。Masaru さんはペイン越しに進捗を見たい人なので、
+「並列で」「チームで」「複数作業を並行して」と言われたら **反射的に A を選ぶ**。
 
-> **前提**: `.claude/settings.json` に `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 設定済み。
+> **前提**: `.claude/settings.json` に `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` + `teammateMmode: "tmux"` 設定済み。
+
+## v3 での変更点（重要）
+
+- **既定は Pattern A（tmux split）**。Masaru さんから明示的に「裏で走らせて」「定期実行で」と言われない限り、必ず A を使う。
+- **Agent ツールの `run_in_background: true` を安易に使わない**。それは「見えない並列実行」= Pattern B であり、
+  Masaru さんが毎回「画面に出てこない」と不満を示した実績がある。
+- **権限問題の注意**：Pattern A（`TeamCreate` + `Agent(team_name, name)` で spawn）だと teammate が
+  親セッションの permission を継承しやすい。**Pattern B（`run_in_background`）は default permission で立ち上がるため Edit/Write が拒否されやすい**。
+  これも A をデフォルトにすべき理由。
 
 ---
 
@@ -34,24 +45,27 @@ v2 では **3 つの実行パターン** を使い分けます。
 
 ---
 
-## 実行パターンの使い分け（最初に判断する）
-
-ユーザーの依頼を読んで **A / B / C のどれか** を決める。
+## 実行パターンの使い分け（v3：A がデフォルト）
 
 ### 判断フロー
 
 ```
-[1] 繰り返し or 定期実行 が必要？ ──── Yes ──→ パターン C（スケジュール）
+[1] 「毎日」「〇〇分ごとに」と時間指定あり？ ─ Yes ─→ パターン C（スケジュール）
         │ No
         ▼
-[2] 作業を横で見ながら進めたい？ ──── Yes ──→ パターン A（並列チーム）
+[2] 「裏で」「待ってる間に」「調査だけ」等の明示？ ─ Yes ─→ パターン B（バックグラウンド）
         │ No
         ▼
-[3] 独立したタスクを裏で走らせたい？── Yes ──→ パターン B（バックグラウンド）
-        │ No
-        ▼
-     単一セッションで実行（harness-executor スキルを使う）
+     **デフォルト：パターン A（tmux split）で起動する**
 ```
+
+### ルール（Masaru さんの過去フィードバックから確定）
+
+- **何も言われなくても「複数の独立タスク」なら A**：Masaru さんが tmux 越しに進捗を見たい
+- **「チームで」「並列で」は確定で A**
+- 単発タスクで「調べておいて」だけなら B-1
+- 明確に「別 worktree で試して」と言われたら B-2
+- Pattern B を使うときは **必ず「tmux に出ない旨」を事前にひとこと告げる**（認識齟齬防止）
 
 ---
 

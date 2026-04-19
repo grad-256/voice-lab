@@ -235,14 +235,15 @@ Anthropic Labs の研究（[Harness design for long-running application developm
 `app/layout.tsx` の body は既に `min-h-screen flex flex-col` で 100vh を確保しており、
 内部は `<div className="flex-1 flex flex-col">{children}</div>` + footer の構造になっている。
 
-- **ページ側の `<main>` に `min-h-screen` を直接書かない**。body とダブルがけになり、
-  `main = 100vh` + `footer = 自然高` で画面超過（`/echo` 事例）。代わりに `flex-1 w-full` を使う
-- **footer を隠したい画面**（会話画面の `/app` など）だけ、明示的に `h-screen overflow-hidden` を書く
-- 該当例：`/echo`・`/settings/voice`・`/privacy`・`/terms` は `flex-1 w-full`、`/app` のみ `h-screen overflow-hidden`
+- **ページ側の `<main>` に `min-h-screen` を直接書かない`**。body とダブルがけになり、
+  `main = 100vh` + `footer = 自然高` で画面超過する（過去に発生した回帰）。代わりに `flex-1 w-full` を使う
+- **footer を隠したい画面**（日記の会話画面 `/diary` など）だけ、明示的に `h-screen overflow-hidden` を書く
+- 該当例：`/app`・`/diary/history`・`/privacy`・`/terms` は `flex-1 w-full`、`/diary` のみ `h-screen overflow-hidden`
 
 ### システムプロンプトを変更するとき
 `app/api/chat/route.ts` の `SYSTEM_PROMPT` 定数を編集する。
-（Phase 1 で UI から設定可能にする予定）
+日記モードは `lib/chat.ts` の `buildDiarySystemPrompt`。
 
 ### ElevenLabs のボイスを変えるとき
 `app/api/speak/route.ts` の `VOICE_ID` または `.env.local` の `ELEVENLABS_VOICE_ID` を変更する。
+クライアント側の簡易声選択は `lib/voicePreferences.ts` の `PRESET_VOICES` で管理。
