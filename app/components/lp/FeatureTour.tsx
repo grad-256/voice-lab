@@ -322,7 +322,8 @@ export default function FeatureTour() {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   // Autoplay プラグイン：ユーザー操作でいったん停止、マウスオーバーでも停止。
-  // ドット操作後は autoplay.reset() で自動再生を再開する（UX 意図：触っても止まり続けない）。
+  // ドット操作後は autoplay.play() で自動再生を再開する（UX 意図：触っても止まり続けない）。
+  // ※ reset() は autoplayActive が false だと no-op（embla-carousel-autoplay v8 の実装）なので play() を使う。
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center", skipSnaps: false }, [
     Autoplay({ delay: AUTOPLAY_DELAY_MS, stopOnInteraction: true, stopOnMouseEnter: true }),
   ]);
@@ -342,9 +343,11 @@ export default function FeatureTour() {
     (idx: number) => {
       if (!emblaApi) return;
       emblaApi.scrollTo(idx);
-      // 手動ジャンプ後も自動再生を続けたいので reset でタイマーを再始動
+      // 手動ジャンプ後も自動再生を続けたい。stopOnInteraction / stopOnMouseEnter で既に
+      // autoplayActive=false になっているケースが通常なので、reset() ではなく play() を呼ぶ
+      // （reset は停止中に no-op になる embla-carousel-autoplay v8 の仕様）
       const autoplay = emblaApi.plugins().autoplay;
-      autoplay?.reset();
+      autoplay?.play();
     },
     [emblaApi]
   );
