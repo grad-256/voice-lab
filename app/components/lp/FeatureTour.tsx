@@ -426,7 +426,7 @@ export default function FeatureTour() {
         {tTour(`slides.${activeSlide}.description`)}
       </p>
 
-      {/* ドットナビ：タップ or クリックでジャンプ。autoplay は reset で再開 */}
+      {/* ドットナビ：タップ or クリックでジャンプ。autoplay は play() で再開 */}
       <div className="flex items-center justify-center gap-2.5">
         {SLIDES.map((slide, idx) => {
           const isActive = idx === selectedIndex;
