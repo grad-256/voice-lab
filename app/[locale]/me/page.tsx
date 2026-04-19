@@ -5,10 +5,35 @@ export const runtime = "edge";
 
 import { Link, useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
+import {
+  type ThemePreference,
+  applyResolvedTheme,
+  getStoredThemePreference,
+  resolveTheme,
+  setStoredThemePreference,
+  subscribeSystemTheme,
+} from "@/lib/theme";
 import { getSelectedVoice } from "@/lib/voicePreferences";
-import { ArrowLeft, ChevronRight, Lock, LogOut, Mic, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  Lock,
+  LogOut,
+  Mic,
+  Monitor,
+  Moon,
+  Sun,
+  Trash2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+
+// テーマ 3 択。表示順とアイコンはブランドで統一（System → Light → Dark）。
+const THEME_OPTIONS: readonly { value: ThemePreference; Icon: typeof Monitor }[] = [
+  { value: "system", Icon: Monitor },
+  { value: "light", Icon: Sun },
+  { value: "dark", Icon: Moon },
+];
 
 export default function SettingsPage() {
   const t = useTranslations("me");
@@ -21,12 +46,34 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [currentVoiceLabel, setCurrentVoiceLabel] = useState<string>("");
+  // テーマ選択は SSR では決まらないので、マウント後に localStorage から読む。
+  // 未マウント時は null にしておき、ボタンのアクティブ表示を抑える（ちらつき防止）。
+  const [themePref, setThemePref] = useState<ThemePreference | null>(null);
 
   useEffect(() => {
     // localStorage から現在の声 ID を取り、i18n のラベルに引き直す
     const id = getSelectedVoice().id;
     setCurrentVoiceLabel(t(`voice.presets.${id}.label`));
   }, [t]);
+
+  // 初回マウント時に localStorage の選択を state に復元する
+  useEffect(() => {
+    setThemePref(getStoredThemePreference());
+  }, []);
+
+  // themePref が "system" の間だけ OS 変更を購読する。
+  // 依存配列を [themePref] にすることで、System ↔ Light/Dark 切替時に購読が追従する
+  // （前版は依存配列 [] で初回値が "system" の人にしか働かなかった）。
+  useEffect(() => {
+    if (themePref !== "system") return;
+    return subscribeSystemTheme(applyResolvedTheme);
+  }, [themePref]);
+
+  const handleThemeChange = (next: ThemePreference) => {
+    setThemePref(next);
+    setStoredThemePreference(next);
+    applyResolvedTheme(resolveTheme(next));
+  };
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -86,7 +133,7 @@ export default function SettingsPage() {
         {/* 声を選ぶ */}
         <Link
           href="/me/voice"
-          className="flex items-center justify-between gap-4 p-5 rounded-lg bg-[var(--bg-elevated)]/50 hover:bg-[var(--bg-elevated)] border border-[var(--border)] hover:border-[var(--accent)]/60 transition-colors"
+          className="flex items-center justify-between gap-4 p-5 rounded-lg bg-elevated-50 hover:bg-elevated border border-[var(--border)] hover:border-accent-60 transition-colors"
         >
           <div className="flex items-center gap-4 min-w-0">
             <Mic size={18} strokeWidth={1.5} className="shrink-0 text-[var(--fg-subtle)]" />
@@ -100,10 +147,55 @@ export default function SettingsPage() {
           <ChevronRight size={16} strokeWidth={1.5} className="shrink-0 text-[var(--fg-subtle)]" />
         </Link>
 
+        {/* テーマ切替（System / Light / Dark） */}
+        <div className="p-5 rounded-lg bg-elevated-50 border border-[var(--border)]">
+          <div className="flex items-center gap-4 min-w-0 mb-4">
+            {/* System 時はモニタ、明示指定時はその状態のアイコン */}
+            {(() => {
+              const Icon = THEME_OPTIONS.find((o) => o.value === themePref)?.Icon ?? Monitor;
+              return (
+                <Icon size={18} strokeWidth={1.5} className="shrink-0 text-[var(--fg-subtle)]" />
+              );
+            })()}
+            <div className="min-w-0">
+              <div className="text-base font-medium text-[var(--fg)]">{t("theme.cardTitle")}</div>
+              <div className="text-xs text-[var(--fg-muted)] mt-0.5">{t("theme.cardSubtitle")}</div>
+            </div>
+          </div>
+
+          <div
+            role="radiogroup"
+            aria-label={t("theme.groupAriaLabel")}
+            className="grid grid-cols-3 gap-1.5 p-1 rounded-md border border-[var(--border)] bg-[var(--bg)]"
+          >
+            {THEME_OPTIONS.map(({ value, Icon }) => {
+              const active = themePref === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  // biome-ignore lint/a11y/useSemanticElements: segmented control にはカスタムスタイルが必要で、button + role=radio の組み合わせで A11y を満たす。
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => handleThemeChange(value)}
+                  className={
+                    active
+                      ? "flex items-center justify-center gap-2 py-2.5 rounded text-sm bg-[var(--accent)] text-white transition-colors"
+                      : "flex items-center justify-center gap-2 py-2.5 rounded text-sm text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-elevated)] transition-colors"
+                  }
+                >
+                  <Icon size={14} strokeWidth={1.5} />
+                  {t(`theme.options.${value}`)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* パスワード変更（ログイン中のまま変更可能） */}
         <Link
           href="/me/password"
-          className="flex items-center justify-between gap-4 p-5 rounded-lg bg-[var(--bg-elevated)]/50 hover:bg-[var(--bg-elevated)] border border-[var(--border)] hover:border-[var(--accent)]/60 transition-colors"
+          className="flex items-center justify-between gap-4 p-5 rounded-lg bg-elevated-50 hover:bg-elevated border border-[var(--border)] hover:border-accent-60 transition-colors"
         >
           <div className="flex items-center gap-4 min-w-0">
             <Lock size={18} strokeWidth={1.5} className="shrink-0 text-[var(--fg-subtle)]" />
@@ -124,7 +216,7 @@ export default function SettingsPage() {
             setErrorMsg(null);
             setShowLogoutConfirm(true);
           }}
-          className="w-full flex items-center justify-between gap-4 p-5 rounded-lg bg-[var(--bg-elevated)]/50 hover:bg-[var(--bg-elevated)] border border-[var(--border)] hover:border-[var(--accent)]/60 transition-colors text-left"
+          className="w-full flex items-center justify-between gap-4 p-5 rounded-lg bg-elevated-50 hover:bg-elevated border border-[var(--border)] hover:border-accent-60 transition-colors text-left"
         >
           <div className="flex items-center gap-4 min-w-0">
             <LogOut size={18} strokeWidth={1.5} className="shrink-0 text-[var(--fg-subtle)]" />
@@ -139,7 +231,7 @@ export default function SettingsPage() {
         </button>
 
         {/* アカウント削除 */}
-        <div className="p-5 rounded-lg bg-[var(--bg-elevated)]/50 border border-[var(--border)]">
+        <div className="p-5 rounded-lg bg-elevated-50 border border-[var(--border)]">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-4 min-w-0">
               <Trash2

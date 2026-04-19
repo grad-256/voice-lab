@@ -2,9 +2,11 @@
 // ルートレイアウトに宣言して root 経由のルートにも確実に行き渡らせる。
 export const runtime = "edge";
 
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import type { Metadata, Viewport } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Noto_Sans_JP, Noto_Serif_JP, Plus_Jakarta_Sans } from "next/font/google";
+import Script from "next/script";
 import PostHogProvider from "./components/PostHogProvider";
 import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
 import "./globals.css";
@@ -52,8 +54,15 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+// themeColor はメディアクエリでダーク/ライトを切り替え。
+// ブラウザの themeColor はカスタム属性を参照できないため、
+// 手動選択（localStorage）ではなく OS の prefers-color-scheme のみに追従する。
+// 値は globals.css の --bg と揃える（Dark: #121212, Light: #f6f2e9）。
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#121212" },
+    { media: "(prefers-color-scheme: light)", color: "#f6f2e9" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -70,11 +79,21 @@ export default async function RootLayout({
   const locale = await getLocale();
 
   return (
+    // suppressHydrationWarning：THEME_INIT_SCRIPT が hydration 前に data-theme を書き込むため、
+    // サーバー HTML とクライアント DOM で html 要素の属性が差分になる。警告抑止は html 要素 1 段のみに
+    // 限定される（子ツリーには波及しない）Next.js / next-themes 標準パターン。
     <html
       lang={locale}
       className={`${jakartaSans.variable} ${notoSansJP.variable} ${notoSerifJP.variable}`}
+      suppressHydrationWarning
     >
       <body className="min-h-screen bg-[var(--bg)] text-[var(--fg)] antialiased flex flex-col">
+        {/* FOUC 防止：React hydration より前に html の data-theme を同期適用する。
+            beforeInteractive は root layout でのみ有効（Next.js 15 App Router の制約）。
+            スクリプト本体は lib/theme.ts で定義され、localStorage と OS 設定を読む。 */}
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
         <PostHogProvider>{children}</PostHogProvider>
         {/* PWA Service Worker 登録（インストール可能判定のため必須） */}
         <ServiceWorkerRegister />

@@ -23,9 +23,11 @@ type HistoryEntry = { date: string; title: string; body: string };
 function PhoneFrame({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto w-full max-w-[340px] sm:max-w-[320px] md:max-w-[360px]">
-      <div className="relative rounded-[2.25rem] border-[8px] border-[var(--border-strong)] bg-[var(--bg)] shadow-2xl shadow-black/30 overflow-hidden aspect-[9/17]">
-        {/* スマホのノッチ（上部中央の薄い黒バー） */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-4 bg-[var(--border-strong)] rounded-b-xl z-10" />
+      {/* ベゼル（border）とノッチは端末表現のため両テーマで墨色（--phone-bezel）に固定。
+          ChatDemo の .chat-phone-frame と色方針を揃える（Light の紙背景でも電話に見える）。 */}
+      <div className="relative rounded-[2.25rem] border-[8px] border-[var(--phone-bezel)] bg-[var(--bg)] shadow-theme-lg overflow-hidden aspect-[9/17]">
+        {/* スマホのノッチ（上部中央の墨色バー） */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-4 bg-[var(--phone-bezel)] rounded-b-xl z-10" />
         <div className="absolute inset-0 overflow-hidden">{children}</div>
       </div>
     </div>
@@ -173,7 +175,7 @@ function SummaryMock({
 
       {/* 要約モーダル（中央） */}
       <div className="absolute inset-0 flex items-center justify-center px-4">
-        <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-3 w-full shadow-xl shadow-black/30">
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-3 w-full shadow-theme-md">
           <p className="text-sm tracking-widest-tabular text-[var(--fg-subtle)] mb-1.5 uppercase">
             {heading}
           </p>

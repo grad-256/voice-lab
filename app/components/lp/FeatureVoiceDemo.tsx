@@ -43,14 +43,16 @@ export default function FeatureVoiceDemo() {
       {/* マイクボタン（録音中は墨青の静かな呼吸 / Quiet Journal 路線） */}
       <div className="relative">
         <div
-          className={`relative w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all ${
+          className={`relative w-14 h-14 rounded-full flex items-center justify-center transition-all ${
             active
-              ? "bg-[var(--accent)] scale-105 shadow-black/40 animate-breathe"
-              : "bg-[var(--bg-elevated)] shadow-black/30"
+              ? "bg-[var(--accent)] scale-105 shadow-theme-lg animate-breathe"
+              : "bg-[var(--bg-elevated)] shadow-theme-md"
           }`}
         >
           <svg
-            className="w-6 h-6 text-white"
+            // active（録音中）は墨青背景なので白、idle は elevated 紙色なのでテーマ連動のミュート色に。
+            // Light モードで白アイコンが白背景に消える回帰を防ぐ。
+            className={`w-6 h-6 ${active ? "text-white" : "text-[var(--fg-muted)]"}`}
             viewBox="0 0 24 24"
             fill="currentColor"
             aria-hidden="true"

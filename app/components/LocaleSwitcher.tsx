@@ -13,7 +13,7 @@ export default function LocaleSwitcher() {
   return (
     <div
       aria-label="Language"
-      className="inline-flex items-center rounded-full border border-gray-800 overflow-hidden text-xs"
+      className="inline-flex items-center rounded-full border border-[var(--border)] overflow-hidden text-xs"
     >
       {routing.locales.map((l) => {
         const isActive = l === locale;
@@ -24,7 +24,9 @@ export default function LocaleSwitcher() {
             locale={l}
             aria-current={isActive ? "true" : undefined}
             className={`px-3 py-1 transition-colors ${
-              isActive ? "bg-gray-200 text-gray-900" : "text-gray-400 hover:text-gray-100"
+              isActive
+                ? "bg-[var(--fg)] text-[var(--bg)]"
+                : "text-[var(--fg-muted)] hover:text-[var(--fg)]"
             }`}
           >
             {l.toUpperCase()}

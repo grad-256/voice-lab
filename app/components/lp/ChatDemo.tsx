@@ -83,11 +83,10 @@ export default function ChatDemo() {
 
   return (
     <div
-      className="w-full bg-[var(--bg)] rounded-[36px] border border-[var(--border-strong)] overflow-hidden flex flex-col h-[560px]"
-      style={{
-        boxShadow:
-          "0 0 0 7px rgba(0,0,0,0.6), 0 0 0 8px rgba(74,122,156,0.12), 0 40px 80px -20px rgba(0,0,0,0.9), 0 20px 40px -10px rgba(0,0,0,0.4)",
-      }}
+      // 端末ベゼル（内側 7px の黒）+ テーマ連動のドロップシャドウ。
+      // ベゼルは「電話の筐体」を示す表現なので Light でも黒のまま維持する。
+      // 外側のふわっと広がる影だけ shadow-soft/strong（CSS 変数）で紙との親和性を保つ。
+      className="chat-phone-frame w-full bg-[var(--bg)] rounded-[36px] border border-[var(--border-strong)] overflow-hidden flex flex-col h-[560px]"
     >
       {/* ステータスバー */}
       <div className="px-5 pt-3 pb-1 flex justify-between items-center text-[10px] text-[var(--fg-subtle)]">
@@ -102,11 +101,11 @@ export default function ChatDemo() {
       <div className="flex flex-col px-3 pb-5 flex-1 min-h-0">
         {/* ヘッダー：ブランド名（特定ペルソナ・英会話訴求は廃止） */}
         <div className="flex items-center gap-2 py-2 border-b border-[var(--border)]">
-          <div className="relative w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0">
+          <div className="relative w-7 h-7 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-strong)] flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0">
             VL
             {/* AI が話しているときはアバターの周囲に柔らかい光 */}
             {phase === "speaking" && (
-              <span className="absolute inset-0 rounded-full ring-2 ring-[var(--accent-strong)]/60 animate-ping" />
+              <span className="absolute inset-0 rounded-full ring-2 ring-accent-strong-60 animate-ping" />
             )}
           </div>
           <div className="leading-tight">
@@ -131,7 +130,7 @@ export default function ChatDemo() {
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-fadeSlideUp`}
             >
               {msg.role === "assistant" && (
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-1 mr-1.5">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-strong)] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-1 mr-1.5">
                   VL
                 </div>
               )}
@@ -139,7 +138,7 @@ export default function ChatDemo() {
                 <div
                   className={`text-sm px-3.5 py-2.5 rounded-2xl leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-[var(--accent)]/30 text-[var(--fg)] rounded-tr-sm"
+                      ? "bg-accent-30 text-[var(--fg)] rounded-tr-sm"
                       : "bg-[var(--bg-elevated)] text-[var(--fg)] rounded-tl-sm"
                   }`}
                 >
@@ -152,7 +151,7 @@ export default function ChatDemo() {
           {/* AI が考えている：タイピングインジケーター */}
           {phase === "thinking" && (
             <div className="flex justify-start gap-1.5 animate-fadeSlideUp">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-1">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-strong)] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-1">
                 VL
               </div>
               <div className="bg-[var(--bg-elevated)] px-3 py-2.5 rounded-2xl rounded-tl-sm flex items-center gap-1">
@@ -198,15 +197,17 @@ export default function ChatDemo() {
 
           <div className="relative">
             <div
-              className={`relative w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all ${
+              // 冗長な Tailwind `shadow-lg` は削除。影はテーマ連動の `shadow-theme-*` に一本化。
+              className={`relative w-12 h-12 rounded-full flex items-center justify-center transition-all ${
                 phase === "listening"
-                  ? "bg-[var(--accent)] scale-105 shadow-black/40 animate-breathe"
-                  : "bg-[var(--bg-elevated)] shadow-black/30"
+                  ? "bg-[var(--accent)] scale-105 shadow-theme-lg animate-breathe"
+                  : "bg-[var(--bg-elevated)] shadow-theme-md"
               }`}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5 text-white"
+                // listening 以外は白背景カード上に乗るので、アイコン色もテーマ連動（Light で白アイコンが消える回帰を防ぐ）
+                className={`w-5 h-5 ${phase === "listening" ? "text-white" : "text-[var(--fg-muted)]"}`}
                 viewBox="0 0 24 24"
                 fill="currentColor"
                 aria-hidden="true"

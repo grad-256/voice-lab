@@ -37,7 +37,7 @@ export default function FeatureConversationDemo() {
           <div
             className={`max-w-[78%] px-3 py-1.5 rounded-xl text-xs leading-snug ${
               b.role === "user"
-                ? "bg-[var(--accent)]/30 text-[var(--fg)] rounded-tr-sm"
+                ? "bg-accent-30 text-[var(--fg)] rounded-tr-sm"
                 : "bg-[var(--bg-elevated)] text-[var(--fg-muted)] rounded-tl-sm"
             }`}
           >

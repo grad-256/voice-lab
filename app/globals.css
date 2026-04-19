@@ -7,8 +7,12 @@
    - 既定は Dark。`[data-theme="light"]` で Light へ切替。
    - 純黒・純白を避けて「墨」「紙」の質感を狙う（Quiet Journal 路線）。
    - 本ファイル外の Tailwind クラスはすべて var(--*) を参照する設計。
+   - `:root` と `[data-theme="dark"]` の両方で同じ値を宣言する理由：
+     子要素に `data-theme="dark"` を付けると、親が light の場合でもその subtree だけ
+     ダーク値を取り戻せる（例：LP をテーマ非依存にしたいケース）。
    ============================================================ */
-:root {
+:root,
+[data-theme="dark"] {
   /* Dark（既定） */
   --bg: #121212; /* 墨 */
   --bg-elevated: #1b1b1b; /* カード・モーダル */
@@ -29,6 +33,23 @@
   --error: #c26767;
   --error-bg: rgba(194, 103, 103, 0.14);
 
+  /* 影：Dark は墨色の濃い影、Light は薄インクの軽い影（紙に押し付けすぎない）。
+     Tailwind の shadow-* が var を直接受けられないため、.shadow-theme-* ユーティリティを別途定義する。 */
+  --shadow-soft: rgba(0, 0, 0, 0.3);
+  --shadow-strong: rgba(0, 0, 0, 0.5);
+
+  /* 電話モックのベゼル色（ChatDemo / FeatureTour 共通）。
+     「電話の筐体」を示す表現のため、両テーマで墨色に固定する（[data-theme="light"] でも上書きしない）。 */
+  --phone-bezel: #1e1c18;
+
+  /* 見出しグラデ：Dark では墨青 → 薄墨青で抜け感、Light では背景に沈まない深い藍のレンジに差し替える。 */
+  --grad-title-from: #5a88a8;
+  --grad-title-via: #7ba5c2;
+  --grad-title-to: #a8cce8;
+
+  /* LP の装飾 Canvas（HeroBg 等）の可視度。Dark は 1（既定通り）、Light では紙との親和性のため抑える。 */
+  --lp-canvas-opacity: 1;
+
   /* 互換維持：既存コードの bg-background / text-foreground 参照用 */
   --background: var(--bg);
   --foreground: var(--fg);
@@ -36,23 +57,40 @@
 
 [data-theme="light"] {
   --bg: #f6f2e9; /* 生成り */
-  --bg-elevated: #fcf8ef;
+  /* 紙よりしっかり「厚みのある紙」寄せ。カード / モーダル / マイクボタンを紙から浮かすため
+     紙色との差を明確に取る（以前より更に濃く、ベージュ色のマット紙のイメージ）。 */
+  --bg-elevated: #e4d9bd;
   --bg-overlay: rgba(30, 28, 24, 0.35);
 
-  --fg: #2a2823;
-  --fg-muted: #4a4742;
-  --fg-subtle: #6a6862;
+  /* 文字色は「紙に墨で書いた」濃さを優先。全段階で濃く寄せ、薄墨でも確実に読める水準に揃える。
+     以前の値ではサブテキストが紙に沈むとの指摘があったため、一段ずつ濃さを強化。 */
+  --fg: #0f0d08; /* 本文：黒インク（最大コントラスト） */
+  --fg-muted: #2a2821; /* 副文：濃墨。紙の上でも主張する */
+  --fg-subtle: #43403a; /* 補助：薄墨だが紙に食い込むレベルを維持 */
 
   /* 深い藍：同じく彩度を少し抑えて紙に馴染ませる */
   --accent: #3a5c78;
   --accent-strong: #2f5066;
   --accent-subtle: rgba(58, 92, 120, 0.08);
 
-  --border: #e2dccf;
-  --border-strong: #c9c2b2;
+  /* 境界線も紙の階調が見えるよう一段濃く。カード境界・区切り線がはっきり見える水準に。 */
+  --border: #c8beaa;
+  --border-strong: #a89f8c;
 
   --error: #a04444;
   --error-bg: rgba(160, 68, 68, 0.08);
+
+  /* 影：紙に落ちる薄インクの影。黒ではなく墨インク色（#1e1c18 ベース）で温度感を保つ。 */
+  --shadow-soft: rgba(30, 28, 24, 0.08);
+  --shadow-strong: rgba(30, 28, 24, 0.14);
+
+  /* 見出しグラデ：生成り背景（#f6f2e9）に沈まないよう、全レンジを深い藍 → 墨青寄りに差し替え。 */
+  --grad-title-from: #1f3a52;
+  --grad-title-via: #2d4a63;
+  --grad-title-to: #4a7a9c;
+
+  /* violet/indigo の Canvas は紙上では浮くので、Light モードではかなり抑える。 */
+  --lp-canvas-opacity: 0.25;
 
   --background: var(--bg);
   --foreground: var(--fg);
@@ -253,6 +291,9 @@ body {
   }
 }
 
+/* 以前は violet/indigo/cyan のオーブだったが、Quiet Journal の紫禁止ルールに反するため、
+   すべて --accent-subtle（墨青/藍）ベースに統一。Light モードでは紙に馴染み、Dark モードでは
+   従来のような派手な色使いを避けて静かな光の揺らぎとして機能する。 */
 .orb-1 {
   position: absolute;
   width: 500px;
@@ -260,7 +301,7 @@ body {
   left: -100px;
   top: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--accent-subtle) 0%, transparent 70%);
   filter: blur(40px);
   animation: orbFloat1 16s ease-in-out infinite;
 }
@@ -271,7 +312,7 @@ body {
   right: -80px;
   top: 20%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.28) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--accent-subtle) 0%, transparent 70%);
   filter: blur(40px);
   animation: orbFloat2 20s ease-in-out infinite;
 }
@@ -282,7 +323,7 @@ body {
   left: 38%;
   bottom: -60px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.22) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--accent-subtle) 0%, transparent 70%);
   filter: blur(40px);
   animation: orbFloat3 24s ease-in-out infinite;
 }
@@ -365,6 +406,101 @@ body {
 .card-hover:hover {
   border-color: var(--accent);
   background-color: var(--bg-elevated);
+}
+
+/* ============================================================
+   テーマ連動ユーティリティ（Tailwind の shadow-* が CSS 変数を受けないので自前定義）
+   - ページ / コンポーネント側は shadow-black/XX の代わりにこれらを使う
+   ============================================================ */
+.shadow-theme-md {
+  box-shadow: 0 10px 30px -8px var(--shadow-soft);
+}
+.shadow-theme-lg {
+  box-shadow: 0 20px 45px -12px var(--shadow-strong);
+}
+
+/* 見出しグラデ：bg-gradient-to-r with CSS variables 用のユーティリティ。
+   Tailwind の from-[var(...)] 記法は動くが、3 色指定だと冗長なので専用クラスに切り出す。 */
+.text-grad-title {
+  background-image: linear-gradient(
+    90deg,
+    var(--grad-title-from) 0%,
+    var(--grad-title-via) 50%,
+    var(--grad-title-to) 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* LP の装飾 Canvas を Light モードで抑える。
+   canvas 要素に .lp-canvas-deco を付与しておけば data-theme=light 時に不透明度が下がる。 */
+.lp-canvas-deco {
+  opacity: var(--lp-canvas-opacity);
+  transition: opacity 0.3s ease;
+}
+
+/* ChatDemo の電話フレーム風シャドウ。
+   内側 7px の「ベゼル」は端末表現のため両テーマで --phone-bezel に固定し、
+   外側の広がる影だけ --shadow-* に接続してテーマ連動させる。
+   薄い青リム（8px 目）も --accent-subtle を参照してテーマ連動にする。 */
+.chat-phone-frame {
+  box-shadow: 0 0 0 7px var(--phone-bezel), 0 0 0 8px var(--accent-subtle), 0 40px 80px -20px
+    var(--shadow-strong), 0 20px 40px -10px var(--shadow-soft);
+}
+
+/* ============================================================
+   CSS 変数 × opacity ユーティリティ
+   Tailwind v3.4 は `bg-[var(--xxx)]/60` のような arbitrary 値 + `/opacity` 修飾子を
+   CSS 変数に対してクラス生成しない（silently 透明になる既知制約）。
+   代替として color-mix ベースで明示的に宣言する。命名は `<prop>-<var>-<opacity>` 規則。
+   運用ルール：
+     - CSS 変数に対して `bg-[var(--x)]/NN` / `border-[var(--x)]/NN` / `hover:border-[var(--x)]/NN` 等の
+       Tailwind クラスを直接書かないこと（silently 透明になる）。
+     - 新しい透明度が必要になったら本ブロックに `.<prop>-<var>-<NN>` 形式のユーティリティを追加する。
+   ============================================================ */
+.bg-elevated-30 {
+  background-color: color-mix(in srgb, var(--bg-elevated) 30%, transparent);
+}
+.bg-elevated-50 {
+  background-color: color-mix(in srgb, var(--bg-elevated) 50%, transparent);
+}
+.bg-elevated-60 {
+  background-color: color-mix(in srgb, var(--bg-elevated) 60%, transparent);
+}
+.bg-elevated-70 {
+  background-color: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
+}
+.bg-elevated-80 {
+  background-color: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+}
+.hover\:bg-elevated-80:hover {
+  background-color: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+}
+.hover\:bg-elevated:hover {
+  background-color: var(--bg-elevated);
+}
+.bg-fg-muted-60 {
+  background-color: color-mix(in srgb, var(--fg-muted) 60%, transparent);
+}
+.bg-fg-subtle-40 {
+  background-color: color-mix(in srgb, var(--fg-subtle) 40%, transparent);
+}
+.bg-accent-30 {
+  background-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.bg-bg-80 {
+  background-color: color-mix(in srgb, var(--bg) 80%, transparent);
+}
+.border-accent-60 {
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.hover\:border-accent-60:hover {
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.ring-accent-strong-60 {
+  --tw-ring-color: color-mix(in srgb, var(--accent-strong) 60%, transparent);
 }
 
 /* ============================================================

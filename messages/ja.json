@@ -288,6 +288,16 @@
         }
       }
     },
+    "theme": {
+      "cardTitle": "テーマ",
+      "cardSubtitle": "画面の明るさの好みを選べます",
+      "groupAriaLabel": "テーマの選択",
+      "options": {
+        "system": "システム",
+        "light": "ライト",
+        "dark": "ダーク"
+      }
+    },
     "logout": {
       "cardTitle": "ログアウト",
       "cardSubtitle": "このデバイスからログアウトします",

@@ -130,7 +130,7 @@ export default function DiaryHistoryPage() {
             <li key={item.id}>
               <Link
                 href={`/diary/history/${item.id}`}
-                className="group relative block h-full bg-[var(--bg-elevated)] rounded-lg p-6 border border-[var(--border)] hover:border-[var(--accent)]/60 transition-colors"
+                className="group relative block h-full bg-[var(--bg-elevated)] rounded-lg p-6 border border-[var(--border)] hover:border-accent-60 transition-colors"
               >
                 <div className="flex items-center gap-1.5">
                   <Calendar
