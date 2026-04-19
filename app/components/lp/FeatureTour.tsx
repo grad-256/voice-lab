@@ -61,7 +61,11 @@ function RecordingMock({
   headerTitle,
   headerFinish,
 }: {
-  caption: string;
+  /**
+   * マイク下に表示する短いラベル。PC 2x2 グリッドでは外側に別途 caption を出すため
+   * 重複を避けたいケース（`showCaption={false}`）で undefined にできる。
+   */
+  caption?: string;
   bubbles: ChatBubble[];
   headerBack: string;
   headerTitle: string;
@@ -109,7 +113,7 @@ function RecordingMock({
             aria-hidden="true"
           />
         </div>
-        <p className="text-xs text-[var(--fg-muted)] tracking-wide">{caption}</p>
+        {caption && <p className="text-xs text-[var(--fg-muted)] tracking-wide">{caption}</p>}
       </div>
     </div>
   );
@@ -361,12 +365,14 @@ export default function FeatureTour() {
   // 先頭 3 件のみ使う（録音モックに 3 バブル並べる用）
   const recordingBubbles = conversation.slice(0, 3);
 
-  // スライド ID に対応するモックを描画。モバイル・PC 両方で再利用する。
-  const renderMock = (slide: SlideId) => {
+  // スライド ID に対応するモックを描画。
+  // `showInnerCaption` は PhoneFrame の外側に caption を別途出す PC 2x2 時に false を渡し、
+  // モック内部のキャプションを隠して重複表示を避ける。
+  const renderMock = (slide: SlideId, showInnerCaption = true) => {
     if (slide === "recording") {
       return (
         <RecordingMock
-          caption={tTour("slides.recording.caption")}
+          caption={showInnerCaption ? tTour("slides.recording.caption") : undefined}
           bubbles={recordingBubbles}
           headerBack={tDiary("header.back")}
           headerTitle={tDiary("header.title")}
@@ -461,11 +467,12 @@ export default function FeatureTour() {
       </div>
 
       {/* PC（>= sm）：2×2 グリッド。4 枚同時表示・スワイプ / 自動再生 / ドットなし。
-          各フレームの下に caption + description を個別に配置する */}
+          各フレームの下に caption + description を個別に配置する。
+          フレーム外に caption が出るので、モック内のキャプションは showInnerCaption=false で抑制 */}
       <div className="hidden sm:grid sm:grid-cols-2 sm:gap-8 md:gap-12 max-w-5xl mx-auto">
         {SLIDES.map((slide) => (
           <div key={slide} className="flex flex-col items-center gap-4">
-            <PhoneFrame>{renderMock(slide)}</PhoneFrame>
+            <PhoneFrame>{renderMock(slide, false)}</PhoneFrame>
             <p className="text-xs font-medium tracking-widest-tabular uppercase text-[var(--accent)]">
               {tTour(`slides.${slide}.caption`)}
             </p>
