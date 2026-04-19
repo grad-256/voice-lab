@@ -385,6 +385,9 @@ function HomeInner() {
         }
 
         // 3. ElevenLabs: テキスト → 音声（キャラのボイス ID を渡す）
+        // 会話ラリーは即応性最優先のため modelId は指定せず、/api/speak の既定モデル
+        // （eleven_multilingual_v2：品質と応答速度のバランス重視）に委ねる。
+        // 長文・表現力重視の経路（日記要約・場面学習再生）のみが明示的に eleven_v3 を指定する。
         const speakRes = await fetch("/api/speak", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

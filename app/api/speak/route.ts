@@ -29,7 +29,11 @@ export async function POST(req: Request) {
     // キャラのボイス ID を優先し、なければ環境変数 → 既定の VOICE_ID の順で使用
     const resolvedVoiceId = voiceId ?? VOICE_ID;
 
-    // 呼び出し側が許可外モデルを渡してきた場合は黙って DEFAULT にフォールバック
+    // 呼び出し側が許可外モデル（未知文字列・空文字・null・undefined）を渡してきた場合は
+    // 黙って DEFAULT にフォールバックする。ElevenLabs に未知モデル ID を流して 400 を
+    // 返させるより、既定挙動に倒した方が UX・監査性とも安全。
+    // `as AllowedModel` は includes() で whitelist を通過したあとの実行時ナローイング
+    // （TS の型ガードとしては narrow が効かないため assertion を使う）。
     const resolvedModelId: AllowedModel = (ALLOWED_MODELS as readonly string[]).includes(
       modelId ?? "",
     )

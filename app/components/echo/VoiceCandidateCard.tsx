@@ -97,7 +97,14 @@ export function VoiceCandidateCard({
       const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: PREVIEW_TEXT, voiceId: voice.voiceId }),
+        // 試聴で選んだ声は、その後の場面プリセット / 保存フレーズ / scene-AI の学習再生
+        // （いずれも eleven_v3）で使われる。試聴と本番で音が食い違わないよう、
+        // 試聴も明示的に eleven_v3 で揃える。
+        body: JSON.stringify({
+          text: PREVIEW_TEXT,
+          voiceId: voice.voiceId,
+          modelId: "eleven_v3",
+        }),
       });
       if (!res.ok) {
         if (res.status === 429) {

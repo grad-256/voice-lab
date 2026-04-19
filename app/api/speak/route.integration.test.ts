@@ -157,4 +157,36 @@ describe("POST /api/speak", () => {
     const body = JSON.parse(fetchMock.mock.calls[0][1].body) as { model_id: string };
     expect(body.model_id).toBe("eleven_multilingual_v2");
   });
+
+  it("modelId に空文字列を渡したとき既定にフォールバックする", async () => {
+    const fetchMock = mockElevenLabsSuccess();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const req = new Request("http://localhost/api/speak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: "Hello", modelId: "" }),
+    });
+
+    await POST(req);
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body) as { model_id: string };
+    expect(body.model_id).toBe("eleven_multilingual_v2");
+  });
+
+  it("modelId に null を渡したとき既定にフォールバックする", async () => {
+    const fetchMock = mockElevenLabsSuccess();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const req = new Request("http://localhost/api/speak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: "Hello", modelId: null }),
+    });
+
+    await POST(req);
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body) as { model_id: string };
+    expect(body.model_id).toBe("eleven_multilingual_v2");
+  });
 });
