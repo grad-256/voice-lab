@@ -63,7 +63,7 @@ const GUEST_PERSONA: Persona = {
   name: "Yuki",
   style_prompt:
     "You are Yuki, a friendly English conversation partner. Keep responses short and encouraging.",
-  voice_id: "EXAVITQu4vr4xnSDxMaL",
+  voice_id: "hmVgSRXAUU4D4E9yl5iw",
   created_at: "",
 };
 
@@ -899,7 +899,7 @@ function HomeInner() {
 
       {/* 「これ言えなかった」モーダル
        * voiceId：認証ユーザーは voice_sessions、ゲストは localStorage 由来。どちらも無ければ
-       * persona.voice_id（デフォルトは Bella）にフォールバックして「分身の声未設定でも体験だけは試せる」状態を担保する。 */}
+       * persona.voice_id（既定値は GUEST_PERSONA.voice_id）にフォールバックして「分身の声未設定でも体験だけは試せる」状態を担保する。 */}
       <SavePhraseModal
         open={savePhraseOpen}
         onRequestClose={() => setSavePhraseOpen(false)}

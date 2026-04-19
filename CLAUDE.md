@@ -74,7 +74,7 @@ pnpm pages:deploy  # Cloudflare Pages にデプロイ
 OPENAI_API_KEY=sk-...          # Whisper 音声認識
 ANTHROPIC_API_KEY=sk-ant-...   # Claude Haiku 対話AI
 ELEVENLABS_API_KEY=...         # ElevenLabs 音声生成
-ELEVENLABS_VOICE_ID=...        # 省略時は Bella（EXAVITQu4vr4xnSDxMaL）
+ELEVENLABS_VOICE_ID=...        # 省略時は hmVgSRXAUU4D4E9yl5iw
 
 # Cloudflare AI Gateway（香港ルーティング対策。両方セット時のみ有効）
 CF_ACCOUNT_ID=...              # Cloudflare Account ID

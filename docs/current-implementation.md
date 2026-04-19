@@ -44,7 +44,7 @@
 ### 外部 API
 - **OpenAI Whisper**（`whisper-1`）：音声認識
 - **Anthropic Claude Haiku**（`claude-haiku-4-5-20251001`）：対話
-- **ElevenLabs**（`eleven_turbo_v2_5`）：音声合成（デフォルト Voice ID: Bella `EXAVITQu4vr4xnSDxMaL`、他 6 種から選択可）
+- **ElevenLabs**（`eleven_turbo_v2_5`）：音声合成（デフォルト Voice ID: `hmVgSRXAUU4D4E9yl5iw`、`VOICE_OPTIONS` から他の声も選択可）
 
 ---
 
@@ -207,7 +207,7 @@ SUPABASE_SERVICE_ROLE_KEY            # アカウント削除 API 用
 OPENAI_API_KEY                       # Whisper
 ANTHROPIC_API_KEY                    # Claude Haiku
 ELEVENLABS_API_KEY                   # TTS
-ELEVENLABS_VOICE_ID                  # 省略時 Bella
+ELEVENLABS_VOICE_ID                  # 省略時 hmVgSRXAUU4D4E9yl5iw
 NEXT_PUBLIC_POSTHOG_KEY
 NEXT_PUBLIC_POSTHOG_HOST
 ```

@@ -1,8 +1,8 @@
 export const runtime = "edge";
 
-// ElevenLabs の標準ボイス ID（Emma に近い自然なネイティブ英語女性）
+// ElevenLabs の標準ボイス ID
 // ダッシュボードで確認・変更可能: https://elevenlabs.io/voice-lab
-const VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? "EXAVITQu4vr4xnSDxMaL"; // "Bella"
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? "hmVgSRXAUU4D4E9yl5iw";
 
 export async function POST(req: Request) {
   try {
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
       return Response.json({ error: "テキストが空です" }, { status: 400 });
     }
 
-    // キャラのボイス ID を優先し、なければ環境変数 → デフォルト（Bella）の順で使用
+    // キャラのボイス ID を優先し、なければ環境変数 → 既定の VOICE_ID の順で使用
     const resolvedVoiceId = voiceId ?? VOICE_ID;
 
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${resolvedVoiceId}`, {
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         text,
-        model_id: "eleven_turbo_v2_5", // 最速・低レイテンシ
+        model_id: "eleven_v3", // 最速・低レイテンシ
         voice_settings: {
           stability: 0.5,
           similarity_boost: 0.75,
