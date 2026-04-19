@@ -111,7 +111,8 @@ export default function DiaryDetailPage({
       const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: entry.summary }),
+        // 日記要約は長文・じっくり聞き返せる用途のため、表現力重視の eleven_v3 を使う
+        body: JSON.stringify({ text: entry.summary, modelId: "eleven_v3" }),
       });
       if (!mountedRef.current) return;
       if (!res.ok) {

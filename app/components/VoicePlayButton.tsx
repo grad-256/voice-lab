@@ -115,11 +115,21 @@ export function VoicePlayButton({
     setState("loading");
     setErrorMsg(null);
 
+    // source ごとに TTS モデルを使い分ける。
+    // - 学習向け（聞き返し前提・レイテンシ許容）は表現力重視の eleven_v3
+    // - 会話ラリー中の即応系は、速度とのバランスが良い eleven_multilingual_v2 を /api/speak 側のデフォルトに任せる
+    const modelId: "eleven_v3" | undefined =
+      source === "preset" || source === "saved" || source === "scene-ai" ? "eleven_v3" : undefined;
+
     try {
       const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: enText, voiceId }),
+        body: JSON.stringify({
+          text: enText,
+          voiceId,
+          ...(modelId ? { modelId } : {}),
+        }),
       });
       if (!res.ok) {
         if (res.status === 429) {

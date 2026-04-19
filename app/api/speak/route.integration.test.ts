@@ -109,4 +109,52 @@ describe("POST /api/speak", () => {
     const calledUrl: string = fetchMock.mock.calls[0][0];
     expect(calledUrl).toContain("test-voice-id");
   });
+
+  it("modelId 未指定のとき eleven_multilingual_v2 が使われる", async () => {
+    const fetchMock = mockElevenLabsSuccess();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const req = new Request("http://localhost/api/speak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: "Hello" }),
+    });
+
+    await POST(req);
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body) as { model_id: string };
+    expect(body.model_id).toBe("eleven_multilingual_v2");
+  });
+
+  it("許可モデル（eleven_v3）を指定すると ElevenLabs に反映される", async () => {
+    const fetchMock = mockElevenLabsSuccess();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const req = new Request("http://localhost/api/speak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: "Hello", modelId: "eleven_v3" }),
+    });
+
+    await POST(req);
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body) as { model_id: string };
+    expect(body.model_id).toBe("eleven_v3");
+  });
+
+  it("許可外モデルを渡したとき既定（eleven_multilingual_v2）にフォールバックする", async () => {
+    const fetchMock = mockElevenLabsSuccess();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const req = new Request("http://localhost/api/speak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: "Hello", modelId: "malicious_model_id" }),
+    });
+
+    await POST(req);
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body) as { model_id: string };
+    expect(body.model_id).toBe("eleven_multilingual_v2");
+  });
 });
