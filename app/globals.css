@@ -2,40 +2,142 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   テーマ変数
+   - 既定は Dark。`[data-theme="light"]` で Light へ切替。
+   - 純黒・純白を避けて「墨」「紙」の質感を狙う（Quiet Journal 路線）。
+   - 本ファイル外の Tailwind クラスはすべて var(--*) を参照する設計。
+   ============================================================ */
 :root {
-  --background: #0f0f0f;
-  --foreground: #f0f0f0;
+  /* Dark（既定） */
+  --bg: #121212; /* 墨 */
+  --bg-elevated: #1b1b1b; /* カード・モーダル */
+  --bg-overlay: rgba(0, 0, 0, 0.78); /* モーダル背景 */
+
+  --fg: #e8e6e1; /* 紙のオフホワイト */
+  --fg-muted: #b8b6b1;
+  --fg-subtle: #8a8884;
+
+  /* 墨青：彩度を少し落として夜空に馴染ませる（控えめ方向） */
+  --accent: #4a7a9c;
+  --accent-strong: #5a88a8;
+  --accent-subtle: rgba(74, 122, 156, 0.1);
+
+  --border: #262624;
+  --border-strong: #36342f;
+
+  --error: #c26767;
+  --error-bg: rgba(194, 103, 103, 0.14);
+
+  /* 互換維持：既存コードの bg-background / text-foreground 参照用 */
+  --background: var(--bg);
+  --foreground: var(--fg);
 }
 
+[data-theme="light"] {
+  --bg: #f6f2e9; /* 生成り */
+  --bg-elevated: #fcf8ef;
+  --bg-overlay: rgba(30, 28, 24, 0.35);
+
+  --fg: #2a2823;
+  --fg-muted: #4a4742;
+  --fg-subtle: #6a6862;
+
+  /* 深い藍：同じく彩度を少し抑えて紙に馴染ませる */
+  --accent: #3a5c78;
+  --accent-strong: #2f5066;
+  --accent-subtle: rgba(58, 92, 120, 0.08);
+
+  --border: #e2dccf;
+  --border-strong: #c9c2b2;
+
+  --error: #a04444;
+  --error-bg: rgba(160, 68, 68, 0.08);
+
+  --background: var(--bg);
+  --foreground: var(--fg);
+}
+
+/* ============================================================
+   body の基本スタイル
+   - 背景色に加えて、極薄のラジアルグラデ 2 枚を重ねて静かな抽象背景を作る（Stoic 感）
+   - `background-attachment: fixed` でスクロールしても静止
+   - Dark / Light ともに `--accent-subtle` を使うのでテーマ切替に自動追従
+   - `background:` ショートハンドは使わず、color / image / attachment を分けて宣言することで
+     将来 `background:` を追記したときに `background-image` が消えるリスクを避ける
+   ============================================================ */
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: var(--bg);
+  background-image: radial-gradient(
+      ellipse 80% 60% at 50% 0%,
+      var(--accent-subtle) 0%,
+      transparent 50%
+    ), radial-gradient(ellipse 60% 50% at 80% 100%, var(--accent-subtle) 0%, transparent 40%);
+  background-attachment: fixed;
+  color: var(--fg);
   font-family: var(--font-jakarta), var(--font-noto), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* 録音ボタン アニメーション */
-@keyframes pulse-ring {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 16px rgba(239, 68, 68, 0);
-  }
+/* ============================================================
+   タイポグラフィのユーティリティ（セリフ見出し用）
+   ============================================================ */
+.font-serif-jp {
+  font-family: var(--font-serif), "Noto Serif JP", "YuMincho", "Hiragino Mincho ProN", serif;
+  font-feature-settings: "palt" 1;
+}
+
+.font-mono-jp {
+  /* TODO: 等幅フォントを Next Font で読む場合は root layout で `--font-mono` を定義して先頭に追加する。
+     現状は root で未バインドのため変数参照せずシステム等幅を直接指定する。 */
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   アプリ側アニメーション（Quiet Journal）
+   - 旧 `.recording-pulse` / `@keyframes pulse-ring`（赤系 pulse）は
+     Quiet Journal 路線に合わないため撤去済み。代替は `.animate-breathe`（墨青の静かな呼吸）。
+   ============================================================ */
+
+/* 呼吸する光：録音中マイクボタンに使う。pulse より静か */
+@keyframes breathe {
+  0%,
   100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--accent-subtle);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 0 18px transparent;
+    opacity: 0.92;
   }
 }
 
-.recording-pulse {
-  animation: pulse-ring 1.5s infinite;
+.animate-breathe {
+  animation: breathe 3.6s ease-in-out infinite;
 }
 
-/* ────── LP アニメーション ────── */
+/* 薄く光る呼吸（idle 時のマイクボタン用、録音ではない静かな佇まい） */
+@keyframes glow-soft {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--accent-subtle);
+  }
+  50% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+}
 
-/* メッセージの出現アニメーション */
+.animate-glow-soft {
+  animation: glow-soft 4.8s ease-in-out infinite;
+}
+
+/* メッセージの出現アニメーション（既存、保持） */
 @keyframes fadeSlideUp {
   from {
     opacity: 0;
@@ -48,8 +150,26 @@ body {
 }
 
 .animate-fadeSlideUp {
-  animation: fadeSlideUp 0.35s ease both;
+  animation: fadeSlideUp 0.5s ease-out both;
 }
+
+/* 全体のフェードイン */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.6s ease-out both;
+}
+
+/* ============================================================
+   LP 用アニメーション（既存、保持）
+   ============================================================ */
 
 /* 背景ブロブ */
 @keyframes blobFloat1 {
@@ -194,4 +314,68 @@ body {
   background-size: 300% 300%;
   animation: aurora 10s ease infinite;
   pointer-events: none;
+}
+
+/* ============================================================
+   静かな点描パターン（カード内背景等の装飾レイヤー）
+   - 薄い点の反復で紙のテクスチャ感を出す
+   - opacity で更に抑え、下地として控えめに振る舞う
+   ============================================================ */
+.bg-quiet-dots {
+  background-image: radial-gradient(circle, var(--border) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+  background-position: 0 0;
+  opacity: 0.4;
+}
+
+/* ============================================================
+   タイポ階層用ユーティリティ（Day One 的極小ラベル）
+   - 等幅数字 + 広いトラッキング + 大文字化
+   ============================================================ */
+.tracking-widest-tabular {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* セクション見出しの標準スタイル（Day One 的） */
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+
+/* ============================================================
+   カード hover の静かな持ち上げ
+   - 1px だけ上に浮く。大げさな shadow は使わない。
+   ============================================================ */
+.card-lift {
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+.card-lift:hover {
+  transform: translateY(-1px);
+}
+
+/* カードの標準 hover 遷移（border / bg の静かな変化） */
+.card-hover {
+  transition: all 0.25s ease;
+}
+.card-hover:hover {
+  border-color: var(--accent);
+  background-color: var(--bg-elevated);
+}
+
+/* ============================================================
+   動作縮減設定（ユーザーが縮減を希望している場合はアニメーションを静止）
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

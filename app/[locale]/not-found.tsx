@@ -12,12 +12,12 @@ export default async function LocaleNotFound() {
   const t = await getTranslations({ locale, namespace: "notFound" });
 
   return (
-    <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-24 text-center">
-      <h1 className="text-3xl font-bold text-white mb-3">{t("title")}</h1>
-      <p className="text-sm text-gray-400 mb-8">{t("description")}</p>
+    <main className="flex-1 w-full max-w-2xl mx-auto px-6 pt-10 pb-16 sm:pt-12 sm:pb-20 text-center animate-fadeIn">
+      <h1 className="text-2xl font-semibold text-[var(--fg)] mb-3 leading-relaxed">{t("title")}</h1>
+      <p className="text-sm text-[var(--fg-muted)] mb-10 leading-relaxed">{t("description")}</p>
       <Link
         href="/"
-        className="inline-block px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors"
+        className="inline-block border border-[var(--border-strong)] hover:border-[var(--accent)] text-[var(--fg)] hover:text-[var(--accent-strong)] px-6 py-3 rounded-md text-sm transition-colors"
       >
         {t("backHome")}
       </Link>

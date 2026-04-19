@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     // `as AllowedModel` は includes() で whitelist を通過したあとの実行時ナローイング
     // （TS の型ガードとしては narrow が効かないため assertion を使う）。
     const resolvedModelId: AllowedModel = (ALLOWED_MODELS as readonly string[]).includes(
-      modelId ?? "",
+      modelId ?? ""
     )
       ? (modelId as AllowedModel)
       : DEFAULT_MODEL;

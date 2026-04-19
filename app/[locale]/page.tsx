@@ -3,6 +3,7 @@ export const runtime = "edge";
 import ChatDemo from "@/app/components/lp/ChatDemo";
 import FeatureConversationDemo from "@/app/components/lp/FeatureConversationDemo";
 import FeatureSummaryDemo from "@/app/components/lp/FeatureSummaryDemo";
+import FeatureTour from "@/app/components/lp/FeatureTour";
 import FeatureVoiceDemo from "@/app/components/lp/FeatureVoiceDemo";
 import GridBg from "@/app/components/lp/GridBg";
 import HeroBg from "@/app/components/lp/HeroBg";
@@ -23,26 +24,12 @@ const STEPS = [
   { num: "03", key: "visualize", Demo: StepVisualize },
 ] as const;
 
-// できること（Features）— それぞれの軸の詳細
+// できること（Features）— それぞれの軸の詳細。
+// Quiet Journal 路線では色で差別化せず、共通のカードトーンに揃える。
 const FEATURES = [
-  {
-    key: "voice",
-    gradient: "from-violet-900/40 to-indigo-900/40",
-    border: "border-violet-800/30",
-    Demo: FeatureVoiceDemo,
-  },
-  {
-    key: "conversation",
-    gradient: "from-indigo-900/40 to-blue-900/40",
-    border: "border-indigo-800/30",
-    Demo: FeatureConversationDemo,
-  },
-  {
-    key: "summary",
-    gradient: "from-blue-900/40 to-cyan-900/40",
-    border: "border-blue-800/30",
-    Demo: FeatureSummaryDemo,
-  },
+  { key: "voice", Demo: FeatureVoiceDemo },
+  { key: "conversation", Demo: FeatureConversationDemo },
+  { key: "summary", Demo: FeatureSummaryDemo },
 ] as const;
 
 export default async function LandingPage() {
@@ -62,18 +49,18 @@ export default async function LandingPage() {
   const tCta = await getTranslations("lp.cta");
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] overflow-x-hidden">
       {/* ────── Navbar ────── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-800/60 bg-gray-950/80 backdrop-blur-md">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <span className="font-bold text-lg tracking-tight text-white">
-            My<span className="text-indigo-400">VoiceLab</span>
+          <span className="font-bold text-lg tracking-tight text-[var(--fg)]">
+            My<span className="text-[var(--accent)]">VoiceLab</span>
           </span>
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
               <Link
                 href="/app"
-                className="text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors"
+                className="text-sm font-medium bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white px-4 py-1.5 rounded-lg transition-colors"
               >
                 {tNav("ctaHome")}
               </Link>
@@ -81,13 +68,13 @@ export default async function LandingPage() {
               <>
                 <Link
                   href="/app"
-                  className="text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors"
+                  className="text-sm font-medium bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white px-4 py-1.5 rounded-lg transition-colors"
                 >
                   {tNav("ctaStart")}
                 </Link>
                 <Link
                   href="/login"
-                  className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5"
+                  className="text-sm text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors px-3 py-1.5"
                 >
                   {tNav("ctaLogin")}
                 </Link>
@@ -106,47 +93,49 @@ export default async function LandingPage() {
             {/* 二段 Hero：前置き（小・grey）+ メイン H1（大・white → grad）の構造で、
                日本語長文による折返しのバランス崩れを避けつつインパクトを出す（Linear / Anthropic プレスリリース流）。 */}
             <div className="flex flex-col items-start text-left">
-              <div className="inline-flex items-center gap-2 bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 text-xs font-medium px-3 py-1.5 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+              <div className="inline-flex items-center gap-2 bg-[var(--accent-subtle)] border border-[var(--border-strong)] text-[var(--fg-muted)] text-xs font-medium px-3 py-1.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
                 {tHero("badge")}
               </div>
 
               {/* 前置き（文脈・対象・シーン）— H1 の主役を食わないサイズに抑える */}
-              <p className="mt-8 text-sm sm:text-base text-gray-400 font-medium tracking-wide">
+              <p className="mt-8 text-sm sm:text-base text-[var(--fg-muted)] font-medium tracking-wide">
                 {tHero("lead")}
               </p>
 
-              {/* メイン H1（動詞 2 連で印象を締める） */}
-              <h1 className="mt-3 text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
+              {/* メイン H1（動詞 2 連で印象を締める）— Quiet Journal 路線では単色に統一して紙の落ち着きを出す。
+                 改行はモバイル時のみ明示（`sm:hidden`）。PC では自然に 1 行で並ぶ。 */}
+              <h1 className="mt-3 text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-[var(--fg)]">
                 {tHero("h1Part1")}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-indigo-400 to-cyan-400">
+                <br className="sm:hidden" />
+                <span className="bg-gradient-to-r from-[#5a88a8] via-[#7ba5c2] to-[#a8cce8] bg-clip-text text-transparent">
                   {tHero("h1Part2")}
                 </span>
               </h1>
 
               {/* サブコピー（ブランドメッセージ）— 前置きより控えめに */}
-              <p className="mt-10 text-sm sm:text-base text-gray-500 leading-relaxed">
+              <p className="mt-10 text-sm sm:text-base text-[var(--fg-subtle)] leading-relaxed">
                 {tHero("subCopy1")}
                 <br />
-                <span className="text-gray-600">——</span> {tHero("subCopy2")}
+                <span className="text-[var(--fg-subtle)]">——</span> {tHero("subCopy2")}
               </p>
 
               <div className="mt-8 flex flex-row gap-3 w-full sm:w-auto">
                 <Link
                   href="/app"
-                  className="flex-1 sm:flex-none text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all text-sm sm:text-base shadow-lg shadow-indigo-900/50 hover:shadow-indigo-900/70 hover:-translate-y-0.5"
+                  className="flex-1 sm:flex-none text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white font-semibold rounded-xl transition-all text-sm sm:text-base shadow-lg shadow-black/30 hover:-translate-y-0.5"
                 >
                   {tHero("ctaStart")}
                 </Link>
                 <Link
                   href="/login"
-                  className="flex-1 sm:flex-none text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-700 text-gray-200 font-medium rounded-xl transition-colors text-sm sm:text-base"
+                  className="flex-1 sm:flex-none text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-[var(--bg-elevated)] hover:bg-[var(--bg-elevated)]/80 border border-[var(--border-strong)] text-[var(--fg-muted)] font-medium rounded-xl transition-colors text-sm sm:text-base"
                 >
                   {tHero("ctaLogin")}
                 </Link>
               </div>
 
-              <p className="mt-3 text-xs sm:text-sm text-gray-400">{tHero("note")}</p>
+              <p className="mt-3 text-xs sm:text-sm text-[var(--fg-subtle)]">{tHero("note")}</p>
             </div>
 
             {/* ChatDemo は Hero 内で完結させ、途切れを防ぐ（Notion 流の自然な流れ） */}
@@ -157,12 +146,12 @@ export default async function LandingPage() {
         </section>
 
         {/* ────── 使いかた（How it works） ────── */}
-        <section className="relative w-full bg-gray-900/30 overflow-hidden">
+        <section className="relative w-full bg-[var(--bg-elevated)]/30 overflow-hidden">
           <GridBg />
           <div className="relative z-10 max-w-5xl mx-auto px-6 py-20">
             <ScrollReveal className="text-center mb-14">
-              <p className="text-sm font-medium text-indigo-400 mb-3">{tSteps("eyebrow")}</p>
-              <h2 className="text-3xl font-bold text-white">{tSteps("title")}</h2>
+              <p className="text-sm font-medium text-[var(--accent)] mb-3">{tSteps("eyebrow")}</p>
+              <h2 className="text-3xl font-bold text-[var(--fg)]">{tSteps("title")}</h2>
             </ScrollReveal>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
@@ -172,13 +161,13 @@ export default async function LandingPage() {
                     <div className="w-full max-w-[240px] mb-5">
                       <step.Demo />
                     </div>
-                    <p className="text-base font-bold text-indigo-500 tracking-widest mb-2">
+                    <p className="text-base font-bold text-[var(--fg-subtle)] tracking-widest mb-2">
                       {step.num}
                     </p>
-                    <h3 className="text-white font-semibold text-lg mb-3">
+                    <h3 className="text-[var(--fg)] font-semibold text-lg mb-3">
                       {tStepsItems(`${step.key}.title`)}
                     </h3>
-                    <p className="text-gray-400 text-sm leading-relaxed max-w-xs">
+                    <p className="text-[var(--fg-muted)] text-sm leading-relaxed max-w-xs">
                       {tStepsItems(`${step.key}.desc`)}
                     </p>
                   </div>
@@ -193,23 +182,23 @@ export default async function LandingPage() {
           <OrbsBg />
           <div className="relative z-10 max-w-5xl mx-auto px-6 py-20">
             <ScrollReveal className="text-center mb-14">
-              <p className="text-sm font-medium text-indigo-400 mb-3">{tFeatures("eyebrow")}</p>
-              <h2 className="text-3xl font-bold text-white">{tFeatures("title")}</h2>
+              <p className="text-sm font-medium text-[var(--accent)] mb-3">
+                {tFeatures("eyebrow")}
+              </p>
+              <h2 className="text-3xl font-bold text-[var(--fg)]">{tFeatures("title")}</h2>
             </ScrollReveal>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {FEATURES.map((f, i) => (
                 <ScrollReveal key={f.key} delay={i * 100}>
-                  <div
-                    className={`bg-gradient-to-br ${f.gradient} border ${f.border} rounded-2xl p-5 h-full flex flex-col`}
-                  >
+                  <div className="bg-[var(--bg-elevated)]/70 border border-[var(--border)] rounded-2xl p-5 h-full flex flex-col">
                     <div className="mb-4">
                       <f.Demo />
                     </div>
-                    <h3 className="text-white font-semibold text-lg mb-2">
+                    <h3 className="text-[var(--fg)] font-semibold text-lg mb-2">
                       {tFeaturesItems(`${f.key}.title`)}
                     </h3>
-                    <p className="text-gray-400 text-sm leading-relaxed">
+                    <p className="text-[var(--fg-muted)] text-sm leading-relaxed">
                       {tFeaturesItems(`${f.key}.desc`)}
                     </p>
                   </div>
@@ -219,26 +208,35 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        {/* ────── できることツアー（ProductTour）— 実際の画面を自動切替で見せる ────── */}
+        <section className="relative w-full overflow-hidden bg-[var(--bg-elevated)]/30">
+          <div className="relative z-10 max-w-4xl mx-auto px-6 py-20 sm:py-24">
+            <FeatureTour />
+          </div>
+        </section>
+
         {/* ────── CTA ────── */}
         <section className="relative w-full overflow-hidden">
           <PulseBg />
 
           <div className="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center">
             <ScrollReveal>
-              <h2 className="text-4xl sm:text-5xl font-bold text-white leading-tight mb-6">
+              {/* CTA 見出しはモバイル時のみ明示改行、PC では 1 行で流す */}
+              <h2 className="text-4xl sm:text-5xl font-bold text-[var(--fg)] leading-tight mb-6">
                 {tCta("titlePart1")}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400">
+                <br className="sm:hidden" />
+                <span className="bg-gradient-to-r from-[#5a88a8] via-[#7ba5c2] to-[#a8cce8] bg-clip-text text-transparent">
                   {tCta("titlePart2")}
                 </span>
               </h2>
-              <p className="text-gray-400 text-lg mb-10 max-w-md mx-auto">
+              <p className="text-[var(--fg-muted)] text-lg mb-10 max-w-md mx-auto">
                 {tCta("bodyLine1")}
                 <br />
                 {tCta("bodyLine2")}
               </p>
               <Link
                 href="/app"
-                className="inline-block px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all text-lg shadow-xl shadow-indigo-900/50 hover:shadow-indigo-900/70 hover:-translate-y-0.5"
+                className="inline-block px-10 py-4 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white font-semibold rounded-xl transition-all text-lg shadow-xl shadow-black/30 hover:-translate-y-0.5"
               >
                 {tCta("button")}
               </Link>

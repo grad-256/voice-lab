@@ -12,6 +12,7 @@ import {
 } from "@/lib/guestUsage";
 import { mapGetUserMediaError, pickBrowserMimeType } from "@/lib/recordingMime";
 import { createClient } from "@/lib/supabase/client";
+import { ArrowLeft, ArrowRight, Mic } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -539,22 +540,24 @@ export default function DiaryPage() {
 
   return (
     <main className="flex flex-col h-screen w-full max-w-2xl mx-auto px-4 overflow-hidden">
-      {/* ヘッダー */}
-      <header className="flex items-center justify-between pt-6 pb-2">
+      {/* ヘッダー：pt は他ページと統一。pb-6 は h-screen 会話画面でマイクボタン領域を
+         縦に確保するため、他ページの pb-16 sm:pb-20 とは意図的に違う値を採用 */}
+      <header className="flex items-center justify-between pt-10 sm:pt-12 pb-6">
         <Link
           href="/app"
-          className="text-gray-400 hover:text-white text-sm flex items-center gap-1 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm tracking-wide text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
         >
+          <ArrowLeft size={14} strokeWidth={1.5} aria-hidden="true" />
           {t("header.back")}
         </Link>
-        <h1 className="text-sm text-gray-400">{t("header.title")}</h1>
+        <h1 className="text-sm tracking-wide text-[var(--fg-subtle)]">{t("header.title")}</h1>
         {/* 終了ボタン：会話開始かつユーザー発話があるときは常時押せる。
            processing/speaking 中でも押せる（多重起動は finalizingRef でガード済） */}
         {isStarted && hasUserContent && !summaryResult ? (
           <button
             type="button"
             onClick={() => handleFinish()}
-            className="text-xs text-gray-400 hover:text-white transition-colors"
+            className="text-sm tracking-wide text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
           >
             {t("header.finish")}
           </button>
@@ -565,7 +568,7 @@ export default function DiaryPage() {
 
       {/* ゲスト残数（会話開始後のみ表示） */}
       {isStarted && isGuest && !summaryResult && (
-        <div className="mb-3 text-center text-xs text-gray-500">
+        <div className="mb-3 text-center text-xs text-[var(--fg-subtle)]">
           {t("guestRemaining", {
             remaining: Math.max(0, GUEST_LIMIT - guestCount),
             total: GUEST_LIMIT,
@@ -574,45 +577,43 @@ export default function DiaryPage() {
       )}
 
       {!isStarted ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-5 px-6 text-center">
-          <h2 className="text-xl font-semibold text-white leading-relaxed">
-            {t("prompt.heading")}
-          </h2>
-          <p className="text-sm text-gray-400 leading-relaxed max-w-xs">
-            {t("prompt.bodyLine1")}
-            <br />
-            {t("prompt.bodyLine2")}
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6 text-center animate-fadeIn">
+          <p className="text-sm text-[var(--fg-muted)] leading-relaxed max-w-md">
+            {t("prompt.body")}
           </p>
           <button
             type="button"
             onClick={handleStart}
             disabled={status === "processing" || status === "speaking"}
-            className="mt-2 px-10 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium rounded-full transition-colors"
+            className="mt-4 border border-[var(--border-strong)] hover:border-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--fg)] px-10 py-3 rounded-md text-sm tracking-wide transition-colors"
           >
             {status === "processing" ? t("prompt.starting") : t("prompt.start")}
           </button>
-          {errorMsg && <div className="mt-2 text-red-300 text-xs">{errorMsg}</div>}
+          {errorMsg && <div className="mt-2 text-xs text-[var(--error)]">{errorMsg}</div>}
           {authStatus === "authed" && (
             <Link
               href="/diary/history"
-              className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors mt-2"
+              className="inline-flex items-center gap-1.5 text-sm text-[var(--fg-subtle)] hover:text-[var(--accent)] transition-colors mt-2"
             >
               {t("prompt.viewHistory")}
+              <ArrowRight size={14} strokeWidth={1.5} aria-hidden="true" />
             </Link>
           )}
         </div>
       ) : (
         <>
-          {/* 会話ログ */}
-          <div className="flex-1 overflow-y-auto space-y-3 py-4">
+          {/* 会話ログ（LINE 風バブル廃止 → 手紙引用風） */}
+          <div className="flex-1 overflow-y-auto space-y-6 py-4">
             {messages.map((m) => (
               <div
                 key={m.id}
-                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex animate-fadeSlideUp ${m.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm leading-relaxed ${
-                    m.role === "user" ? "bg-indigo-600 text-white" : "bg-gray-800 text-gray-100"
+                  className={`max-w-[80%] text-sm leading-relaxed whitespace-pre-wrap px-4 py-3 rounded-2xl ${
+                    m.role === "user"
+                      ? "bg-[var(--accent)] text-white rounded-tr-sm"
+                      : "bg-[var(--bg-elevated)] text-[var(--fg)] rounded-tl-sm"
                   }`}
                 >
                   {m.text}
@@ -624,39 +625,35 @@ export default function DiaryPage() {
 
           {/* エラー */}
           {errorMsg && !summaryResult && (
-            <div className="mb-3 px-3 py-2 bg-red-900/60 border border-red-700 rounded-lg text-red-200 text-xs text-center">
+            <div className="mb-3 px-3 py-2 bg-[var(--error-bg)] border border-[var(--error)] rounded-lg text-[var(--error)] text-xs text-center">
               {errorMsg}
             </div>
           )}
 
           {/* マイクボタン + ステータス（要約プレビュー中は隠す） */}
           {!summaryResult && (
-            <div className="flex flex-col items-center gap-2 pb-4">
+            <div className="flex flex-col items-center gap-3 pb-6">
               <button
                 type="button"
                 onClick={handleMicClick}
                 disabled={status === "processing" || status === "speaking"}
                 className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all ${
                   status === "recording"
-                    ? "bg-red-500 scale-110 animate-pulse"
+                    ? "bg-[var(--accent-subtle)] border border-[var(--accent)] animate-breathe"
                     : status === "idle"
-                      ? "bg-indigo-600 hover:bg-indigo-500"
-                      : "bg-gray-700"
+                      ? "bg-[var(--bg-elevated)] border border-[var(--border-strong)] animate-glow-soft"
+                      : "bg-[var(--bg-elevated)] border border-[var(--border)] opacity-60"
                 } disabled:cursor-not-allowed`}
                 aria-label={status === "recording" ? t("micAria.recording") : t("micAria.idle")}
               >
-                <svg
-                  className="w-8 h-8 text-white"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
+                <Mic
+                  className="w-7 h-7 text-[var(--accent)]"
+                  strokeWidth={1.5}
                   aria-hidden="true"
-                >
-                  <path d="M12 14a3 3 0 003-3V5a3 3 0 10-6 0v6a3 3 0 003 3z" />
-                  <path d="M19 11a1 1 0 10-2 0 5 5 0 01-10 0 1 1 0 10-2 0 7 7 0 006 6.92V20H8a1 1 0 100 2h8a1 1 0 100-2h-3v-2.08A7 7 0 0019 11z" />
-                </svg>
+                />
               </button>
-              <span className="text-sm text-gray-300">{statusLabel}</span>
-              <span className="text-xs text-gray-400">{t("hint")}</span>
+              <span className="text-sm text-[var(--fg-muted)]">{statusLabel}</span>
+              <span className="text-xs text-[var(--fg-subtle)]">{t("hint")}</span>
             </div>
           )}
         </>
@@ -664,38 +661,40 @@ export default function DiaryPage() {
 
       {/* 要約プレビューモーダル */}
       {summaryResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
-            <div className="text-xs text-gray-500 mb-1">{t("summary.heading")}</div>
-            <h2 className="text-lg font-semibold text-white mb-4 leading-relaxed">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-overlay)] p-4 animate-fadeIn">
+          <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
+            <div className="text-xs tracking-wide text-[var(--fg-subtle)] mb-2">
+              {t("summary.heading")}
+            </div>
+            <h2 className="text-xl font-medium text-[var(--fg)] mb-4 leading-relaxed">
               {summaryResult.title}
             </h2>
-            <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap mb-6">
+            <p className="text-sm text-[var(--fg-muted)] leading-relaxed whitespace-pre-wrap mb-6">
               {summaryResult.summary}
             </p>
 
             {saveStatus === "error" && (
-              <div className="mb-4 px-3 py-2 bg-red-900/60 border border-red-700 rounded-lg text-red-200 text-xs text-center">
+              <div className="mb-4 px-3 py-2 bg-[var(--error-bg)] border border-[var(--error)] rounded-lg text-[var(--error)] text-xs text-center">
                 {t("errors.saveFailed")}
               </div>
             )}
 
             {authStatus === "guest" ? (
               <>
-                <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+                <p className="text-xs text-[var(--fg-muted)] mb-4 leading-relaxed">
                   {t("summary.guestNote")}
                 </p>
                 <div className="flex gap-2">
                   <Link
                     href="/login"
-                    className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg text-center transition-colors"
+                    className="flex-1 px-4 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white text-sm font-medium rounded-md text-center transition-colors"
                   >
                     {t("summary.guestSave")}
                   </Link>
                   <button
                     type="button"
                     onClick={handleDiscard}
-                    className="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg transition-colors"
+                    className="px-4 py-2.5 bg-transparent border border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)] text-sm rounded-md transition-colors"
                   >
                     {t("summary.guestDiscard")}
                   </button>
@@ -707,7 +706,7 @@ export default function DiaryPage() {
                   type="button"
                   onClick={handleSaveSummary}
                   disabled={saveStatus === "saving" || saveStatus === "saved"}
-                  className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-strong)] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md transition-colors"
                 >
                   {saveStatus === "saving"
                     ? t("summary.saving")
@@ -719,7 +718,7 @@ export default function DiaryPage() {
                   type="button"
                   onClick={handleDiscard}
                   disabled={saveStatus === "saving" || saveStatus === "saved"}
-                  className="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 text-sm rounded-lg transition-colors"
+                  className="px-4 py-2.5 bg-transparent border border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)] disabled:opacity-50 disabled:cursor-not-allowed text-sm rounded-md transition-colors"
                 >
                   {t("summary.discard")}
                 </button>
@@ -731,25 +730,25 @@ export default function DiaryPage() {
 
       {/* ゲスト上限モーダル */}
       {showLimitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 max-w-sm w-full">
-            <h2 className="text-lg font-semibold text-white mb-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-overlay)] p-4 animate-fadeIn">
+          <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-6 max-w-sm w-full">
+            <h2 className="text-xl font-medium text-[var(--fg)] mb-3 leading-relaxed">
               {t("guestLimitModal.title", { limit: GUEST_LIMIT })}
             </h2>
-            <p className="text-sm text-gray-400 mb-5 leading-relaxed">
+            <p className="text-sm text-[var(--fg-muted)] mb-5 leading-relaxed">
               {t("guestLimitModal.desc")}
             </p>
             <div className="flex gap-2">
               <Link
                 href="/login"
-                className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg text-center transition-colors"
+                className="flex-1 px-4 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white text-sm font-medium rounded-md text-center transition-colors"
               >
                 {t("guestLimitModal.signup")}
               </Link>
               <button
                 type="button"
                 onClick={() => setShowLimitModal(false)}
-                className="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg transition-colors"
+                className="px-4 py-2.5 bg-transparent border border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)] text-sm rounded-md transition-colors"
               >
                 {t("guestLimitModal.later")}
               </button>

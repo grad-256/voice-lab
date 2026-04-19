@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 
 import { Link, useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
+import { ArrowLeft, ChevronDown, ChevronUp, Pause, Play, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -162,102 +163,129 @@ export default function DiaryDetailPage({
   }, [entry, deleting, router, t]);
 
   return (
-    <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-6">
-      <header className="flex items-center justify-between mb-6">
+    <main className="flex-1 w-full max-w-3xl mx-auto px-6 pt-10 pb-16 sm:pt-12 sm:pb-20 animate-fadeIn">
+      <header className="flex items-center justify-between mb-12 text-sm tracking-wide">
         <Link
           href="/diary/history"
-          className="text-gray-400 hover:text-white text-sm transition-colors"
+          className="inline-flex items-center gap-1.5 text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
         >
+          <ArrowLeft strokeWidth={1.5} className="w-4 h-4" aria-hidden="true" />
           {t("back")}
         </Link>
-        <h1 className="text-sm text-gray-400">{t("title")}</h1>
         <div className="w-12" />
       </header>
 
       {errorMsg && (
-        <div className="mb-4 px-3 py-2 bg-red-900/60 border border-red-700 rounded-lg text-red-200 text-xs text-center">
+        <div className="mb-6 px-4 py-3 bg-[var(--error-bg)] border border-[var(--error)] text-[var(--error)] text-xs text-center rounded-md">
           {errorMsg}
         </div>
       )}
 
       {!entry && !errorMsg && (
-        <div className="text-center text-gray-500 py-16 text-sm">{t("loading")}</div>
+        <div className="text-center text-[var(--fg-subtle)] py-20 text-sm tracking-wide">
+          {t("loading")}
+        </div>
       )}
 
       {entry && (
-        <>
-          <div className="text-xs text-gray-500 mb-2">{formatDate(entry.created_at)}</div>
-          <h2 className="text-xl font-semibold text-white mb-4 leading-relaxed">{entry.title}</h2>
-          <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap mb-6">
+        <article>
+          {/* 日付 → タイトル → 区切り → 要約 → 付帯アクション → transcript → 削除 */}
+          {/* Day One 流：日付は極小、タイトルは巨大に */}
+          <time className="block font-mono-jp text-[11px] uppercase tracking-widest text-[var(--fg-subtle)]">
+            {formatDate(entry.created_at)}
+          </time>
+          <h2 className="mt-4 text-2xl sm:text-3xl font-semibold text-[var(--fg)] leading-tight tracking-wide">
+            {entry.title}
+          </h2>
+          <div className="mt-10 border-t border-[var(--border)]" />
+          <p className="mt-10 text-[var(--fg)] leading-loose whitespace-pre-wrap">
             {entry.summary}
           </p>
 
-          <div className="flex gap-2 mb-6">
+          {/* 付帯アクション（音声再生）。色を抑えて本文を邪魔しない */}
+          <div className="mt-10 flex items-center gap-3 text-sm tracking-wide">
             <button
               type="button"
               onClick={handlePlay}
               disabled={playing}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 border border-[var(--border-strong)] text-[var(--fg-muted)] hover:text-[var(--accent-strong)] hover:border-[var(--accent)] px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
+              {playing ? (
+                <Pause strokeWidth={1.5} className="w-4 h-4" aria-hidden="true" />
+              ) : (
+                <Play strokeWidth={1.5} className="w-4 h-4" aria-hidden="true" />
+              )}
               {playing ? t("playing") : t("play")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowDeleteConfirm(true)}
-              disabled={deleting}
-              className="px-4 py-2 bg-gray-800 hover:bg-red-900 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 hover:text-red-200 text-sm rounded-lg transition-colors"
-            >
-              {deleting ? t("deleting") : t("delete")}
             </button>
           </div>
 
+          {/* transcript：折り畳みで補助情報に退避 */}
           {entry.transcript.length > 0 && (
-            <>
+            <div className="mt-16">
               <button
                 type="button"
                 onClick={() => setShowTranscript((v) => !v)}
-                className="text-xs text-gray-400 hover:text-white mb-3 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm tracking-wide text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
               >
+                {showTranscript ? (
+                  <ChevronUp strokeWidth={1.5} className="w-3.5 h-3.5" aria-hidden="true" />
+                ) : (
+                  <ChevronDown strokeWidth={1.5} className="w-3.5 h-3.5" aria-hidden="true" />
+                )}
                 {showTranscript ? t("hideTranscript") : t("showTranscript")}
               </button>
 
               {showTranscript && (
-                <div className="space-y-2 pb-10">
+                <div className="mt-8 space-y-6">
                   {entry.transcript.map((item, i) => (
-                    <div
-                      key={`${item.role}-${i}-${item.text.slice(0, 20)}`}
-                      className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`max-w-[80%] px-3 py-2 rounded-xl text-xs leading-relaxed whitespace-pre-wrap ${
-                          item.role === "user"
-                            ? "bg-indigo-700/60 text-white"
-                            : "bg-gray-800 text-gray-200"
-                        }`}
-                      >
-                        {item.text}
-                      </div>
+                    <div key={`${item.role}-${i}-${item.text.slice(0, 20)}`}>
+                      {item.role === "user" ? (
+                        <p className="border-l-2 border-[var(--accent)] pl-4 py-1 text-sm text-[var(--fg)] leading-relaxed whitespace-pre-wrap">
+                          {item.text}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-[var(--fg-muted)] leading-relaxed whitespace-pre-wrap">
+                          {item.text}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
-            </>
+            </div>
           )}
-        </>
+
+          {/* 削除リンク：記事末の控えめな underline に退避 */}
+          <div className="mt-20 pt-8 border-t border-[var(--border)]">
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={deleting}
+              className="inline-flex items-center gap-1.5 text-sm tracking-wide text-[var(--fg-subtle)] hover:text-[var(--error)] underline underline-offset-4 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Trash2 strokeWidth={1.5} className="w-3.5 h-3.5" aria-hidden="true" />
+              {deleting ? t("deleting") : t("delete")}
+            </button>
+          </div>
+        </article>
       )}
 
       {/* 削除確認モーダル */}
       {showDeleteConfirm && entry && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 max-w-sm w-full">
-            <h2 className="text-lg font-semibold text-white mb-2">{t("deleteConfirm.title")}</h2>
-            <p className="text-sm text-gray-400 mb-5 leading-relaxed">{t("deleteConfirm.desc")}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-overlay)] p-4 animate-fadeIn">
+          <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-6 max-w-sm w-full">
+            <h2 className="text-lg font-medium text-[var(--fg)] mb-2">
+              {t("deleteConfirm.title")}
+            </h2>
+            <p className="text-sm text-[var(--fg-muted)] mb-6 leading-relaxed">
+              {t("deleteConfirm.desc")}
+            </p>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                className="flex-1 px-4 py-2.5 bg-[var(--error)] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md transition-opacity"
               >
                 {deleting ? t("deleting") : t("deleteConfirm.confirm")}
               </button>
@@ -265,7 +293,7 @@ export default function DiaryDetailPage({
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={deleting}
-                className="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-gray-300 text-sm rounded-lg transition-colors"
+                className="px-4 py-2.5 border border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)] disabled:opacity-50 text-sm rounded-md transition-colors"
               >
                 {t("deleteConfirm.cancel")}
               </button>

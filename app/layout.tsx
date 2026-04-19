@@ -4,10 +4,9 @@ export const runtime = "edge";
 
 import type { Metadata, Viewport } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
-import { Noto_Sans_JP, Plus_Jakarta_Sans } from "next/font/google";
+import { Noto_Sans_JP, Noto_Serif_JP, Plus_Jakarta_Sans } from "next/font/google";
 import PostHogProvider from "./components/PostHogProvider";
 import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
-import { AuthMigrationListener } from "./components/auth/AuthMigrationListener";
 import "./globals.css";
 
 const jakartaSans = Plus_Jakarta_Sans({
@@ -21,6 +20,15 @@ const notoSansJP = Noto_Sans_JP({
   variable: "--font-noto",
   display: "swap",
   weight: ["400", "500", "700"],
+});
+
+// Quiet Journal の見出しに使うセリフ体。
+// globals.css の `.font-serif-jp` ユーティリティと `--font-serif` を繋ぐ。
+const notoSerifJP = Noto_Serif_JP({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  display: "swap",
+  weight: ["400", "600"],
 });
 
 // ルートの metadata はロケール非依存（icons のみ）。
@@ -62,11 +70,12 @@ export default async function RootLayout({
   const locale = await getLocale();
 
   return (
-    <html lang={locale} className={`${jakartaSans.variable} ${notoSansJP.variable}`}>
-      <body className="min-h-screen bg-gray-950 text-gray-100 antialiased flex flex-col">
+    <html
+      lang={locale}
+      className={`${jakartaSans.variable} ${notoSansJP.variable} ${notoSerifJP.variable}`}
+    >
+      <body className="min-h-screen bg-[var(--bg)] text-[var(--fg)] antialiased flex flex-col">
         <PostHogProvider>{children}</PostHogProvider>
-        {/* ゲスト → 認証ユーザー移行のトリガ。UI は通常レンダーされない（移行成功時のみトースト表示） */}
-        <AuthMigrationListener />
         {/* PWA Service Worker 登録（インストール可能判定のため必須） */}
         <ServiceWorkerRegister />
       </body>

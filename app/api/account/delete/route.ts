@@ -43,14 +43,7 @@ export async function DELETE(_req: Request) {
       .eq("user_id", user.id);
     if (delConvsError) throw delConvsError;
 
-    // 4. personas を削除
-    const { error: delPersonasError } = await supabase
-      .from("personas")
-      .delete()
-      .eq("user_id", user.id);
-    if (delPersonasError) throw delPersonasError;
-
-    // 5. ユーザーを削除（最後に実行）
+    // 4. ユーザーを削除（最後に実行）
     const response = await fetch(`${supabaseUrl}/auth/v1/admin/users/${user.id}`, {
       method: "DELETE",
       headers: adminHeaders,

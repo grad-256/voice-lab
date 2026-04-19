@@ -23,13 +23,13 @@ export default function FeatureVoiceDemo() {
   }, []);
 
   return (
-    <div className="relative w-full h-[200px] rounded-2xl bg-gray-950 border border-gray-800/60 overflow-hidden flex flex-col items-center justify-center gap-3">
+    <div className="relative w-full h-[200px] rounded-2xl bg-[var(--bg)] border border-[var(--border)] overflow-hidden flex flex-col items-center justify-center gap-3">
       {/* 波形バー */}
       <div className="flex items-end gap-[4px] h-10">
         {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
           <span
             key={i}
-            className={`w-[4px] rounded-full ${active ? "bg-red-400" : "bg-gray-700"} transition-colors`}
+            className={`w-[4px] rounded-full ${active ? "bg-[var(--accent-strong)]" : "bg-[var(--border-strong)]"} transition-colors`}
             style={{
               height: `${30 + ((i * 17) % 70)}%`,
               animation: active
@@ -40,12 +40,13 @@ export default function FeatureVoiceDemo() {
         ))}
       </div>
 
-      {/* マイクボタン */}
+      {/* マイクボタン（録音中は墨青の静かな呼吸 / Quiet Journal 路線） */}
       <div className="relative">
-        {active && <span className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />}
         <div
           className={`relative w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all ${
-            active ? "bg-red-500 scale-110 shadow-red-900/60" : "bg-indigo-600 shadow-indigo-900/50"
+            active
+              ? "bg-[var(--accent)] scale-105 shadow-black/40 animate-breathe"
+              : "bg-[var(--bg-elevated)] shadow-black/30"
           }`}
         >
           <svg
@@ -59,7 +60,9 @@ export default function FeatureVoiceDemo() {
         </div>
       </div>
 
-      <p className={`text-xs transition-colors ${active ? "text-red-400" : "text-gray-600"}`}>
+      <p
+        className={`text-xs transition-colors ${active ? "text-[var(--fg-muted)]" : "text-[var(--fg-subtle)]"}`}
+      >
         {active ? t("listening") : t("idle")}
       </p>
 
