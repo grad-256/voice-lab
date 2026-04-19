@@ -13,11 +13,6 @@
     "ctaHome": "Start talking"
   },
   "lp": {
-    "bridges": {
-      "afterHero": "Here's how your voice turns into a diary. Take a look at the flow.",
-      "afterSteps": "The flow is simple — but there's a bit more you can do.",
-      "afterFeatures": "All that's left is to start talking."
-    },
     "hero": {
       "badge": "No signup required — try it now",
       "lead": "Talk your day into a diary.",
@@ -62,6 +57,29 @@
         "summary": {
           "title": "Revisit it on your own time",
           "desc": "Browse past entries at a glance, or open a single one to reread. A quiet place to meet the thoughts you had, again."
+        }
+      }
+    },
+    "tour": {
+      "eyebrow": "Actual screens",
+      "title": "Speak, and read it back later.",
+      "subtitle": "A quick look at how the app actually feels.",
+      "slides": {
+        "recording": {
+          "caption": "Speak",
+          "description": "Press the mic and talk about your day. The AI chats back with you."
+        },
+        "summary": {
+          "caption": "Shape",
+          "description": "The AI turns your conversation into a diary entry that's easy to read."
+        },
+        "history": {
+          "caption": "Keep",
+          "description": "Your diaries stay here. Come back to them anytime."
+        },
+        "detail": {
+          "caption": "Revisit",
+          "description": "Open a past entry and meet the thoughts you had, again."
         }
       }
     },

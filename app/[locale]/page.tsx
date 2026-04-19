@@ -3,6 +3,7 @@ export const runtime = "edge";
 import ChatDemo from "@/app/components/lp/ChatDemo";
 import FeatureConversationDemo from "@/app/components/lp/FeatureConversationDemo";
 import FeatureSummaryDemo from "@/app/components/lp/FeatureSummaryDemo";
+import FeatureTour from "@/app/components/lp/FeatureTour";
 import FeatureVoiceDemo from "@/app/components/lp/FeatureVoiceDemo";
 import GridBg from "@/app/components/lp/GridBg";
 import HeroBg from "@/app/components/lp/HeroBg";
@@ -46,7 +47,6 @@ export default async function LandingPage() {
   const tFeatures = await getTranslations("lp.features");
   const tFeaturesItems = await getTranslations("lp.features.items");
   const tCta = await getTranslations("lp.cta");
-  const tBridges = await getTranslations("lp.bridges");
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] overflow-x-hidden">
@@ -104,11 +104,13 @@ export default async function LandingPage() {
               </p>
 
               {/* メイン H1（動詞 2 連で印象を締める）— Quiet Journal 路線では単色に統一して紙の落ち着きを出す。
-                 改行は <br /> で明示し、モバイルでも必ず 2 行で表示されるようにする（whitespace-nowrap は不使用）。 */}
+                 改行はモバイル時のみ明示（`sm:hidden`）。PC では自然に 1 行で並ぶ。 */}
               <h1 className="mt-3 text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-[var(--fg)]">
                 {tHero("h1Part1")}
-                <br />
-                <span className="text-[var(--fg)]">{tHero("h1Part2")}</span>
+                <br className="sm:hidden" />
+                <span className="bg-gradient-to-r from-[#5a88a8] via-[#7ba5c2] to-[#a8cce8] bg-clip-text text-transparent">
+                  {tHero("h1Part2")}
+                </span>
               </h1>
 
               {/* サブコピー（ブランドメッセージ）— 前置きより控えめに */}
@@ -143,15 +145,6 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* ────── つなぎ（Hero → Steps）— 次セクションへの橋渡し文 ────── */}
-        <ScrollReveal>
-          <div className="max-w-2xl mx-auto px-6 py-10 sm:py-16 text-center">
-            <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
-              {tBridges("afterHero")}
-            </p>
-          </div>
-        </ScrollReveal>
-
         {/* ────── 使いかた（How it works） ────── */}
         <section className="relative w-full bg-[var(--bg-elevated)]/30 overflow-hidden">
           <GridBg />
@@ -184,15 +177,6 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* ────── つなぎ（Steps → Features）— 次セクションへの橋渡し文 ────── */}
-        <ScrollReveal>
-          <div className="max-w-2xl mx-auto px-6 py-10 sm:py-16 text-center">
-            <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
-              {tBridges("afterSteps")}
-            </p>
-          </div>
-        </ScrollReveal>
-
         {/* ────── できること（Features） ────── */}
         <section className="relative w-full overflow-hidden">
           <OrbsBg />
@@ -224,14 +208,12 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* ────── つなぎ（Features → CTA）— 次セクションへの橋渡し文 ────── */}
-        <ScrollReveal>
-          <div className="max-w-2xl mx-auto px-6 py-10 sm:py-16 text-center">
-            <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
-              {tBridges("afterFeatures")}
-            </p>
+        {/* ────── できることツアー（ProductTour）— 実際の画面を自動切替で見せる ────── */}
+        <section className="relative w-full overflow-hidden bg-[var(--bg-elevated)]/30">
+          <div className="relative z-10 max-w-4xl mx-auto px-6 py-20 sm:py-24">
+            <FeatureTour />
           </div>
-        </ScrollReveal>
+        </section>
 
         {/* ────── CTA ────── */}
         <section className="relative w-full overflow-hidden">
@@ -239,11 +221,13 @@ export default async function LandingPage() {
 
           <div className="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center">
             <ScrollReveal>
-              {/* CTA 見出しもモバイルで必ず 2 行になるよう <br /> で明示改行 */}
+              {/* CTA 見出しはモバイル時のみ明示改行、PC では 1 行で流す */}
               <h2 className="text-4xl sm:text-5xl font-bold text-[var(--fg)] leading-tight mb-6">
                 {tCta("titlePart1")}
-                <br />
-                <span className="text-[var(--fg)]">{tCta("titlePart2")}</span>
+                <br className="sm:hidden" />
+                <span className="bg-gradient-to-r from-[#5a88a8] via-[#7ba5c2] to-[#a8cce8] bg-clip-text text-transparent">
+                  {tCta("titlePart2")}
+                </span>
               </h2>
               <p className="text-[var(--fg-muted)] text-lg mb-10 max-w-md mx-auto">
                 {tCta("bodyLine1")}
