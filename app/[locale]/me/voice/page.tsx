@@ -178,8 +178,8 @@ export default function VoiceSettingsPage() {
               <div
                 className={`flex items-start justify-between gap-4 p-5 rounded-lg border transition-colors ${
                   isSelected
-                    ? "border-[var(--accent)]/60 bg-[var(--accent-subtle)]"
-                    : "border-[var(--border)] bg-[var(--bg-elevated)]/50 hover:border-[var(--border-strong)]"
+                    ? "border-accent-60 bg-[var(--accent-subtle)]"
+                    : "border-[var(--border)] bg-elevated-50 hover:border-[var(--border-strong)]"
                 }`}
               >
                 {/* 選択ボタン（カード全体の幅をとる） */}
@@ -204,7 +204,7 @@ export default function VoiceSettingsPage() {
                   className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-sm tracking-wide transition-colors ${
                     isPreviewing
                       ? "border-[var(--border)] text-[var(--fg-subtle)]"
-                      : "border-[var(--border)] text-[var(--fg-muted)] hover:border-[var(--accent)]/60 hover:text-[var(--fg)]"
+                      : "border-[var(--border)] text-[var(--fg-muted)] hover:border-accent-60 hover:text-[var(--fg)]"
                   }`}
                   aria-label={t("previewAria", { label })}
                 >

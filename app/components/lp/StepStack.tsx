@@ -28,14 +28,18 @@ export default function StepStack() {
   ];
 
   return (
-    <div className="relative w-full h-[120px] rounded-xl bg-[var(--bg-elevated)]/60 border border-[var(--border)] overflow-hidden p-3 flex flex-col justify-end gap-1.5">
+    <div className="relative w-full h-[120px] rounded-xl bg-elevated-60 border border-[var(--border)] overflow-hidden p-3 flex flex-col justify-end gap-1.5">
       {bubbles.slice(0, count).map((b) => (
         <div
           key={b.id}
           className={`flex ${b.right ? "justify-end" : "justify-start"} animate-fadeSlideUp`}
         >
           <span
-            className={`${b.w} h-2.5 rounded-full ${b.right ? "bg-gray-500/80" : "bg-gray-700/80"}`}
+            // 会話バブル：ユーザー側（right）は自分発の濃い色、AI 側は控えめ。
+            // var(--fg-subtle) / var(--border-strong) でどちらのテーマでも階調が残るように設計。
+            className={`${b.w} h-2.5 rounded-full ${
+              b.right ? "bg-[var(--fg-subtle)]" : "bg-[var(--border-strong)]"
+            }`}
           />
         </div>
       ))}

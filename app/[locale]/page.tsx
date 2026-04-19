@@ -1,5 +1,14 @@
 export const runtime = "edge";
 
+// LP はブランドトーン維持のため常にダーク固定。
+// Next.js 15 の page 単位 viewport override で、root layout の prefers-color-scheme 連動を上書きし
+// OS が light 端末でもモバイルブラウザのアドレスバーを墨色 (#121212) に統一する。
+// 非 LP ページは root layout の themeColor（メディアクエリ連動）を引き続き使う。
+import type { Viewport } from "next";
+export const viewport: Viewport = {
+  themeColor: "#121212",
+};
+
 import ChatDemo from "@/app/components/lp/ChatDemo";
 import FeatureConversationDemo from "@/app/components/lp/FeatureConversationDemo";
 import FeatureSummaryDemo from "@/app/components/lp/FeatureSummaryDemo";
@@ -49,9 +58,17 @@ export default async function LandingPage() {
   const tCta = await getTranslations("lp.cta");
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] overflow-x-hidden">
+    // LP は常にダークのブランドトーンで表示する。
+    // 実際の固定は html 要素側（THEME_INIT_SCRIPT が LP パスを検出して data-theme="dark" を設定、
+    // LocaleShellThemeLock の useEffect でも保険として上書き）。ここで data-theme="dark" を
+    // 再宣言しているのは、SSR 初期 HTML 段階（THEME_INIT_SCRIPT 実行前の一瞬）でも subtree を
+    // ダーク値で解決させる二重安全のため。
+    <div
+      data-theme="dark"
+      className="min-h-screen bg-[var(--bg)] text-[var(--fg)] overflow-x-hidden"
+    >
       {/* ────── Navbar ────── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur-md">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border)] bg-bg-80 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <span className="font-bold text-lg tracking-tight text-[var(--fg)]">
             My<span className="text-[var(--accent)]">VoiceLab</span>
@@ -108,9 +125,7 @@ export default async function LandingPage() {
               <h1 className="mt-3 text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-[var(--fg)]">
                 {tHero("h1Part1")}
                 <br className="sm:hidden" />
-                <span className="bg-gradient-to-r from-[#5a88a8] via-[#7ba5c2] to-[#a8cce8] bg-clip-text text-transparent">
-                  {tHero("h1Part2")}
-                </span>
+                <span className="text-grad-title">{tHero("h1Part2")}</span>
               </h1>
 
               {/* サブコピー（ブランドメッセージ）— 前置きより控えめに */}
@@ -123,13 +138,13 @@ export default async function LandingPage() {
               <div className="mt-8 flex flex-row gap-3 w-full sm:w-auto">
                 <Link
                   href="/app"
-                  className="flex-1 sm:flex-none text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white font-semibold rounded-xl transition-all text-sm sm:text-base shadow-lg shadow-black/30 hover:-translate-y-0.5"
+                  className="flex-1 sm:flex-none text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white font-semibold rounded-xl transition-all text-sm sm:text-base shadow-theme-md hover:-translate-y-0.5"
                 >
                   {tHero("ctaStart")}
                 </Link>
                 <Link
                   href="/login"
-                  className="flex-1 sm:flex-none text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-[var(--bg-elevated)] hover:bg-[var(--bg-elevated)]/80 border border-[var(--border-strong)] text-[var(--fg-muted)] font-medium rounded-xl transition-colors text-sm sm:text-base"
+                  className="flex-1 sm:flex-none text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-[var(--bg-elevated)] hover:bg-elevated-80 border border-[var(--border-strong)] text-[var(--fg-muted)] font-medium rounded-xl transition-colors text-sm sm:text-base"
                 >
                   {tHero("ctaLogin")}
                 </Link>
@@ -146,7 +161,7 @@ export default async function LandingPage() {
         </section>
 
         {/* ────── 使いかた（How it works） ────── */}
-        <section className="relative w-full bg-[var(--bg-elevated)]/30 overflow-hidden">
+        <section className="relative w-full bg-elevated-30 overflow-hidden">
           <GridBg />
           <div className="relative z-10 max-w-5xl mx-auto px-6 py-20">
             <ScrollReveal className="text-center mb-14">
@@ -191,7 +206,7 @@ export default async function LandingPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {FEATURES.map((f, i) => (
                 <ScrollReveal key={f.key} delay={i * 100}>
-                  <div className="bg-[var(--bg-elevated)]/70 border border-[var(--border)] rounded-2xl p-5 h-full flex flex-col">
+                  <div className="bg-elevated-70 border border-[var(--border)] rounded-2xl p-5 h-full flex flex-col">
                     <div className="mb-4">
                       <f.Demo />
                     </div>
@@ -209,7 +224,7 @@ export default async function LandingPage() {
         </section>
 
         {/* ────── できることツアー（ProductTour）— 実際の画面を自動切替で見せる ────── */}
-        <section className="relative w-full overflow-hidden bg-[var(--bg-elevated)]/30">
+        <section className="relative w-full overflow-hidden bg-elevated-30">
           <div className="relative z-10 max-w-4xl mx-auto px-6 py-20 sm:py-24">
             <FeatureTour />
           </div>
@@ -225,9 +240,7 @@ export default async function LandingPage() {
               <h2 className="text-4xl sm:text-5xl font-bold text-[var(--fg)] leading-tight mb-6">
                 {tCta("titlePart1")}
                 <br className="sm:hidden" />
-                <span className="bg-gradient-to-r from-[#5a88a8] via-[#7ba5c2] to-[#a8cce8] bg-clip-text text-transparent">
-                  {tCta("titlePart2")}
-                </span>
+                <span className="text-grad-title">{tCta("titlePart2")}</span>
               </h2>
               <p className="text-[var(--fg-muted)] text-lg mb-10 max-w-md mx-auto">
                 {tCta("bodyLine1")}
@@ -236,7 +249,7 @@ export default async function LandingPage() {
               </p>
               <Link
                 href="/app"
-                className="inline-block px-10 py-4 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white font-semibold rounded-xl transition-all text-lg shadow-xl shadow-black/30 hover:-translate-y-0.5"
+                className="inline-block px-10 py-4 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white font-semibold rounded-xl transition-all text-lg shadow-theme-lg hover:-translate-y-0.5"
               >
                 {tCta("button")}
               </Link>

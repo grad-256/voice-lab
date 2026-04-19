@@ -4,20 +4,20 @@ export const runtime = "edge";
 
 export default function PrivacyPage() {
   return (
-    <main className="flex-1 w-full bg-gray-950 text-gray-300 px-4 py-16">
+    <main className="flex-1 w-full bg-[var(--bg)] text-[var(--fg-muted)] px-4 py-16">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold text-white mb-2">プライバシーポリシー</h1>
-        <p className="text-sm text-gray-500 mb-10">最終更新日：2026年3月27日</p>
+        <h1 className="text-2xl font-bold text-[var(--fg)] mb-2">プライバシーポリシー</h1>
+        <p className="text-sm text-[var(--fg-subtle)] mb-10">最終更新日：2026年3月27日</p>
 
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-3">1. 運営者</h2>
+          <h2 className="text-lg font-semibold text-[var(--fg)] mb-3">1. 運営者</h2>
           <p className="text-sm leading-relaxed">
             本サービス「MyVoiceLab」は、個人により運営されています。
             <br />
             お問い合わせ先：
             <a
               href="mailto:m.miyaudi@uclab-w.com"
-              className="text-indigo-400 hover:text-indigo-300 transition-colors ml-1"
+              className="text-[var(--accent)] hover:text-[var(--accent-strong)] transition-colors ml-1"
             >
               m.miyaudi@uclab-w.com
             </a>
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-3">2. 収集する情報</h2>
+          <h2 className="text-lg font-semibold text-[var(--fg)] mb-3">2. 収集する情報</h2>
           <p className="text-sm leading-relaxed">本サービスは、以下の情報を収集します。</p>
           <ul className="mt-3 space-y-2 text-sm list-disc list-inside">
             <li>メールアドレス（アカウント登録時）</li>
@@ -36,7 +36,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-3">3. 利用目的</h2>
+          <h2 className="text-lg font-semibold text-[var(--fg)] mb-3">3. 利用目的</h2>
           <ul className="mt-3 space-y-2 text-sm list-disc list-inside">
             <li>アカウントの識別・認証</li>
             <li>AI 音声会話サービスの提供（音声認識・AI 対話・音声合成）</li>
@@ -45,7 +45,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-3">
+          <h2 className="text-lg font-semibold text-[var(--fg)] mb-3">
             4. 業務委託先への情報提供（外国含む）
           </h2>
           <p className="text-sm leading-relaxed">
@@ -67,7 +67,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-3">5. 安全管理措置</h2>
+          <h2 className="text-lg font-semibold text-[var(--fg)] mb-3">5. 安全管理措置</h2>
           <p className="text-sm leading-relaxed">
             本サービスは、個人データの漏えい・滅失・毀損を防止するため、以下の措置を講じています。
           </p>
@@ -80,7 +80,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-3">6. 外部送信</h2>
+          <h2 className="text-lg font-semibold text-[var(--fg)] mb-3">6. 外部送信</h2>
           <p className="text-sm leading-relaxed">
             本サービスは、サービス提供にあたり以下の情報を外部に送信します。
           </p>
@@ -93,7 +93,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-3">7. 保存期間</h2>
+          <h2 className="text-lg font-semibold text-[var(--fg)] mb-3">7. 保存期間</h2>
           <ul className="mt-3 space-y-2 text-sm list-disc list-inside">
             <li>メールアドレス：アカウント削除まで保持</li>
             <li>音声データ：文字起こし処理完了後に即時破棄</li>
@@ -103,7 +103,9 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-3">8. 開示・訂正・利用停止請求</h2>
+          <h2 className="text-lg font-semibold text-[var(--fg)] mb-3">
+            8. 開示・訂正・利用停止請求
+          </h2>
           <p className="text-sm leading-relaxed">
             ユーザーは、個人情報保護法に基づき、以下の請求を行うことができます。
           </p>
@@ -120,7 +122,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-3">9. アカウント削除</h2>
+          <h2 className="text-lg font-semibold text-[var(--fg)] mb-3">9. アカウント削除</h2>
           <p className="text-sm leading-relaxed">
             退会希望の場合は、お問い合わせ先までご連絡ください。
             アカウントおよび関連する個人情報を削除します。
@@ -129,21 +131,24 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-3">10. お問い合わせ</h2>
+          <h2 className="text-lg font-semibold text-[var(--fg)] mb-3">10. お問い合わせ</h2>
           <p className="text-sm leading-relaxed">
             プライバシーに関するお問い合わせは以下までご連絡ください。
             <br />
             <a
               href="mailto:m.miyaudi@uclab-w.com"
-              className="text-indigo-400 hover:text-indigo-300 transition-colors"
+              className="text-[var(--accent)] hover:text-[var(--accent-strong)] transition-colors"
             >
               m.miyaudi@uclab-w.com
             </a>
           </p>
         </section>
 
-        <div className="mt-12 pt-8 border-t border-gray-800">
-          <a href="/" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+        <div className="mt-12 pt-8 border-t border-[var(--border)]">
+          <a
+            href="/"
+            className="text-sm text-[var(--accent)] hover:text-[var(--accent-strong)] transition-colors"
+          >
             ← トップに戻る
           </a>
         </div>

@@ -294,6 +294,16 @@
         }
       }
     },
+    "theme": {
+      "cardTitle": "Theme",
+      "cardSubtitle": "Pick how bright the screen feels",
+      "groupAriaLabel": "Theme selection",
+      "options": {
+        "system": "System",
+        "light": "Light",
+        "dark": "Dark"
+      }
+    },
     "logout": {
       "cardTitle": "Log out",
       "cardSubtitle": "Sign out of this device",
