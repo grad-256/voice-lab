@@ -10,14 +10,19 @@ import { useCallback, useEffect, useState } from "react";
 type SlideId = "recording" | "summary" | "history" | "detail";
 
 const SLIDES: readonly SlideId[] = ["recording", "summary", "history", "detail"] as const;
-// embla-carousel-autoplay のデフォルト間隔
+// embla-carousel-autoplay のスライド切替間隔
 const AUTOPLAY_DELAY_MS = 4500;
 
-// スマホ風の丸角フレーム。中身は absolute inset-0 で 9:19 の画面に収める。
+// messages の `lp.chatDemo.conversation` / `lp.tour.mock.history.entries` を
+// そのまま取り出すための型（`t.raw` の戻り値を最小限にキャストする。`any` は使わない）。
+type ChatBubble = { role: "assistant" | "user"; text: string };
+type HistoryEntry = { date: string; title: string; body: string };
+
+// スマホ風の丸角フレーム。中身は absolute inset-0 で縦長画面に収める。
 function PhoneFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-[280px] sm:max-w-[320px]">
-      <div className="relative rounded-[2.25rem] border-[8px] border-[var(--border-strong)] bg-[var(--bg)] shadow-2xl shadow-black/30 overflow-hidden aspect-[9/19]">
+    <div className="mx-auto w-full max-w-[340px] sm:max-w-[400px] md:max-w-[460px]">
+      <div className="relative rounded-[2.25rem] border-[8px] border-[var(--border-strong)] bg-[var(--bg)] shadow-2xl shadow-black/30 overflow-hidden aspect-[9/17]">
         {/* スマホのノッチ（上部中央の薄い黒バー） */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-4 bg-[var(--border-strong)] rounded-b-xl z-10" />
         <div className="absolute inset-0 overflow-hidden">{children}</div>
@@ -27,6 +32,7 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
 }
 
 // 各モックに共通のスマホ画面風ヘッダー。
+// left/right が未指定でも min-w スペーサーは残して中央寄せを維持する（レイアウト崩れ防止）。
 function MockHeader({
   left,
   center,
@@ -46,13 +52,16 @@ function MockHeader({
 }
 
 // 録音中画面の再現モック：ヘッダー + 会話バブル + 呼吸するマイク。
+// bubbles は lp.chatDemo.conversation の先頭 3 件（ja/en 両方に整備済）を利用。
 function RecordingMock({
   caption,
+  bubbles,
   headerBack,
   headerTitle,
   headerFinish,
 }: {
   caption: string;
+  bubbles: ChatBubble[];
   headerBack: string;
   headerTitle: string;
   headerFinish: string;
@@ -71,29 +80,30 @@ function RecordingMock({
       />
 
       {/* 会話ログ（assistant/user が交互に積まれる） */}
-      <div className="flex-1 flex flex-col gap-2 px-3 overflow-hidden">
-        <div className="flex justify-start">
-          <div className="max-w-[80%] text-[9px] leading-relaxed px-2.5 py-1.5 rounded-2xl rounded-tl-sm bg-[var(--bg-elevated)] text-[var(--fg)]">
-            今日はどんな一日でしたか？
+      <div className="flex-1 flex flex-col gap-1.5 px-3 overflow-hidden">
+        {bubbles.map((b, i) => (
+          <div
+            key={`${b.role}-${i}`}
+            className={`flex ${b.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-[80%] text-[8px] leading-relaxed px-2 py-1 rounded-2xl ${
+                b.role === "user"
+                  ? "bg-[var(--accent)] text-white rounded-tr-sm"
+                  : "bg-[var(--bg-elevated)] text-[var(--fg)] rounded-tl-sm"
+              }`}
+            >
+              {b.text}
+            </div>
           </div>
-        </div>
-        <div className="flex justify-end">
-          <div className="max-w-[80%] text-[9px] leading-relaxed px-2.5 py-1.5 rounded-2xl rounded-tr-sm bg-[var(--accent)] text-white">
-            打ち合わせでうまく話せなくて、少し落ち込んだ。
-          </div>
-        </div>
-        <div className="flex justify-start">
-          <div className="max-w-[80%] text-[9px] leading-relaxed px-2.5 py-1.5 rounded-2xl rounded-tl-sm bg-[var(--bg-elevated)] text-[var(--fg)]">
-            具体的にはどのあたりが？
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* マイクボタン（呼吸アニメーション）＋キャプション */}
-      <div className="flex flex-col items-center gap-2 pb-6">
-        <div className="relative w-14 h-14 rounded-full bg-[var(--accent-subtle)] border border-[var(--accent)] flex items-center justify-center animate-breathe">
+      <div className="flex flex-col items-center gap-1.5 pb-4">
+        <div className="relative w-12 h-12 rounded-full bg-[var(--accent-subtle)] border border-[var(--accent)] flex items-center justify-center animate-breathe">
           <Mic
-            className="w-5 h-5 text-[var(--accent-strong)]"
+            className="w-4 h-4 text-[var(--accent-strong)]"
             strokeWidth={1.5}
             aria-hidden="true"
           />
@@ -106,15 +116,21 @@ function RecordingMock({
 
 // 要約ダイアログの再現モック：背景に会話ログをうっすら、上に紙風モーダル。
 function SummaryMock({
+  bubbles,
   headerBack,
   headerTitle,
   heading,
+  summaryTitle,
+  summaryBody,
   saveLabel,
   discardLabel,
 }: {
+  bubbles: ChatBubble[];
   headerBack: string;
   headerTitle: string;
   heading: string;
+  summaryTitle: string;
+  summaryBody: string;
   saveLabel: string;
   discardLabel: string;
 }) {
@@ -131,32 +147,37 @@ function SummaryMock({
       />
 
       {/* 背景：会話ログが微かに見える */}
-      <div className="flex-1 flex flex-col gap-2 px-3 opacity-30 overflow-hidden">
-        <div className="flex justify-start">
-          <div className="max-w-[80%] text-[9px] px-2.5 py-1.5 rounded-2xl bg-[var(--bg-elevated)]">
-            今日はどうでした？
+      <div className="flex-1 flex flex-col gap-1.5 px-3 opacity-30 overflow-hidden">
+        {bubbles.slice(0, 2).map((b, i) => (
+          <div
+            key={`${b.role}-${i}`}
+            className={`flex ${b.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-[80%] text-[8px] px-2 py-1 rounded-2xl ${
+                b.role === "user"
+                  ? "bg-[var(--accent)] text-white"
+                  : "bg-[var(--bg-elevated)] text-[var(--fg)]"
+              }`}
+            >
+              {b.text}
+            </div>
           </div>
-        </div>
-        <div className="flex justify-end">
-          <div className="max-w-[80%] text-[9px] px-2.5 py-1.5 rounded-2xl bg-[var(--accent)] text-white">
-            打ち合わせで言いたいことを最後まで伝えられた。
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* 要約モーダル（中央） */}
       <div className="absolute inset-0 flex items-center justify-center px-4">
-        <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-4 w-full shadow-xl shadow-black/30">
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-3 w-full shadow-xl shadow-black/30">
           <p className="text-[8px] tracking-widest-tabular text-[var(--fg-subtle)] mb-1.5 uppercase">
             {heading}
           </p>
           <h4 className="font-semibold text-[var(--fg)] text-[11px] mb-2 leading-snug">
-            打ち合わせの振り返り
+            {summaryTitle}
           </h4>
           <div className="h-px bg-[var(--border)] mb-2" />
           <p className="text-[9px] text-[var(--fg)] leading-relaxed mb-3 whitespace-pre-wrap">
-            {`午後の打ち合わせは緊張したけれど、
-言いたいことは最後まで伝え切れた。`}
+            {summaryBody}
           </p>
           <div className="flex gap-1.5">
             <div className="flex-1 px-2 py-1.5 bg-[var(--accent)] text-white text-[9px] font-medium rounded-md text-center">
@@ -174,32 +195,16 @@ function SummaryMock({
 
 // 履歴画面の再現モック：ヘッダー + 大見出し + カード 1 列グリッド。
 function HistoryMock({
+  entries,
   headerBack,
   headerNew,
   title,
 }: {
+  entries: HistoryEntry[];
   headerBack: string;
   headerNew: string;
   title: string;
 }) {
-  const entries = [
-    {
-      date: "2026-04-18",
-      title: "散歩の途中で",
-      body: "夕方の公園で、金木犀の香りがした。小さな発見だけれど、書き留めておきたい気持ちになった。",
-    },
-    {
-      date: "2026-04-17",
-      title: "朝のコーヒー",
-      body: "淹れ方を少し変えてみた。豆の違いで味がこんなに変わるとは思わなかった。",
-    },
-    {
-      date: "2026-04-16",
-      title: "仕事の手応え",
-      body: "久しぶりに集中して書けた。やっぱり午前中は調子が出る。",
-    },
-  ];
-
   return (
     <div className="relative w-full h-full flex flex-col">
       <MockHeader
@@ -218,18 +223,18 @@ function HistoryMock({
       />
 
       {/* 大見出し */}
-      <div className="px-4 pt-2 pb-4">
+      <div className="px-4 pt-1 pb-2">
         <h1 className="text-sm font-semibold text-[var(--fg)] leading-snug tracking-wide">
           {title}
         </h1>
       </div>
 
       {/* カード 1 列グリッド */}
-      <div className="flex-1 overflow-hidden px-4 pb-4 flex flex-col gap-2">
+      <div className="flex-1 overflow-hidden px-4 pb-4 flex flex-col gap-1.5">
         {entries.map((e) => (
           <div
             key={e.date}
-            className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-2.5 flex flex-col gap-1"
+            className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-2 flex flex-col gap-0.5"
           >
             <div className="flex items-center gap-1">
               <Calendar
@@ -251,7 +256,7 @@ function HistoryMock({
             <ChevronRight
               size={8}
               strokeWidth={1.5}
-              className="self-end text-[var(--fg-subtle)] -mt-1"
+              className="self-end text-[var(--fg-subtle)] -mt-0.5"
               aria-hidden="true"
             />
           </div>
@@ -264,9 +269,15 @@ function HistoryMock({
 // 個別日記画面の再現モック：日付 → タイトル → 区切り → 本文 → 再生ボタン。
 function DetailMock({
   headerBack,
+  dateLine,
+  title,
+  body,
   playLabel,
 }: {
   headerBack: string;
+  dateLine: string;
+  title: string;
+  body: string;
   playLabel: string;
 }) {
   return (
@@ -280,25 +291,20 @@ function DetailMock({
         }
       />
 
-      <article className="flex-1 px-4 pt-4 pb-4 overflow-hidden">
+      <article className="flex-1 px-4 pt-2 pb-4 overflow-hidden">
         <p className="font-mono-jp text-[8px] text-[var(--fg-subtle)] tracking-widest-tabular uppercase">
-          2026-04-18 — SAT
+          {dateLine}
         </p>
-        <h4 className="mt-2 text-base font-semibold text-[var(--fg)] leading-tight tracking-wide">
-          散歩の途中で
+        <h4 className="mt-1.5 text-sm font-semibold text-[var(--fg)] leading-tight tracking-wide">
+          {title}
         </h4>
-        <div className="mt-3 h-px bg-[var(--border)]" />
-        <p className="mt-3 text-[9px] text-[var(--fg)] leading-loose whitespace-pre-wrap">
-          {`夕方の公園で、金木犀の香りがした。
-しばらく立ち止まって、秋が近いことを
-ゆっくり確かめた。
-小さな発見だけれど、
-こうして書き留めておくと、
-あとで読み返すのが楽しみになる。`}
+        <div className="mt-2 h-px bg-[var(--border)]" />
+        <p className="mt-2 text-[9px] text-[var(--fg)] leading-relaxed whitespace-pre-wrap line-clamp-6">
+          {body}
         </p>
 
         {/* 再生ボタン（「もう一度聞く」） */}
-        <div className="mt-4">
+        <div className="mt-3">
           <div className="inline-flex items-center gap-1.5 border border-[var(--border-strong)] text-[var(--fg-muted)] px-2.5 py-1 rounded-md text-[9px] tracking-wide">
             <Play size={10} strokeWidth={1.5} aria-hidden="true" />
             {playLabel}
@@ -310,17 +316,20 @@ function DetailMock({
 }
 
 // LP「できることツアー」セクション本体。
-// embla-carousel でスワイプ・タップ・自動再生を担保する。
+// embla-carousel でスワイプ・タップ・自動再生を担保し、全コピーは i18n 経由で引く。
 export default function FeatureTour() {
   const tTour = useTranslations("lp.tour");
+  const tChat = useTranslations("lp.chatDemo");
+  const tDiary = useTranslations("diary");
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   // Autoplay プラグイン：ユーザー操作でいったん停止、マウスオーバーでも停止。
+  // ドット操作後は autoplay.reset() で自動再生を再開する（UX 意図：触っても止まり続けない）。
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center", skipSnaps: false }, [
     Autoplay({ delay: AUTOPLAY_DELAY_MS, stopOnInteraction: true, stopOnMouseEnter: true }),
   ]);
 
-  // アクティブスライド（キャプション・ドット表示用）を embla API と同期
+  // アクティブスライドを embla API と同期
   useEffect(() => {
     if (!emblaApi) return;
     const onSelect = () => setSelectedIndex(emblaApi.selectedScrollSnap());
@@ -333,12 +342,22 @@ export default function FeatureTour() {
 
   const scrollTo = useCallback(
     (idx: number) => {
-      emblaApi?.scrollTo(idx);
+      if (!emblaApi) return;
+      emblaApi.scrollTo(idx);
+      // 手動ジャンプ後も自動再生を続けたいので reset でタイマーを再始動
+      const autoplay = emblaApi.plugins().autoplay;
+      autoplay?.reset();
     },
     [emblaApi]
   );
 
   const activeSlide = SLIDES[selectedIndex] ?? "recording";
+
+  // messages から会話バブル・履歴カードを配列で取得（型は最小限にキャスト）
+  const conversation = tChat.raw("conversation") as ChatBubble[];
+  const historyEntries = tTour.raw("mock.history.entries") as HistoryEntry[];
+  // 先頭 3 件のみ使う（録音モックに 3 バブル並べる用）
+  const recordingBubbles = conversation.slice(0, 3);
 
   return (
     <div className="flex flex-col gap-8">
@@ -352,7 +371,7 @@ export default function FeatureTour() {
 
       {/* embla ビューポート：overflow-hidden + ref */}
       <div className="overflow-hidden" ref={emblaRef}>
-        {/* コンテナ：flex で横並び。各スライドは flex-[0_0_100%] */}
+        {/* コンテナ：flex で横並び。touch-pan-y で縦スクロールと両立 */}
         <div className="flex touch-pan-y">
           {SLIDES.map((slide) => (
             <div key={slide} className="flex-[0_0_100%] min-w-0 px-3 py-2">
@@ -360,24 +379,41 @@ export default function FeatureTour() {
                 {slide === "recording" && (
                   <RecordingMock
                     caption={tTour("slides.recording.caption")}
-                    headerBack="戻る"
-                    headerTitle="声の日記"
-                    headerFinish="終わる"
+                    bubbles={recordingBubbles}
+                    headerBack={tDiary("header.back")}
+                    headerTitle={tDiary("header.title")}
+                    headerFinish={tDiary("header.finish")}
                   />
                 )}
                 {slide === "summary" && (
                   <SummaryMock
-                    headerBack="戻る"
-                    headerTitle="声の日記"
-                    heading="TODAY'S ENTRY"
-                    saveLabel="保存する"
-                    discardLabel="捨てる"
+                    bubbles={recordingBubbles}
+                    headerBack={tDiary("header.back")}
+                    headerTitle={tDiary("header.title")}
+                    heading={tDiary("summary.heading")}
+                    summaryTitle={tTour("mock.summary.title")}
+                    summaryBody={tTour("mock.summary.body")}
+                    saveLabel={tDiary("summary.save")}
+                    discardLabel={tDiary("summary.discard")}
                   />
                 )}
                 {slide === "history" && (
-                  <HistoryMock headerBack="戻る" headerNew="新しく話す" title="日記の履歴" />
+                  <HistoryMock
+                    entries={historyEntries}
+                    headerBack={tDiary("history.back")}
+                    headerNew={tDiary("history.new")}
+                    title={tDiary("history.title")}
+                  />
                 )}
-                {slide === "detail" && <DetailMock headerBack="戻る" playLabel="もう一度聞く" />}
+                {slide === "detail" && (
+                  <DetailMock
+                    headerBack={tDiary("detail.back")}
+                    dateLine={tTour("mock.detail.dateLine")}
+                    title={tTour("mock.detail.title")}
+                    body={tTour("mock.detail.body")}
+                    playLabel={tDiary("detail.play")}
+                  />
+                )}
               </PhoneFrame>
             </div>
           ))}
@@ -389,7 +425,7 @@ export default function FeatureTour() {
         {tTour(`slides.${activeSlide}.description`)}
       </p>
 
-      {/* ドットナビ：タップ or クリックでジャンプ。自動再生は stopOnInteraction で止まる */}
+      {/* ドットナビ：タップ or クリックでジャンプ。autoplay は reset で再開 */}
       <div className="flex items-center justify-center gap-2.5">
         {SLIDES.map((slide, idx) => {
           const isActive = idx === selectedIndex;

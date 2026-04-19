@@ -81,6 +81,36 @@
           "caption": "Revisit",
           "description": "Open a past entry and meet the thoughts you had, again."
         }
+      },
+      "mock": {
+        "summary": {
+          "title": "Looking back on the meeting",
+          "body": "The afternoon meeting was tense,\nbut I got my words out by the end."
+        },
+        "history": {
+          "entries": [
+            {
+              "date": "2026-04-18",
+              "title": "On a walk",
+              "body": "The evening park smelled of osmanthus. A small discovery, but I wanted to write it down."
+            },
+            {
+              "date": "2026-04-17",
+              "title": "Morning coffee",
+              "body": "Changed how I brewed it. I hadn't realized beans could shift the taste this much."
+            },
+            {
+              "date": "2026-04-16",
+              "title": "Something clicked at work",
+              "body": "I was able to focus and write for the first time in a while. Mornings still work best for me."
+            }
+          ]
+        },
+        "detail": {
+          "dateLine": "2026-04-18 — SAT",
+          "title": "On a walk",
+          "body": "The evening park smelled of osmanthus.\nI stood still for a while,\nquietly making sure autumn was near.\nA small discovery,\nbut writing it down like this\nmakes reading it back later something to look forward to."
+        }
       }
     },
     "cta": {
