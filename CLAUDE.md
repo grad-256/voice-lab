@@ -26,7 +26,7 @@ ChatGPT との差別化：「AI と話す」ではなく「AI で作った"他�
 | 認証 | Supabase Auth | メール/パスワード認証 |
 | STT | OpenAI Whisper（`whisper-1`） | 音声 → テキスト |
 | 対話AI | Claude Haiku（`claude-haiku-4-5-20251001`） | テキスト → 返答 |
-| TTS | ElevenLabs（`eleven_turbo_v2_5`） | テキスト → 音声 |
+| TTS | ElevenLabs（既定 `eleven_multilingual_v2` / 日記要約・学習再生は `eleven_v3`） | テキスト → 音声。`/api/speak` の `modelId` で切替 |
 | ホスティング | Cloudflare Pages（予定） | `@cloudflare/next-on-pages` |
 | リポジトリ構成 | **pnpm workspaces モノレポ** | `apps/web` / `apps/api` / `packages/shared`（Phase 2 で再編）。詳細は `docs/monorepo-structure.md` |
 | DB | なし（Phase 1 途中） | 会話履歴は React state のみ |
@@ -74,7 +74,7 @@ pnpm pages:deploy  # Cloudflare Pages にデプロイ
 OPENAI_API_KEY=sk-...          # Whisper 音声認識
 ANTHROPIC_API_KEY=sk-ant-...   # Claude Haiku 対話AI
 ELEVENLABS_API_KEY=...         # ElevenLabs 音声生成
-ELEVENLABS_VOICE_ID=...        # 省略時は Bella（EXAVITQu4vr4xnSDxMaL）
+ELEVENLABS_VOICE_ID=...        # 省略時は hmVgSRXAUU4D4E9yl5iw
 
 # Cloudflare AI Gateway（香港ルーティング対策。両方セット時のみ有効）
 CF_ACCOUNT_ID=...              # Cloudflare Account ID

@@ -63,7 +63,7 @@ const GUEST_PERSONA: Persona = {
   name: "Yuki",
   style_prompt:
     "You are Yuki, a friendly English conversation partner. Keep responses short and encouraging.",
-  voice_id: "EXAVITQu4vr4xnSDxMaL",
+  voice_id: "hmVgSRXAUU4D4E9yl5iw",
   created_at: "",
 };
 
@@ -385,6 +385,9 @@ function HomeInner() {
         }
 
         // 3. ElevenLabs: テキスト → 音声（キャラのボイス ID を渡す）
+        // 会話ラリーは即応性最優先のため modelId は指定せず、/api/speak の既定モデル
+        // （eleven_multilingual_v2：品質と応答速度のバランス重視）に委ねる。
+        // 長文・表現力重視の経路（日記要約・場面学習再生）のみが明示的に eleven_v3 を指定する。
         const speakRes = await fetch("/api/speak", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -899,7 +902,7 @@ function HomeInner() {
 
       {/* 「これ言えなかった」モーダル
        * voiceId：認証ユーザーは voice_sessions、ゲストは localStorage 由来。どちらも無ければ
-       * persona.voice_id（デフォルトは Bella）にフォールバックして「分身の声未設定でも体験だけは試せる」状態を担保する。 */}
+       * persona.voice_id（既定値は GUEST_PERSONA.voice_id）にフォールバックして「分身の声未設定でも体験だけは試せる」状態を担保する。 */}
       <SavePhraseModal
         open={savePhraseOpen}
         onRequestClose={() => setSavePhraseOpen(false)}

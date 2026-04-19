@@ -21,6 +21,7 @@ export const VOICE_OPTIONS = [
   { id: "ErXwobaYiN019PkySvjV", label: "Antoni（男性・落ち着き）" },
   { id: "VR6AewLTigWG4xSOukaG", label: "Arnold（男性・力強い）" },
   { id: "pNInz6obpgDQGcFmaJgB", label: "Adam（男性・ナレーター）" },
+  { id: "hmVgSRXAUU4D4E9yl5iw", label: "Ethan（男性・落ち着き・穏やか）" },
 ] as const;
 
 // ────────────────────────────────────────────────

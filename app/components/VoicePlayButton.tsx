@@ -115,11 +115,31 @@ export function VoicePlayButton({
     setState("loading");
     setErrorMsg(null);
 
+    // source ごとに TTS モデルを使い分ける。
+    // - 学習向け（聞き返し前提・レイテンシ許容）は表現力重視の eleven_v3
+    // - 会話ラリー中の即応系は undefined を返し、/api/speak 側の既定（eleven_multilingual_v2）に委ねる
+    // Record で網羅させているので、source 型に新しい値が増えたら TypeScript が必ずエラーを出す。
+    const MODEL_BY_SOURCE: Record<
+      VoicePlayButtonProps["source"],
+      "eleven_v3" | undefined
+    > = {
+      preset: "eleven_v3",
+      saved: "eleven_v3",
+      "scene-ai": "eleven_v3",
+      suggest: undefined,
+      user: undefined,
+    };
+    const modelId = MODEL_BY_SOURCE[source];
+
     try {
       const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: enText, voiceId }),
+        body: JSON.stringify({
+          text: enText,
+          voiceId,
+          ...(modelId ? { modelId } : {}),
+        }),
       });
       if (!res.ok) {
         if (res.status === 429) {

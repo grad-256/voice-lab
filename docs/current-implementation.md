@@ -44,7 +44,7 @@
 ### 外部 API
 - **OpenAI Whisper**（`whisper-1`）：音声認識
 - **Anthropic Claude Haiku**（`claude-haiku-4-5-20251001`）：対話
-- **ElevenLabs**（`eleven_turbo_v2_5`）：音声合成（デフォルト Voice ID: Bella `EXAVITQu4vr4xnSDxMaL`、他 6 種から選択可）
+- **ElevenLabs**：音声合成。既定モデル `eleven_multilingual_v2`（会話ラリー・試聴の品質/速度バランス）、日記要約と場面学習再生は `eleven_v3`（表現力重視）。`/api/speak` の `modelId` パラメータで切替。デフォルト Voice ID: `hmVgSRXAUU4D4E9yl5iw`、`VOICE_OPTIONS` から他の声も選択可
 
 ---
 
@@ -116,8 +116,8 @@ voice-lab/
 - 429 / 529 は `SERVICE_QUOTA_EXCEEDED`
 
 ### 4.3 `/api/speak`（POST）
-- Body：`{ text, voiceId? }`
-- ElevenLabs `/v1/text-to-speech/:voiceId`、`eleven_turbo_v2_5`、speed 0.75（語学学習向け）
+- Body：`{ text, voiceId?, modelId? }`
+- ElevenLabs `/v1/text-to-speech/:voiceId`、既定モデル `eleven_multilingual_v2`（許可：`eleven_multilingual_v2` / `eleven_v3` / `eleven_turbo_v2_5` / `eleven_flash_v2_5`、未知値は既定にフォールバック）、speed 0.75（語学学習向け）
 - 音声バイナリ（audio/mpeg）を `Cache-Control: no-store` で返却
 - 認証**なし**
 
@@ -207,7 +207,7 @@ SUPABASE_SERVICE_ROLE_KEY            # アカウント削除 API 用
 OPENAI_API_KEY                       # Whisper
 ANTHROPIC_API_KEY                    # Claude Haiku
 ELEVENLABS_API_KEY                   # TTS
-ELEVENLABS_VOICE_ID                  # 省略時 Bella
+ELEVENLABS_VOICE_ID                  # 省略時 hmVgSRXAUU4D4E9yl5iw
 NEXT_PUBLIC_POSTHOG_KEY
 NEXT_PUBLIC_POSTHOG_HOST
 ```
