@@ -35,7 +35,7 @@ export default function StepStack() {
           className={`flex ${b.right ? "justify-end" : "justify-start"} animate-fadeSlideUp`}
         >
           <span
-            className={`${b.w} h-2.5 rounded-full ${b.right ? "bg-indigo-600/80" : "bg-gray-700/80"}`}
+            className={`${b.w} h-2.5 rounded-full ${b.right ? "bg-gray-500/80" : "bg-gray-700/80"}`}
           />
         </div>
       ))}
