@@ -46,6 +46,7 @@ export default async function LandingPage() {
   const tFeatures = await getTranslations("lp.features");
   const tFeaturesItems = await getTranslations("lp.features.items");
   const tCta = await getTranslations("lp.cta");
+  const tBridges = await getTranslations("lp.bridges");
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] overflow-x-hidden">
@@ -102,9 +103,11 @@ export default async function LandingPage() {
                 {tHero("lead")}
               </p>
 
-              {/* メイン H1（動詞 2 連で印象を締める）— Quiet Journal 路線では単色に統一して紙の落ち着きを出す */}
+              {/* メイン H1（動詞 2 連で印象を締める）— Quiet Journal 路線では単色に統一して紙の落ち着きを出す。
+                 改行は <br /> で明示し、モバイルでも必ず 2 行で表示されるようにする（whitespace-nowrap は不使用）。 */}
               <h1 className="mt-3 text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-[var(--fg)]">
                 {tHero("h1Part1")}
+                <br />
                 <span className="text-[var(--fg)]">{tHero("h1Part2")}</span>
               </h1>
 
@@ -140,6 +143,15 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        {/* ────── つなぎ（Hero → Steps）— 次セクションへの橋渡し文 ────── */}
+        <ScrollReveal>
+          <div className="max-w-2xl mx-auto px-6 py-10 sm:py-16 text-center">
+            <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
+              {tBridges("afterHero")}
+            </p>
+          </div>
+        </ScrollReveal>
+
         {/* ────── 使いかた（How it works） ────── */}
         <section className="relative w-full bg-[var(--bg-elevated)]/30 overflow-hidden">
           <GridBg />
@@ -172,6 +184,15 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        {/* ────── つなぎ（Steps → Features）— 次セクションへの橋渡し文 ────── */}
+        <ScrollReveal>
+          <div className="max-w-2xl mx-auto px-6 py-10 sm:py-16 text-center">
+            <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
+              {tBridges("afterSteps")}
+            </p>
+          </div>
+        </ScrollReveal>
+
         {/* ────── できること（Features） ────── */}
         <section className="relative w-full overflow-hidden">
           <OrbsBg />
@@ -203,14 +224,25 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        {/* ────── つなぎ（Features → CTA）— 次セクションへの橋渡し文 ────── */}
+        <ScrollReveal>
+          <div className="max-w-2xl mx-auto px-6 py-10 sm:py-16 text-center">
+            <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
+              {tBridges("afterFeatures")}
+            </p>
+          </div>
+        </ScrollReveal>
+
         {/* ────── CTA ────── */}
         <section className="relative w-full overflow-hidden">
           <PulseBg />
 
           <div className="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center">
             <ScrollReveal>
+              {/* CTA 見出しもモバイルで必ず 2 行になるよう <br /> で明示改行 */}
               <h2 className="text-4xl sm:text-5xl font-bold text-[var(--fg)] leading-tight mb-6">
                 {tCta("titlePart1")}
+                <br />
                 <span className="text-[var(--fg)]">{tCta("titlePart2")}</span>
               </h2>
               <p className="text-[var(--fg-muted)] text-lg mb-10 max-w-md mx-auto">

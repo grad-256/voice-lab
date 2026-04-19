@@ -10,9 +10,14 @@
   "nav": {
     "ctaStart": "Start talking",
     "ctaLogin": "Log in",
-    "ctaHome": "Open app"
+    "ctaHome": "Start talking"
   },
   "lp": {
+    "bridges": {
+      "afterHero": "Here's how your voice turns into a diary. Take a look at the flow.",
+      "afterSteps": "The flow is simple — but there's a bit more you can do.",
+      "afterFeatures": "All that's left is to start talking."
+    },
     "hero": {
       "badge": "No signup required — try it now",
       "lead": "Talk your day into a diary.",
