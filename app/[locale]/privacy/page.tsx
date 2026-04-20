@@ -1,5 +1,7 @@
 // プライバシーポリシーページ（静的）
 // Cloudflare Pages の非静的ルート要件を満たすため Edge Runtime を明示
+import { Link } from "@/i18n/routing";
+
 export const runtime = "edge";
 
 export default function PrivacyPage() {
@@ -134,7 +136,7 @@ export default function PrivacyPage() {
               ）
             </li>
             <li>
-              Cloudflare, Inc.<sup>®</sup>（米国）— ホスティング・アクセスログ（
+              Cloudflare, Inc.®（米国）— ホスティング・アクセスログ（
               <a
                 href="https://www.cloudflare.com/privacypolicy/"
                 target="_blank"
@@ -227,8 +229,9 @@ export default function PrivacyPage() {
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-[var(--fg)] mb-3">9. アカウント削除</h2>
           <p className="text-sm leading-relaxed">
-            退会をご希望の場合は、お問い合わせ先までご連絡ください。
-            アカウントおよび関連する個人情報を削除します。
+            ご自身での退会は、ログイン後、マイページ（「アカウント削除」）からお手続きいただけます。
+            お手続きに関するご不明点や、セルフサービスでの削除が難しい場合は、お問い合わせ先までご連絡ください。
+            退会に伴い、アカウントおよび関連する個人情報を削除します。
             サービス終了時も同様に、保有する個人情報を適切に削除します。
           </p>
         </section>
@@ -258,12 +261,12 @@ export default function PrivacyPage() {
         </section>
 
         <div className="mt-12 pt-8 border-t border-[var(--border)]">
-          <a
+          <Link
             href="/"
             className="text-sm text-[var(--accent)] hover:text-[var(--accent-strong)] transition-colors"
           >
             ← トップに戻る
-          </a>
+          </Link>
         </div>
       </div>
     </main>
