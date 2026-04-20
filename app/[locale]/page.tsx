@@ -26,6 +26,7 @@ import StepTalk from "@/app/components/lp/StepTalk";
 import StepVisualize from "@/app/components/lp/StepVisualize";
 import { Link } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
+import { Download } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 // 使いかた（How it works）— 話す → 残る → 可視化される の 3 ステップ
@@ -137,9 +138,7 @@ export default async function LandingPage() {
                 <span className="text-[var(--fg-subtle)]">——</span> {tHero("subCopy2")}
               </p>
 
-              {/* モバイル時は flex-wrap で 3 つ目のボタン（インストール）を次行に落とす。
-                 `flex-1` + `whitespace-nowrap` を 3 つ並べると狭幅デバイスで見切れるため。 */}
-              <div className="mt-8 flex flex-wrap gap-3 w-full sm:w-auto">
+              <div className="mt-8 flex items-center gap-3 w-full sm:w-auto">
                 <Link
                   href="/app"
                   className="flex-1 sm:flex-none text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white font-semibold rounded-xl transition-all text-sm sm:text-base shadow-theme-md hover:-translate-y-0.5"
@@ -152,9 +151,12 @@ export default async function LandingPage() {
                 >
                   {tHero("ctaLogin")}
                 </OpenAuthButton>
+                {/* Android Chrome のみ表示。アイコンのみでコンパクトに（aria-label でスクリーンリーダー対応）。 */}
                 <InstallPromptButton
-                  label={tHero("ctaInstall")}
-                  className="basis-full sm:basis-auto text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-[var(--bg-elevated)] hover:bg-elevated-80 border border-[var(--border-strong)] text-[var(--fg-muted)] font-medium rounded-xl transition-colors text-sm sm:text-base"
+                  label={<Download className="w-5 h-5" aria-hidden="true" />}
+                  ariaLabel={tHero("ctaInstall")}
+                  posthogPlacement="hero"
+                  className="flex items-center justify-center h-[50px] w-[50px] sm:h-[52px] sm:w-[52px] bg-[var(--bg-elevated)] hover:bg-elevated-80 border border-[var(--border-strong)] text-[var(--fg-muted)] rounded-xl transition-colors"
                 />
               </div>
 
@@ -255,12 +257,20 @@ export default async function LandingPage() {
                 <br />
                 {tCta("bodyLine2")}
               </p>
-              <Link
-                href="/app"
-                className="inline-block px-10 py-4 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white font-semibold rounded-xl transition-all text-lg shadow-theme-lg hover:-translate-y-0.5"
-              >
-                {tCta("button")}
-              </Link>
+              <div className="flex items-center justify-center gap-3">
+                <Link
+                  href="/app"
+                  className="inline-block px-10 py-4 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white font-semibold rounded-xl transition-all text-lg shadow-theme-lg hover:-translate-y-0.5"
+                >
+                  {tCta("button")}
+                </Link>
+                <InstallPromptButton
+                  label={<Download className="w-5 h-5" aria-hidden="true" />}
+                  ariaLabel={tHero("ctaInstall")}
+                  posthogPlacement="cta"
+                  className="flex items-center justify-center h-[60px] w-[60px] bg-[var(--bg-elevated)] hover:bg-elevated-80 border border-[var(--border-strong)] text-[var(--fg-muted)] rounded-xl transition-colors"
+                />
+              </div>
             </ScrollReveal>
           </div>
         </section>
