@@ -5,7 +5,7 @@ export const runtime = "edge";
 
 import { useAuth } from "@/app/components/auth/AuthContext";
 import { Link } from "@/i18n/routing";
-import { ArrowLeft, ArrowRight, ChevronRight, User } from "lucide-react";
+import { ArrowRight, ChevronRight, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export default function HubPage() {
@@ -17,15 +17,12 @@ export default function HubPage() {
 
   return (
     <main className="flex-1 w-full max-w-2xl mx-auto px-6 pt-10 pb-16 sm:pt-12 sm:pb-20 flex flex-col animate-fadeIn">
-      {/* ヘッダー：戻る / 認証系リンクは極小の補助役 */}
-      <header className="flex items-center justify-between mb-16 text-sm tracking-wide">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
-        >
-          <ArrowLeft size={14} strokeWidth={1.5} aria-hidden="true" />
-          {t("backToTop")}
-        </Link>
+      {/* ヘッダー：認証系リンクのみの極薄アクション行。
+          PWA / TWA 起動時はここが実質のホームになるため、LP への戻り動線は置かない（Issue #75）。 */}
+      <header className="flex items-center justify-end mb-16 text-sm tracking-wide">
+        {/* loading 中は右上要素がない状態 → 次フレームでアバターが pop-in してしまうため、
+            同サイズの透明プレースホルダで事前に枠を確保しておく。 */}
+        {isAuthed === null && <span aria-hidden="true" className="inline-block w-9 h-9" />}
         {isAuthed === false && (
           <button
             type="button"
