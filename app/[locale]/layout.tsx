@@ -3,7 +3,9 @@
 export const runtime = "edge";
 
 import { LocaleShellThemeLock } from "@/app/components/LocaleShellThemeLock";
-import LocaleSwitcher from "@/app/components/LocaleSwitcher";
+// 英語版のプライバシーポリシー・利用規約が未整備のため、一時的に言語切替 UI を無効化。
+// EN 版 legal docs を追加するタイミングで import と footer 内の呼び出しを復活させる。
+// import LocaleSwitcher from "@/app/components/LocaleSwitcher";
 import { NoteIcon } from "@/app/components/icons/note-icon";
 import { XIcon } from "@/app/components/icons/x-icon";
 import { Link, routing } from "@/i18n/routing";
@@ -89,7 +91,8 @@ export default async function LocaleLayout({ children, params }: Props) {
               >
                 <XIcon className="h-4 w-auto" />
               </a>
-              <LocaleSwitcher />
+              {/* 英語版 legal docs 未整備のため一時無効化。EN 版公開と同時に復活させる。 */}
+              {/* <LocaleSwitcher /> */}
             </div>
           </div>
         </footer>
