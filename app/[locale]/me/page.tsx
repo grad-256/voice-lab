@@ -6,6 +6,7 @@ export const runtime = "edge";
 import { NoteIcon } from "@/app/components/icons/note-icon";
 import { XIcon } from "@/app/components/icons/x-icon";
 import { Link, useRouter } from "@/i18n/routing";
+import { LEGAL_URLS } from "@/lib/legalUrls";
 import { createClient } from "@/lib/supabase/client";
 import {
   type ThemePreference,
@@ -285,27 +286,28 @@ export default function SettingsPage() {
       </div>
 
       {/* 法務・SNS の薄いリンク島：footer 代わりとしてアプリ末尾に集約（Issue #75）。
-          法務リンクは target="_blank" で別タブに開く — PWA / TWA 起動時にアプリタブを残し
-          「法務を見たら戻れない」状態を防ぐ。border-dashed + mt-16 で直上のアカウント削除
-          カード（赤系の破壊的操作）との視覚的分離を明確にする。 */}
+          法務リンクは Notion 公開ページ（PWA scope 外）。PWA / TWA 起動時も確実に
+          外部ブラウザで開くため、内部ページではなく Notion URL を参照する。
+          border-dashed + mt-16 で直上のアカウント削除カード（赤系の破壊的操作）
+          との視覚的分離を明確にする。 */}
       <div className="mt-16 pt-8 border-t border-dashed border-[var(--border)]">
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs tracking-wide text-[var(--fg-subtle)]">
-          <Link
-            href="/terms"
+          <a
+            href={LEGAL_URLS.terms}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[var(--fg)] transition-colors"
           >
             {tFooter("terms")}
-          </Link>
-          <Link
-            href="/privacy"
+          </a>
+          <a
+            href={LEGAL_URLS.privacy}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[var(--fg)] transition-colors"
           >
             {tFooter("privacy")}
-          </Link>
+          </a>
           <a
             href="https://note.com/uclab/m/m59dc828ffd47"
             target="_blank"

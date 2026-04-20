@@ -62,8 +62,6 @@ voice-lab/
 │   │   ├── page.tsx
 │   │   └── new/page.tsx
 │   ├── settings/page.tsx
-│   ├── privacy/                      # 静的規約ページ
-│   ├── terms/
 │   ├── reset-password/
 │   ├── demo-screenshot/              # （用途要確認）
 │   ├── components/
@@ -137,7 +135,7 @@ voice-lab/
 
 ### `middleware.ts`
 - すべてのページリクエストで `supabase.auth.getUser()` を呼んでセッション検証
-- 公開パス：`/`, `/app`, `/login`, `/privacy`, `/terms`, `/reset-password`
+- 公開パス：`/`, `/app`, `/login`, `/reset-password`（法務ドキュメントは Notion 公開ページに外出し済み）
 - 未ログイン＋非公開パス → `/login` リダイレクト
 - ログイン済み＋`/login` → `/app` リダイレクト
 - `api/` は matcher から除外（API は独自認証ロジック）

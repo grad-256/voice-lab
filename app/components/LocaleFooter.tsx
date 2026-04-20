@@ -1,8 +1,9 @@
 "use client";
 
 // Footer の出し分け：
-//   - 表示する：LP (`/`) / 法務ページ (`/terms`・`/privacy`) / 404
-//     → 外部リンクから直接着地したユーザーの導線として footer を残す
+//   - 表示する：LP (`/`) / 404
+//     → 法務ドキュメント (`/terms`・`/privacy`) は Notion 公開ページに外出し済みのため
+//       ここにはルートそのものが存在しない（lib/legalUrls.ts 参照）
 //   - 非表示：アプリ領域 (`/app`・`/diary`・`/me` とその配下)・`/reset-password`
 //     → PWA / TWA 起動時はアプリ内ミニマム運用。法務・SNS 等の導線は /me のリンク島で代替。
 //       `/reset-password` はメールリンク経由の専用フォームで、AuthGate もバイパスされる
@@ -13,7 +14,8 @@
 
 import { NoteIcon } from "@/app/components/icons/note-icon";
 import { XIcon } from "@/app/components/icons/x-icon";
-import { Link, usePathname } from "@/i18n/routing";
+import { usePathname } from "@/i18n/routing";
+import { LEGAL_URLS } from "@/lib/legalUrls";
 import { useTranslations } from "next-intl";
 
 export function LocaleFooter() {
@@ -38,12 +40,24 @@ export function LocaleFooter() {
           デスクトップ（sm 以上）は sm:contents でラッパーを透過し、従来どおり 1 段で並べる。 */}
       <div className="flex flex-col items-center gap-3 text-sm tracking-wide text-[var(--fg-subtle)] sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-8 sm:gap-y-3">
         <div className="order-2 flex items-center gap-x-8 sm:order-1 sm:contents">
-          <Link href="/terms" className="hover:text-[var(--fg)] transition-colors">
+          {/* 法務リンクは Notion 公開ページに外出し（PWA でも確実に外部ブラウザで開く）。
+              内部ページ `/terms`・`/privacy` は持たず Notion のみで運用（lib/legalUrls.ts 参照）。 */}
+          <a
+            href={LEGAL_URLS.terms}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[var(--fg)] transition-colors"
+          >
             {t("terms")}
-          </Link>
-          <Link href="/privacy" className="hover:text-[var(--fg)] transition-colors">
+          </a>
+          <a
+            href={LEGAL_URLS.privacy}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[var(--fg)] transition-colors"
+          >
             {t("privacy")}
-          </Link>
+          </a>
         </div>
         <span className="hidden text-[var(--border-strong)] sm:order-2 sm:inline">|</span>
         <div className="order-1 flex items-center gap-x-8 sm:order-3 sm:contents">
