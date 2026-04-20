@@ -71,19 +71,16 @@ export default async function LandingPage() {
     >
       {/* ────── Navbar ────── */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border)] bg-bg-80 backdrop-blur-md">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <span className="font-bold text-lg tracking-tight text-[var(--fg)]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          <span className="font-bold text-base sm:text-lg tracking-tight text-[var(--fg)]">
             My<span className="text-[var(--accent)]">VoiceLab</span>
           </span>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Navbar のインストールボタンは、Android Chrome（および PC Chrome / Edge のモバイル判定）で
-               beforeinstallprompt が発火したときだけ表示される。usePwaInstall 側で端末判定済みのため
-               ここでは常時レンダリング宣言でよい。スペース節約のため短縮ラベルを使う。
-               iOS Safari は beforeinstallprompt 非対応のため常に非表示（別途ホーム画面追加フローが必要）。 */}
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            {/* Android Chrome のみ表示（PC / iOS Safari / Firefox は usePwaInstall 側で非表示）。 */}
             <InstallPromptButton
               label={tHero("ctaInstallShort")}
               posthogPlacement="navbar"
-              className="text-sm font-medium bg-[var(--bg-elevated)] hover:bg-elevated-80 border border-[var(--border)] text-[var(--fg-muted)] px-3 py-1.5 rounded-lg transition-colors"
+              className="text-sm font-medium bg-[var(--bg-elevated)] hover:bg-elevated-80 border border-[var(--border)] text-[var(--fg-muted)] px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-colors"
             />
             {isAuthenticated ? (
               <Link
