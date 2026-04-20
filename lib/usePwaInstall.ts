@@ -95,24 +95,30 @@ export function usePwaInstall() {
     posthog.capture("pwa_install_button_shown");
   }, [deferredPrompt, isInstalled]);
 
-  const promptInstall = useCallback(async () => {
-    // 再入防止：Chrome は同一 beforeinstallprompt イベントに対する 2 回目の prompt() を
-    // 仕様違反として投げるため、先頭で local 変数に退避して state を即クリアする。
-    // dismissed の場合もイベントは使い捨てになる（Chrome はクールダウンを挟むまで再発火
-    // しないため）。保持せず破棄する方針でユーザー体験と整合する。
-    const ev = deferredPrompt;
-    if (!ev) return;
-    setDeferredPrompt(null);
+  const promptInstall = useCallback(
+    async (placement?: string) => {
+      // 再入防止：Chrome は同一 beforeinstallprompt イベントに対する 2 回目の prompt() を
+      // 仕様違反として投げるため、先頭で local 変数に退避して state を即クリアする。
+      // dismissed の場合もイベントは使い捨てになる（Chrome はクールダウンを挟むまで再発火
+      // しないため）。保持せず破棄する方針でユーザー体験と整合する。
+      const ev = deferredPrompt;
+      if (!ev) return;
+      setDeferredPrompt(null);
 
-    if (posthog.__loaded) {
-      posthog.capture("pwa_install_button_clicked");
-    }
-    await ev.prompt();
-    const { outcome } = await ev.userChoice;
-    if (posthog.__loaded) {
-      posthog.capture("pwa_install_prompt_outcome", { outcome });
-    }
-  }, [deferredPrompt]);
+      if (posthog.__loaded) {
+        posthog.capture("pwa_install_button_clicked", placement ? { placement } : undefined);
+      }
+      await ev.prompt();
+      const { outcome } = await ev.userChoice;
+      if (posthog.__loaded) {
+        posthog.capture("pwa_install_prompt_outcome", {
+          outcome,
+          ...(placement ? { placement } : {}),
+        });
+      }
+    },
+    [deferredPrompt]
+  );
 
   return {
     canInstall: !!deferredPrompt && !isInstalled,

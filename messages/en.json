@@ -23,7 +23,23 @@
       "ctaStart": "Start talking",
       "ctaLogin": "Log in",
       "ctaInstall": "Install app",
+      "ctaInstallShort": "Install",
+      "ctaAddToHome": "Add to Home Screen",
       "note": "No signup — free for your first 10 exchanges"
+    },
+    "iosInstallGuide": {
+      "title": "Add to Home Screen",
+      "subtitle": "Two quick steps from Safari's share menu.",
+      "step1": {
+        "body": "Tap the Share button at the bottom of the screen"
+      },
+      "step2": {
+        "body": "Choose \"Add to Home Screen\" from the menu"
+      },
+      "note": "Once added, you can launch it like a native app.",
+      "close": "Close",
+      "closeNow": "Got it",
+      "dontShowAgain": "Don't show this again"
     },
     "steps": {
       "eyebrow": "How it works",
