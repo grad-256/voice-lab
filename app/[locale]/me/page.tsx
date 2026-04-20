@@ -318,7 +318,7 @@ export default function SettingsPage() {
             <NoteIcon className="h-4 w-auto" />
           </a>
           <a
-            href="https://x.com/UCLab1421"
+            href="https://x.com/myvoicelab"
             target="_blank"
             rel="noopener noreferrer"
             aria-label={tFooter("xAriaLabel")}
