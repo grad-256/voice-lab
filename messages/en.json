@@ -239,6 +239,9 @@
       "item3": "You'll need an account to keep using it",
       "confirm": "Try as a guest",
       "cancel": "Cancel"
+    },
+    "dialog": {
+      "close": "Close"
     }
   },
   "resetPassword": {

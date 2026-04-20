@@ -233,6 +233,9 @@
       "item3": "続けて使うにはアカウント登録が必要です",
       "confirm": "ゲストとして試す",
       "cancel": "キャンセル"
+    },
+    "dialog": {
+      "close": "閉じる"
     }
   },
   "resetPassword": {

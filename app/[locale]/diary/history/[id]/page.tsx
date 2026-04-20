@@ -74,14 +74,14 @@ export default function DiaryDetailPage({
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/login");
+        router.push("/app");
         return;
       }
       try {
         const res = await fetch(`/api/diary/${id}`);
         if (aborted) return;
         if (res.status === 401) {
-          router.push("/login");
+          router.push("/app");
           return;
         }
         if (res.status === 404) {

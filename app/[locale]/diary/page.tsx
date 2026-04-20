@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
+import { useAuth } from "@/app/components/auth/AuthContext";
 import { Link, useRouter } from "@/i18n/routing";
 import {
   GUEST_LIMIT,
@@ -81,6 +82,7 @@ function isEndCommand(text: string): boolean {
 
 export default function DiaryPage() {
   const router = useRouter();
+  const { openDialog } = useAuth();
   // UI ロケール（ja/en）。Whisper の language ヒントと chat ルートのシステムプロンプトへ渡す。
   const locale = useLocale();
   const t = useTranslations("diary");
@@ -685,12 +687,13 @@ export default function DiaryPage() {
                   {t("summary.guestNote")}
                 </p>
                 <div className="flex gap-2">
-                  <Link
-                    href="/login"
+                  <button
+                    type="button"
+                    onClick={() => openDialog("signup")}
                     className="flex-1 px-4 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white text-sm font-medium rounded-md text-center transition-colors"
                   >
                     {t("summary.guestSave")}
-                  </Link>
+                  </button>
                   <button
                     type="button"
                     onClick={handleDiscard}
@@ -739,12 +742,17 @@ export default function DiaryPage() {
               {t("guestLimitModal.desc")}
             </p>
             <div className="flex gap-2">
-              <Link
-                href="/login"
+              <button
+                type="button"
+                onClick={() => {
+                  // ゲスト上限モーダルを閉じてからサインアップダイアログを開く（モーダル二重表示回避）
+                  setShowLimitModal(false);
+                  openDialog("signup");
+                }}
                 className="flex-1 px-4 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white text-sm font-medium rounded-md text-center transition-colors"
               >
                 {t("guestLimitModal.signup")}
-              </Link>
+              </button>
               <button
                 type="button"
                 onClick={() => setShowLimitModal(false)}

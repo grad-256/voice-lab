@@ -9,6 +9,7 @@ export const viewport: Viewport = {
   themeColor: "#121212",
 };
 
+import { OpenAuthButton } from "@/app/components/auth/OpenAuthButton";
 import ChatDemo from "@/app/components/lp/ChatDemo";
 import FeatureConversationDemo from "@/app/components/lp/FeatureConversationDemo";
 import FeatureSummaryDemo from "@/app/components/lp/FeatureSummaryDemo";
@@ -89,12 +90,12 @@ export default async function LandingPage() {
                 >
                   {tNav("ctaStart")}
                 </Link>
-                <Link
-                  href="/login"
+                <OpenAuthButton
+                  mode="login"
                   className="text-sm text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors px-3 py-1.5"
                 >
                   {tNav("ctaLogin")}
-                </Link>
+                </OpenAuthButton>
               </>
             )}
           </div>
@@ -142,12 +143,12 @@ export default async function LandingPage() {
                 >
                   {tHero("ctaStart")}
                 </Link>
-                <Link
-                  href="/login"
+                <OpenAuthButton
+                  mode="login"
                   className="flex-1 sm:flex-none text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-[var(--bg-elevated)] hover:bg-elevated-80 border border-[var(--border-strong)] text-[var(--fg-muted)] font-medium rounded-xl transition-colors text-sm sm:text-base"
                 >
                   {tHero("ctaLogin")}
-                </Link>
+                </OpenAuthButton>
               </div>
 
               <p className="mt-3 text-xs sm:text-sm text-[var(--fg-subtle)]">{tHero("note")}</p>
