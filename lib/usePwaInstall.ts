@@ -70,15 +70,12 @@ export function usePwaInstall() {
   }, []);
 
   useEffect(() => {
-    if (!deferredPrompt || isInstalled) return;
-    if (!posthog.__loaded) return;
+    if (!deferredPrompt || isInstalled || !posthog.__loaded) return;
     try {
       if (sessionStorage.getItem(SHOWN_SESSION_KEY) === "1") return;
+      posthog.capture("pwa_install_button_shown");
       sessionStorage.setItem(SHOWN_SESSION_KEY, "1");
-    } catch {
-      // sessionStorage 無効環境では多重計上を許容
-    }
-    posthog.capture("pwa_install_button_shown");
+    } catch {}
   }, [deferredPrompt, isInstalled]);
 
   const promptInstall = useCallback(

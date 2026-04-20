@@ -97,9 +97,11 @@ export default async function LandingPage() {
                 >
                   {tNav("ctaStart")}
                 </Link>
+                {/* モバイルでは Hero にも同じログインボタンがあり、AuthDialog もどこからでも開けるため、
+                   Navbar では非表示にして install ボタンと話しはじめるの共存スペースを確保する。 */}
                 <OpenAuthButton
                   mode="login"
-                  className="text-sm text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors px-3 py-1.5"
+                  className="hidden sm:inline-block text-sm text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors px-3 py-1.5"
                 >
                   {tNav("ctaLogin")}
                 </OpenAuthButton>
