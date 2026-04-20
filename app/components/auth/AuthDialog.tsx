@@ -151,13 +151,14 @@ export function AuthDialog() {
   const subtitle = mode === "forgot" ? t("forgot.subtitle") : t("login.subtitle");
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-fadeIn">
-      {/* オーバーレイ：クリックで閉じる。button 要素なのでキーボードアクセシブル（Enter/Space で動く）。 */}
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      {/* オーバーレイ：クリックで閉じる。button 要素なのでキーボードアクセシブル（Enter/Space で動く）。
+          ページ遷移用の animate-fadeIn (0.6s) ではダイアログ用途で重いため、高速版 (0.12s) を使う。 */}
       <button
         type="button"
         aria-label={t("dialog.close")}
         onClick={closeDialog}
-        className="absolute inset-0 bg-[var(--bg-overlay)] cursor-default"
+        className="absolute inset-0 bg-[var(--bg-overlay)] cursor-default animate-overlayIn"
       />
       <div
         ref={dialogRef}
@@ -165,7 +166,7 @@ export function AuthDialog() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="auth-dialog-title"
-        className="relative bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-lg p-6 sm:p-8 max-w-sm w-full"
+        className="relative bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-lg p-6 sm:p-8 max-w-sm w-full animate-dialogIn"
       >
         <button
           type="button"
