@@ -80,7 +80,11 @@ export default function SettingsPage() {
     setErrorMsg(null);
     try {
       await supabase.auth.signOut();
-      router.push("/login");
+      // AuthDialog 導入後はログアウト後の遷移先を LP に変更。
+      // 再ログインは LP の「ログイン」ボタンからダイアログを開いて行う。
+      // replace を使う理由：onAuthStateChange → user null → AuthGate 発火 との
+      // 競合で「一瞬ログインダイアログが開いてから LP へ」というチラつきを最小化する。
+      router.replace("/");
     } catch {
       // ネットワーク断などで失敗した場合はローカライズ済みメッセージでフィードバック
       setErrorMsg(t("logout.failed"));
@@ -104,7 +108,11 @@ export default function SettingsPage() {
 
       // 削除成功 → ログアウトしてログインページへ
       await supabase.auth.signOut();
-      router.push("/login");
+      // AuthDialog 導入後はログアウト後の遷移先を LP に変更。
+      // 再ログインは LP の「ログイン」ボタンからダイアログを開いて行う。
+      // replace を使う理由：onAuthStateChange → user null → AuthGate 発火 との
+      // 競合で「一瞬ログインダイアログが開いてから LP へ」というチラつきを最小化する。
+      router.replace("/");
     } catch {
       setErrorMsg(t("delete.failed"));
       setDeleting(false);

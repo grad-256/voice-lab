@@ -3,22 +3,17 @@
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
+import { useAuth } from "@/app/components/auth/AuthContext";
 import { Link } from "@/i18n/routing";
-import { createClient } from "@/lib/supabase/client";
 import { ArrowLeft, ArrowRight, ChevronRight, User } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
 
 export default function HubPage() {
-  const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
   const t = useTranslations("hub");
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setIsAuthed(!!data.user);
-    });
-  }, []);
+  // 認証状態とダイアログ制御は AuthContext から取得（layout に Provider を挿入済み）。
+  // loading 中は isAuthed を null として扱い、チラつき防止のため認証依存 UI を描画しない。
+  const { user, loading, openDialog } = useAuth();
+  const isAuthed = loading ? null : user !== null;
 
   return (
     <main className="flex-1 w-full max-w-2xl mx-auto px-6 pt-10 pb-16 sm:pt-12 sm:pb-20 flex flex-col animate-fadeIn">
@@ -32,12 +27,13 @@ export default function HubPage() {
           {t("backToTop")}
         </Link>
         {isAuthed === false && (
-          <Link
-            href="/login"
+          <button
+            type="button"
+            onClick={() => openDialog("login")}
             className="text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
           >
             {t("login")}
-          </Link>
+          </button>
         )}
         {isAuthed === true && (
           <Link
@@ -103,12 +99,13 @@ export default function HubPage() {
         <div className="mt-auto pt-20 text-xs text-[var(--fg-subtle)]">
           <span>
             {t("guestStatusBefore")}
-            <Link
-              href="/login"
+            <button
+              type="button"
+              onClick={() => openDialog("login")}
               className="text-[var(--accent)] hover:text-[var(--accent-strong)] underline underline-offset-2"
             >
               {t("guestStatusLogin")}
-            </Link>
+            </button>
             {t("guestStatusAfter")}
           </span>
         </div>

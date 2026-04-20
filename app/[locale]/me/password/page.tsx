@@ -22,7 +22,7 @@ const leadingIconClass =
  *
  * リセットリンク経由の `/reset-password` とは異なり、現在のセッションを保持したまま
  * `supabase.auth.updateUser({ password })` で新しいパスワードを設定する。
- * 成功すると `/me` に戻る。未ログイン時は `/login` にリダイレクト。
+ * 成功すると `/me` に戻る。未ログイン時は `/app` に退避し AuthGate がダイアログを開く。
  */
 export default function SettingsPasswordPage() {
   const t = useTranslations("me.password");
@@ -44,12 +44,13 @@ export default function SettingsPasswordPage() {
   // 成功トーストを少し見せてから設定画面へ戻すためのタイマー
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 未ログインユーザーは設定変更不可。/login にリダイレクトする
+  // 未ログインユーザーは設定変更不可。AuthGate が /app へ退避するが、
+  // 保護ページ直アクセス時の API 叩き開始を防ぐため、ここでも /app へ退避する。
   useEffect(() => {
     let cancelled = false;
     void supabase.auth.getUser().then(({ data }) => {
       if (cancelled) return;
-      if (!data.user) router.push("/login");
+      if (!data.user) router.push("/app");
     });
     return () => {
       cancelled = true;

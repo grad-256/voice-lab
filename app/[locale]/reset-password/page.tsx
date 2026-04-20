@@ -41,7 +41,9 @@ export default function ResetPasswordPage() {
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      router.push("/login");
+      // Supabase はリカバリトークンで既にログイン済セッションを発行しているので
+      // ログイン画面へは戻さず、ハブ（/app）へ直接遷移する。
+      router.push("/app");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
       if (msg.includes("Auth session missing")) {

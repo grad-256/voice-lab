@@ -205,6 +205,30 @@ body {
   animation: fadeIn 0.6s ease-out both;
 }
 
+/* ダイアログ・モーダル用の高速フェードイン + わずかなスケール。
+   0.6s の全体フェードインはページ遷移向け。モーダルは開閉レスポンスが
+   UI 品質に直結するため、短めに振る（150ms）。 */
+@keyframes dialogIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-dialogIn {
+  animation: dialogIn 0.15s ease-out both;
+}
+
+/* ダイアログの背景（オーバーレイ）専用のさらに薄い・短いフェード。
+   0.12s で先に出て、パネルが 0.15s でわずかに遅れて現れる感覚を作る。 */
+.animate-overlayIn {
+  animation: fadeIn 0.12s ease-out both;
+}
+
 /* ============================================================
    LP 用アニメーション（既存、保持）
    ============================================================ */

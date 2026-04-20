@@ -6,20 +6,9 @@ import { type NextRequest, NextResponse } from "next/server";
 // next-intl のロケール判定ミドルウェア（URL 書き換え / locale cookie 設定）
 const intlMiddleware = createIntlMiddleware(routing);
 
-// ゲストでもアクセスできる完全一致パスの allowlist（locale プリフィクスを除いた裸のパス）。
-// ここに「ない」ものは認証必須。
-// 例：/diary は公開（ゲストも録音開始可）だが /diary/history は未掲載 → 認証必須。
-const publicPaths = new Set<string>([
-  "/",
-  "/app",
-  "/diary",
-  "/login",
-  "/privacy",
-  "/terms",
-  "/reset-password",
-]);
-
-// `/me` 以下（声選択・パスワード変更など）は認証必須なので publicPaths に入れない
+// AuthDialog 導入後は、middleware で /login に強制リダイレクトしない方針。
+// 保護ページは AuthGate（クライアント側）でダイアログ自動オープン → 閉じたら /app へ退避する。
+// middleware は「/login 直アクセス → /app」の正規化と、ロケール処理・Supabase セッション更新に絞る。
 
 function stripLocale(pathname: string): string {
   const segments = pathname.split("/").filter(Boolean);
@@ -83,27 +72,23 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // getUser() は毎回サーバー検証するため安全
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getUser() は毎回サーバー検証する。戻り値自体は middleware では使わないが、
+  // ここで Supabase のトークンリフレッシュと cookie 更新（setAll 経由）が走るので呼び出し必須。
+  await supabase.auth.getUser();
 
   const bare = stripLocale(request.nextUrl.pathname);
   const localeSegment = getLocaleSegment(request.nextUrl.pathname);
 
-  // 3) 未ログイン かつ 保護パス → /login（現在ロケールのプリフィクスを維持）
-  if (!user && !publicPaths.has(bare)) {
-    const url = request.nextUrl.clone();
-    url.pathname = `${localeSegment}/login`;
-    return NextResponse.redirect(url);
-  }
-
-  // 4) ログイン済み かつ /login → /app
-  if (user && bare === "/login") {
+  // 3) /login は廃止方針（AuthDialog が全ページで代替）。直アクセスされたら常に /app へ寄せる。
+  //    ログイン状態を問わず /app にリダイレクトする（未ログインなら /app で AuthGate が発火）。
+  if (bare === "/login") {
     const url = request.nextUrl.clone();
     url.pathname = `${localeSegment}/app`;
     return NextResponse.redirect(url);
   }
+
+  // 参考：未ログインで保護ページにアクセスした場合は middleware では何もしない。
+  //       AuthGate（クライアント）がダイアログを自動オープンし、閉じたら /app に退避する。
 
   return response;
 }
