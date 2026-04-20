@@ -17,6 +17,7 @@ import FeatureTour from "@/app/components/lp/FeatureTour";
 import FeatureVoiceDemo from "@/app/components/lp/FeatureVoiceDemo";
 import GridBg from "@/app/components/lp/GridBg";
 import HeroBg from "@/app/components/lp/HeroBg";
+import { InstallPromptButton } from "@/app/components/lp/InstallPromptButton";
 import OrbsBg from "@/app/components/lp/OrbsBg";
 import PulseBg from "@/app/components/lp/PulseBg";
 import ScrollReveal from "@/app/components/lp/ScrollReveal";
@@ -136,7 +137,9 @@ export default async function LandingPage() {
                 <span className="text-[var(--fg-subtle)]">——</span> {tHero("subCopy2")}
               </p>
 
-              <div className="mt-8 flex flex-row gap-3 w-full sm:w-auto">
+              {/* モバイル時は flex-wrap で 3 つ目のボタン（インストール）を次行に落とす。
+                 `flex-1` + `whitespace-nowrap` を 3 つ並べると狭幅デバイスで見切れるため。 */}
+              <div className="mt-8 flex flex-wrap gap-3 w-full sm:w-auto">
                 <Link
                   href="/app"
                   className="flex-1 sm:flex-none text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white font-semibold rounded-xl transition-all text-sm sm:text-base shadow-theme-md hover:-translate-y-0.5"
@@ -149,6 +152,10 @@ export default async function LandingPage() {
                 >
                   {tHero("ctaLogin")}
                 </OpenAuthButton>
+                <InstallPromptButton
+                  label={tHero("ctaInstall")}
+                  className="basis-full sm:basis-auto text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-[var(--bg-elevated)] hover:bg-elevated-80 border border-[var(--border-strong)] text-[var(--fg-muted)] font-medium rounded-xl transition-colors text-sm sm:text-base"
+                />
               </div>
 
               <p className="mt-3 text-xs sm:text-sm text-[var(--fg-subtle)]">{tHero("note")}</p>
