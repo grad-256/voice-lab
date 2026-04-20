@@ -17,7 +17,6 @@ import FeatureTour from "@/app/components/lp/FeatureTour";
 import FeatureVoiceDemo from "@/app/components/lp/FeatureVoiceDemo";
 import GridBg from "@/app/components/lp/GridBg";
 import HeroBg from "@/app/components/lp/HeroBg";
-import { IOSInstallGuideButton } from "@/app/components/lp/IOSInstallGuideButton";
 import { InstallPromptButton } from "@/app/components/lp/InstallPromptButton";
 import OrbsBg from "@/app/components/lp/OrbsBg";
 import PulseBg from "@/app/components/lp/PulseBg";
@@ -77,19 +76,14 @@ export default async function LandingPage() {
             My<span className="text-[var(--accent)]">VoiceLab</span>
           </span>
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Navbar のインストール系ボタンは、どちらのフックも「canInstall / canShowGuide = true」時だけ
-               レンダリングされる。モバイル Chrome では InstallPromptButton、iOS Safari では
-               IOSInstallGuideButton がそれぞれ排他的に表示される（同時表示は発生しない）。
-               スペース節約のため短縮ラベルを使う。 */}
+            {/* Navbar のインストールボタンは、Android Chrome（および PC Chrome / Edge のモバイル判定）で
+               beforeinstallprompt が発火したときだけ表示される。usePwaInstall 側で端末判定済みのため
+               ここでは常時レンダリング宣言でよい。スペース節約のため短縮ラベルを使う。
+               iOS Safari は beforeinstallprompt 非対応のため常に非表示（別途ホーム画面追加フローが必要）。 */}
             <InstallPromptButton
               label={tHero("ctaInstallShort")}
               posthogPlacement="navbar"
-              className="hidden sm:inline-flex text-sm font-medium bg-[var(--bg-elevated)] hover:bg-elevated-80 border border-[var(--border)] text-[var(--fg-muted)] px-3 py-1.5 rounded-lg transition-colors"
-            />
-            <IOSInstallGuideButton
-              label={tHero("ctaInstallShort")}
-              posthogPlacement="navbar"
-              className="hidden sm:inline-flex text-sm font-medium bg-[var(--bg-elevated)] hover:bg-elevated-80 border border-[var(--border)] text-[var(--fg-muted)] px-3 py-1.5 rounded-lg transition-colors"
+              className="text-sm font-medium bg-[var(--bg-elevated)] hover:bg-elevated-80 border border-[var(--border)] text-[var(--fg-muted)] px-3 py-1.5 rounded-lg transition-colors"
             />
             {isAuthenticated ? (
               <Link
@@ -169,13 +163,6 @@ export default async function LandingPage() {
                 </OpenAuthButton>
                 <InstallPromptButton
                   label={tHero("ctaInstall")}
-                  posthogPlacement="hero"
-                  className="basis-full sm:basis-auto text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-[var(--bg-elevated)] hover:bg-elevated-80 border border-[var(--border-strong)] text-[var(--fg-muted)] font-medium rounded-xl transition-colors text-sm sm:text-base"
-                />
-                {/* iOS Safari 向け：beforeinstallprompt が無いため、共有メニュー経由の手順案内モーダルを出す。
-                   端末判定で上記 InstallPromptButton と排他に表示されるため、両方置いても同時表示にはならない。 */}
-                <IOSInstallGuideButton
-                  label={tHero("ctaAddToHome")}
                   posthogPlacement="hero"
                   className="basis-full sm:basis-auto text-center whitespace-nowrap px-3 sm:px-8 py-3.5 bg-[var(--bg-elevated)] hover:bg-elevated-80 border border-[var(--border-strong)] text-[var(--fg-muted)] font-medium rounded-xl transition-colors text-sm sm:text-base"
                 />

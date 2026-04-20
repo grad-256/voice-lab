@@ -87,7 +87,13 @@ export function usePwaInstall() {
   }, []);
 
   useEffect(() => {
-    if (!deferredPrompt || isInstalled || shownCapturedRef.current) return;
+    // deferredPrompt が消えた（= ユーザー dismiss 後、Chrome クールダウンで再発火する可能性がある）
+    // タイミングで ref をリセットし、次回発火時に shown イベントを再度送れるようにする。
+    if (!deferredPrompt) {
+      shownCapturedRef.current = false;
+      return;
+    }
+    if (isInstalled || shownCapturedRef.current) return;
     // PostHog init 未了なら送信も「送信済み」扱いも保留し、次の render で再評価させる。
     // こうすることで Provider の init が後から完了しても初回 shown を取り逃さない。
     if (!posthog.__loaded) return;

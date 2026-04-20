@@ -24,22 +24,7 @@
       "ctaLogin": "ログイン",
       "ctaInstall": "インストール",
       "ctaInstallShort": "入れる",
-      "ctaAddToHome": "ホームに追加",
       "note": "登録不要・10往復まで無料"
-    },
-    "iosInstallGuide": {
-      "title": "ホーム画面に追加",
-      "subtitle": "Safari の共有メニューから 2 ステップで追加できます。",
-      "step1": {
-        "body": "画面下の共有ボタンをタップ"
-      },
-      "step2": {
-        "body": "メニューから「ホーム画面に追加」を選ぶ"
-      },
-      "note": "追加するとアプリのように単体で起動できるようになります。",
-      "close": "閉じる",
-      "closeNow": "わかりました",
-      "dontShowAgain": "もう表示しない"
     },
     "steps": {
       "eyebrow": "使いかた",
