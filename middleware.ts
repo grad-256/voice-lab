@@ -40,6 +40,18 @@ function getLocaleSegment(pathname: string): string {
 }
 
 export async function middleware(request: NextRequest) {
+  // 0) 英語版の privacy / terms が未整備のため、/en/* アクセスを JA デフォルトに寄せる。
+  //    NEXT_LOCALE cookie も ja に書き戻しておき、次リクエストでの再リダイレクトを防ぐ。
+  //    EN 版 legal docs 公開時にこのブロックと layout の LocaleSwitcher コメントアウトを同時解除する。
+  const pathname = request.nextUrl.pathname;
+  if (pathname === "/en" || pathname.startsWith("/en/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname === "/en" ? "/" : pathname.slice(3);
+    const redirectResponse = NextResponse.redirect(url);
+    redirectResponse.cookies.set("NEXT_LOCALE", "ja", { path: "/" });
+    return redirectResponse;
+  }
+
   // 1) まず next-intl にロケール処理を委ねる。
   //    戻り値は「rewrite or redirect を含んだ」レスポンス。以降ここに cookie を重ねる。
   const response = intlMiddleware(request);
