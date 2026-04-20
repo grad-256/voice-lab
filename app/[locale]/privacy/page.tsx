@@ -260,7 +260,14 @@ export default function PrivacyPage() {
           </p>
         </section>
 
-        <div className="mt-12 pt-8 border-t border-[var(--border)]">
+        <div className="mt-12 pt-8 border-t border-[var(--border)] flex gap-6">
+          <Link
+            href="/terms"
+            className="text-sm text-[var(--accent)] hover:text-[var(--accent-strong)] transition-colors"
+          >
+            利用規約
+          </Link>
+          {/* 外部から /privacy に直接着地したユーザーのための LP 戻り導線（/terms と対称）。 */}
           <Link
             href="/"
             className="text-sm text-[var(--accent)] hover:text-[var(--accent-strong)] transition-colors"

@@ -468,6 +468,8 @@ export default function TermsPage() {
           >
             プライバシーポリシー
           </Link>
+          {/* 外部（SNS / 検索）から /terms に直接着地したユーザーのための LP 戻り導線。
+              アプリ内の /me から飛んできた場合は別タブで開く設計なので、こちらは別タブ不要。 */}
           <Link
             href="/"
             className="text-sm text-[var(--accent)] hover:text-[var(--accent-strong)] transition-colors"

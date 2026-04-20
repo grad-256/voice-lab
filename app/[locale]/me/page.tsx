@@ -3,6 +3,8 @@
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
+import { NoteIcon } from "@/app/components/icons/note-icon";
+import { XIcon } from "@/app/components/icons/x-icon";
 import { Link, useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -37,6 +39,9 @@ const THEME_OPTIONS: readonly { value: ThemePreference; Icon: typeof Monitor }[]
 
 export default function SettingsPage() {
   const t = useTranslations("me");
+  // footer 相当の法務 / SNS リンクを /me 末尾に集約するため、footer ネームスペースも読む。
+  // layout の LocaleFooter は /me 配下で非表示になる（Issue #75）。
+  const tFooter = useTranslations("footer");
   const router = useRouter();
   const supabase = createClient();
   // 確認モーダルの開閉（破壊的操作は必ず確認を経由）
@@ -276,6 +281,49 @@ export default function SettingsPage() {
               {errorMsg}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* 法務・SNS の薄いリンク島：footer 代わりとしてアプリ末尾に集約（Issue #75）。
+          法務リンクは target="_blank" で別タブに開く — PWA / TWA 起動時にアプリタブを残し
+          「法務を見たら戻れない」状態を防ぐ。border-dashed + mt-16 で直上のアカウント削除
+          カード（赤系の破壊的操作）との視覚的分離を明確にする。 */}
+      <div className="mt-16 pt-8 border-t border-dashed border-[var(--border)]">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs tracking-wide text-[var(--fg-subtle)]">
+          <Link
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[var(--fg)] transition-colors"
+          >
+            {tFooter("terms")}
+          </Link>
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[var(--fg)] transition-colors"
+          >
+            {tFooter("privacy")}
+          </Link>
+          <a
+            href="https://note.com/uclab/m/m59dc828ffd47"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={tFooter("noteAriaLabel")}
+            className="text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
+          >
+            <NoteIcon className="h-4 w-auto" />
+          </a>
+          <a
+            href="https://x.com/UCLab1421"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={tFooter("xAriaLabel")}
+            className="text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
+          >
+            <XIcon className="h-4 w-auto" />
+          </a>
         </div>
       </div>
 
