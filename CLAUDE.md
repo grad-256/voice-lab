@@ -238,7 +238,8 @@ Anthropic Labs の研究（[Harness design for long-running application developm
 - **ページ側の `<main>` に `min-h-screen` を直接書かない`**。body とダブルがけになり、
   `main = 100vh` + `footer = 自然高` で画面超過する（過去に発生した回帰）。代わりに `flex-1 w-full` を使う
 - **footer を隠したい画面**（日記の会話画面 `/diary` など）だけ、明示的に `h-screen overflow-hidden` を書く
-- 該当例：`/app`・`/diary/history`・`/privacy`・`/terms` は `flex-1 w-full`、`/diary` のみ `h-screen overflow-hidden`
+- 該当例：`/app`・`/diary/history` は `flex-1 w-full`、`/diary` のみ `h-screen overflow-hidden`
+- 法務ドキュメント（利用規約・プライバシーポリシー）は Notion 公開ページで運用（`lib/legalUrls.ts` 参照）。内部ページは廃止済みなのでここには含めない
 
 ### システムプロンプトを変更するとき
 `app/api/chat/route.ts` の `SYSTEM_PROMPT` 定数を編集する。

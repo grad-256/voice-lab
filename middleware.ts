@@ -29,9 +29,10 @@ function getLocaleSegment(pathname: string): string {
 }
 
 export async function middleware(request: NextRequest) {
-  // 0) 英語版の privacy / terms が未整備のため、/en/* アクセスを JA デフォルトに寄せる。
+  // 0) EN 本格翻訳（Track C：LP / UI / システムプロンプト等）が未完了のため、
+  //    /en/* アクセスを JA デフォルトに寄せる。
   //    NEXT_LOCALE cookie も ja に書き戻しておき、次リクエストでの再リダイレクトを防ぐ。
-  //    EN 版 legal docs 公開時にこのブロックと layout の LocaleSwitcher コメントアウトを同時解除する。
+  //    Track C 完了時に本ブロックと layout の LocaleSwitcher コメントアウトを同時解除する。
   const pathname = request.nextUrl.pathname;
   if (pathname === "/en" || pathname.startsWith("/en/")) {
     const url = request.nextUrl.clone();

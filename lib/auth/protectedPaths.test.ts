@@ -18,8 +18,6 @@ describe("isProtectedPath", () => {
     expect(isProtectedPath("/app")).toBe(false);
     expect(isProtectedPath("/diary")).toBe(false);
     expect(isProtectedPath("/reset-password")).toBe(false);
-    expect(isProtectedPath("/privacy")).toBe(false);
-    expect(isProtectedPath("/terms")).toBe(false);
   });
 
   test("/memo のような /me プリフィクス近接の誤マッチ防止", () => {
@@ -34,8 +32,6 @@ describe("isDialogOpenablePath", () => {
     expect(isDialogOpenablePath("/diary")).toBe(true);
     expect(isDialogOpenablePath("/me")).toBe(true);
     expect(isDialogOpenablePath("/diary/history")).toBe(true);
-    expect(isDialogOpenablePath("/privacy")).toBe(true);
-    expect(isDialogOpenablePath("/terms")).toBe(true);
   });
 
   test("LP とリセットパスワードでは開かない", () => {
