@@ -89,7 +89,7 @@ export default function ChatDemo() {
       className="chat-phone-frame w-full bg-[var(--bg)] rounded-[36px] border border-[var(--border-strong)] overflow-hidden flex flex-col h-[560px]"
     >
       {/* ステータスバー */}
-      <div className="px-5 pt-3 pb-1 flex justify-between items-center text-[10px] text-[var(--fg-subtle)]">
+      <div className="px-5 pt-3 pb-1 flex justify-between items-center text-xs sm:text-sm text-[var(--fg-subtle)]">
         <span>9:41</span>
         <span className="flex items-center gap-1">
           <span className="inline-block w-1 h-1 rounded-full bg-[var(--fg-subtle)]" />
@@ -101,7 +101,7 @@ export default function ChatDemo() {
       <div className="flex flex-col px-3 pb-5 flex-1 min-h-0">
         {/* ヘッダー：ブランド名（特定ペルソナ・英会話訴求は廃止） */}
         <div className="flex items-center gap-2 py-2 border-b border-[var(--border)]">
-          <div className="relative w-7 h-7 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-strong)] flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0">
+          <div className="relative w-7 h-7 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-strong)] flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
             VL
             {/* AI が話しているときはアバターの周囲に柔らかい光 */}
             {phase === "speaking" && (
@@ -114,7 +114,7 @@ export default function ChatDemo() {
           </div>
           <span className="ml-auto flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-strong)] animate-pulse" />
-            <span className="text-[10px] text-[var(--fg-subtle)]">{t("online")}</span>
+            <span className="text-xs sm:text-sm text-[var(--fg-subtle)]">{t("online")}</span>
           </span>
         </div>
 
@@ -130,7 +130,7 @@ export default function ChatDemo() {
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-fadeSlideUp`}
             >
               {msg.role === "assistant" && (
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-strong)] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-1 mr-1.5">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-strong)] flex items-center justify-center text-white text-xs sm:text-sm font-bold flex-shrink-0 mt-1 mr-1.5">
                   VL
                 </div>
               )}
@@ -151,7 +151,7 @@ export default function ChatDemo() {
           {/* AI が考えている：タイピングインジケーター */}
           {phase === "thinking" && (
             <div className="flex justify-start gap-1.5 animate-fadeSlideUp">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-strong)] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-1">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-strong)] flex items-center justify-center text-white text-xs sm:text-sm font-bold flex-shrink-0 mt-1">
                 VL
               </div>
               <div className="bg-[var(--bg-elevated)] px-3 py-2.5 rounded-2xl rounded-tl-sm flex items-center gap-1">

@@ -11,10 +11,11 @@ type CapProps = {
 };
 
 export function Cap({ children, mb = 10, className }: CapProps) {
+  // 画面幅に応じて sm:/md: で段階的に拡大する。Tailwind 標準 text-xs (12px) を md: から採用。
   const style: CSSProperties = { marginBottom: mb };
   return (
     <div
-      className={`text-[9px] uppercase tracking-[0.4em] text-[var(--fg-muted)] ${className ?? ""}`}
+      className={`text-xs sm:text-sm uppercase tracking-[0.4em] text-[var(--fg-muted)] ${className ?? ""}`}
       style={style}
     >
       {children}

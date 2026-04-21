@@ -72,9 +72,7 @@ export default function ResetPasswordPage() {
   const primaryStyle: CSSProperties = {
     width: "100%",
     padding: "16px 22px",
-    fontSize: 12,
     fontWeight: 600,
-    letterSpacing: "0.14em",
     textTransform: "uppercase",
     background: "var(--fg)",
     color: "var(--bg)",
@@ -90,12 +88,10 @@ export default function ResetPasswordPage() {
       <div className="flex-1 flex flex-col justify-center">
         <Cap mb={10}>{t("chapter.cap")}</Cap>
         <div
+          className="text-4xl sm:text-5xl tracking-tight"
           style={{
             fontFamily: SERIF_FAMILY,
-            fontSize: 32,
             fontWeight: 400,
-            lineHeight: 1.05,
-            letterSpacing: "-0.025em",
           }}
         >
           {t("chapter.titleLead")}
@@ -103,7 +99,7 @@ export default function ResetPasswordPage() {
           <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
           {t("chapter.titleTail")}
         </div>
-        <p className="text-[12px] text-[var(--fg-muted)] mt-3 max-w-[280px] leading-[1.55]">
+        <p className="text-xs sm:text-sm text-[var(--fg-muted)] mt-3 max-w-[280px] leading-[1.55]">
           {t("description")}
         </p>
 
@@ -146,7 +142,7 @@ export default function ResetPasswordPage() {
           {errorMsg && (
             <div
               role="alert"
-              className="mt-4 px-3 py-2 text-[var(--error)] text-[11px]"
+              className="mt-4 px-3 py-2 text-[var(--error)] text-xs sm:text-sm"
               style={{ border: "0.5px solid var(--error)" }}
             >
               {errorMsg}
@@ -154,20 +150,20 @@ export default function ResetPasswordPage() {
           )}
 
           <div className="mt-7">
-            <button type="submit" disabled={!canSubmit} style={primaryStyle}>
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className="text-sm sm:text-base tracking-widest"
+              style={primaryStyle}
+            >
               {loading ? t("submitting") : `${t("submit")} →`}
             </button>
           </div>
 
           {/* リンクの有効期限切れ等で行き詰まったら、ホーム経由で再度ログインできるよう導線を残す */}
           <div
-            className="text-center mt-3 text-[var(--fg-muted)]"
-            style={{
-              fontFamily: MONO_FAMILY,
-              fontSize: 10,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-            }}
+            className="text-center mt-3 text-xs sm:text-sm text-[var(--fg-muted)] tracking-[0.16em] uppercase"
+            style={{ fontFamily: MONO_FAMILY }}
           >
             <span>{t("rememberItPrefix")} </span>
             <Link

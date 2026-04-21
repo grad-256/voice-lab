@@ -44,8 +44,6 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const baseBtn: CSSProperties = {
     padding: "13px 20px",
-    fontSize: 11,
-    letterSpacing: "0.14em",
     textTransform: "uppercase",
     cursor: "pointer",
     flex: 1,
@@ -75,37 +73,47 @@ export function ConfirmDialog({
       className="fixed inset-0 z-50 m-0 max-w-none max-h-none w-screen h-screen p-0 border-0 bg-[var(--bg-overlay)] flex items-center justify-center px-6 animate-fadeIn"
     >
       <div
-        className="w-full max-w-sm bg-[var(--bg-elevated)] p-7"
+        className="w-full max-w-sm bg-[var(--bg-elevated)] text-[var(--fg)] p-7"
         style={{ border: "0.5px solid var(--border)" }}
       >
         <Cap mb={10}>{cap}</Cap>
         <h2
           id={titleId}
+          className="text-2xl sm:text-3xl leading-tight tracking-tight"
           style={{
             fontFamily: SERIF_FAMILY,
-            fontSize: 22,
             fontWeight: 400,
-            lineHeight: 1.15,
-            letterSpacing: "-0.02em",
           }}
         >
           {title}
         </h2>
-        <p className="mt-3 text-[12px] text-[var(--fg-muted)] leading-[1.6]">{desc}</p>
+        <p className="mt-3 text-xs sm:text-sm text-[var(--fg-muted)] leading-[1.6]">{desc}</p>
         {errorMsg && (
           <div
             role="alert"
-            className="mt-4 px-3 py-2 text-[var(--error)] text-[11px]"
+            className="mt-4 px-3 py-2 text-[var(--error)] text-xs sm:text-sm"
             style={{ border: "0.5px solid var(--error)" }}
           >
             {errorMsg}
           </div>
         )}
         <div className="flex gap-3 mt-6">
-          <button type="button" onClick={onCancel} disabled={isProcessing} style={ghostStyle}>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isProcessing}
+            className="text-xs sm:text-sm tracking-widest"
+            style={ghostStyle}
+          >
             {cancelLabel}
           </button>
-          <button type="button" onClick={onConfirm} disabled={isProcessing} style={ctaStyle}>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isProcessing}
+            className="text-xs sm:text-sm tracking-widest"
+            style={ctaStyle}
+          >
             {confirmLabel}
           </button>
         </div>
