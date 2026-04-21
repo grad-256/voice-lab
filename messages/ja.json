@@ -173,7 +173,21 @@
     "guestStatusBefore": "ゲストとして体験中（",
     "guestStatusLogin": "ログイン",
     "guestStatusAfter": "で日記が保存できます）",
-    "loggedIn": "ログイン中"
+    "loggedIn": "ログイン中",
+    "chapter": {
+      "greetingMorning": "おはようございます、",
+      "greetingAfternoon": "こんにちは、",
+      "greetingEvening": "こんばんは、",
+      "greetingNight": "ゆっくりと、",
+      "greetingGuest": "ようこそ。",
+      "subline": "今日の問いが、そっと待っています。",
+      "promptLabel": "今日の問い",
+      "promptBody": "今日いちばん、心が動いたのはいつでしたか。",
+      "beginLabel": "話しはじめる",
+      "streakLabel": "ここ 7 日",
+      "streakCount": "{count} / 7",
+      "noName": "あなた"
+    }
   },
   "footer": {
     "terms": "利用規約",

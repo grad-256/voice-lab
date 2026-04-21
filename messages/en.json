@@ -179,7 +179,21 @@
     "guestStatusBefore": "Trying as a guest (",
     "guestStatusLogin": "log in",
     "guestStatusAfter": " to keep your diary)",
-    "loggedIn": "Logged in"
+    "loggedIn": "Logged in",
+    "chapter": {
+      "greetingMorning": "Good morning,",
+      "greetingAfternoon": "Good afternoon,",
+      "greetingEvening": "Good evening,",
+      "greetingNight": "Quiet night,",
+      "greetingGuest": "Welcome.",
+      "subline": "Today's prompt is quietly waiting.",
+      "promptLabel": "Today's prompt",
+      "promptBody": "When did your heart stir the most today?",
+      "beginLabel": "Begin",
+      "streakLabel": "Last 7 days",
+      "streakCount": "{count} / 7",
+      "noName": "you"
+    }
   },
   "footer": {
     "terms": "Terms of Service",
