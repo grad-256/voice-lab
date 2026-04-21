@@ -248,9 +248,9 @@
   },
   "resetPassword": {
     "chapter": {
-      "cap": "Recover · 再発行",
+      "cap": "Recover",
       "titleLead": "Set a new",
-      "titleItalic": "key",
+      "titleAccent": "key",
       "titleTail": "."
     },
     "description": "ここで新しいパスワードを設定できます。次回以降は、この新しいパスワードでサインインしてください。",
@@ -274,23 +274,23 @@
   },
   "me": {
     "chapter": {
-      "cap": "Me · じぶん",
+      "cap": "Me",
       "titleLead": "Your ",
-      "titleItalic": "page",
+      "titleAccent": "page",
       "titleTail": ".",
       "memberSince": "{date} 登録",
-      "voiceSection": "Voice · 声",
-      "accountSection": "Account · アカウント",
-      "privacySection": "Privacy · プライバシー",
-      "confirmCap": "Confirm · 確認"
+      "voiceSection": "Voice",
+      "accountSection": "Account",
+      "privacySection": "Privacy",
+      "confirmCap": "Confirm"
     },
     "voice": {
       "cardTitle": "声を選ぶ",
       "cardSubtitle": "日記の返答を読み上げる声",
       "chapter": {
-        "cap": "Voice · 声を選ぶ",
+        "cap": "Voice",
         "titleLead": "Who should",
-        "titleItalic": "listen",
+        "titleAccent": "listen",
         "titleTail": " to you?"
       },
       "previewAria": "{label} を試聴",
@@ -305,17 +305,14 @@
       "presets": {
         "ethan": {
           "label": "Ethan",
-          "jp": "おだやか",
           "description": "落ち着いた男性の声（既定）"
         },
         "sarah": {
           "label": "Sarah",
-          "jp": "やさしい",
           "description": "穏やかな女性の声"
         },
         "adam": {
           "label": "Adam",
-          "jp": "ふかい",
           "description": "深く落ち着いた男性の声"
         }
       }
@@ -344,9 +341,9 @@
       "title": "パスワード変更",
       "subtitle": "新しいパスワードを設定します",
       "chapter": {
-        "cap": "Password · パスワード",
+        "cap": "Password",
         "titleLead": "Change",
-        "titleItalic": "your key",
+        "titleAccent": "your key",
         "titleTail": "."
       },
       "newPassword": "新しいパスワード",
@@ -388,17 +385,17 @@
     "billing": {
       "rowTitle": "請求情報",
       "rowSubtitle": "次回請求日と支払方法の確認",
-      "sectionCap": "Billing · 請求",
+      "sectionCap": "Billing",
       "chapter": {
-        "cap": "Billing · 請求",
+        "cap": "Billing",
         "titleLead": "A quiet ",
-        "titleItalic": "year",
+        "titleAccent": "year",
         "titleTail": ", continuing."
       },
       "sections": {
-        "nextCharge": "Next charge · 次回請求",
-        "paymentMethod": "Payment method · 支払方法",
-        "history": "History · 請求履歴"
+        "nextCharge": "Next charge",
+        "paymentMethod": "Payment method",
+        "history": "History"
       },
       "nextCharge": {
         "empty": "現在、有料プランには加入していません。",
@@ -434,16 +431,15 @@
   },
   "pricing": {
     "chapter": {
-      "cap": "Pricing · 料金",
+      "cap": "Pricing",
       "titleLead": "At your pace, ",
-      "titleItalic": "keep going",
+      "titleAccent": "keep going",
       "titleTail": ".",
       "lead": "短く試す、じっくり続ける、一年を描く。3 つのプランから選べます。"
     },
     "plans": {
       "still": {
         "name": "Still",
-        "jp": "しずか",
         "price": "¥0",
         "period": "無料",
         "tagline": "まず、声に出してみる。",
@@ -452,7 +448,6 @@
       },
       "quiet": {
         "name": "Quiet",
-        "jp": "しずけさ",
         "price": "¥980",
         "period": "/ 月",
         "tagline": "毎日のリズムに、深く寄り添う。",
@@ -467,7 +462,6 @@
       },
       "year": {
         "name": "Year",
-        "jp": "ねん",
         "price": "¥9,800",
         "period": "/ 年",
         "tagline": "一年をまるごと、静かに残す。",
@@ -485,9 +479,9 @@
   },
   "faq": {
     "chapter": {
-      "cap": "FAQ · よくある質問",
+      "cap": "FAQ",
       "titleLead": "Quiet ",
-      "titleItalic": "answers",
+      "titleAccent": "answers",
       "titleTail": " to small questions."
     },
     "items": {
@@ -517,9 +511,9 @@
   },
   "releaseNotes": {
     "chapter": {
-      "cap": "Release notes · 更新履歴",
+      "cap": "Release notes",
       "titleLead": "Quiet ",
-      "titleItalic": "updates",
+      "titleAccent": "updates",
       "titleTail": ", kept."
     },
     "versionLabel": "v{version}",
@@ -581,8 +575,8 @@
     },
     "hint": "「終わり」と言うか、右上のボタンで日記になります",
     "chapter": {
-      "liveLabel": "Live · いま話していること",
-      "quietVoice": "ききて · Quiet voice"
+      "liveLabel": "Live",
+      "quietVoice": "Quiet voice"
     },
     "errors": {
       "bootstrap": "AI の準備に失敗しました。もう一度お試しください。",
@@ -620,33 +614,33 @@
       "emptyCta": "最初の日記を話す",
       "loadFailed": "読み込みに失敗しました",
       "chapter": {
-        "archiveLabel": "Archive · 記録",
+        "archiveLabel": "Archive",
         "titleLead": "A small",
-        "titleItalic": "quiet",
+        "titleAccent": "quiet",
         "titleTail": "archive.",
         "countSuffix": "件の日記",
         "emptyLead": "Nothing",
-        "emptyItalic": "spoken",
+        "emptyAccent": "spoken",
         "emptyTail": "yet."
       }
     },
     "insights": {
-      "cap": "Insights · 気づき",
+      "cap": "Insights",
       "headingLead": "April, in",
-      "headingItalic": "shape",
+      "headingAccent": "shape",
       "headingTail": ".",
       "stats": "17 件の日記 · 計 4 時間 12 分 · 平均 14 分",
       "dummyNotice": "※ 仮の値です。実データ表示は近日公開予定",
-      "warmthLabel": "Warmth · あたたかさの推移",
-      "tonesLabel": "Tones · 色調",
+      "warmthLabel": "Warmth",
+      "tonesLabel": "Tones",
       "tones": {
-        "still": "Still · 静けさ",
-        "tender": "Tender · やさしさ",
-        "bright": "Bright · あかるさ",
-        "heavy": "Heavy · 重いもの",
-        "anxious": "Anxious · 不安"
+        "still": "Still",
+        "tender": "Tender",
+        "bright": "Bright",
+        "heavy": "Heavy",
+        "anxious": "Anxious"
       },
-      "quietReadingLabel": "Quiet reading · 読みとり",
+      "quietReadingLabel": "Quiet reading",
       "quietReadingBody": "朝のあなたが一番しずか。ていねいなことばは 22 時すぎに届きます。"
     },
     "detail": {
@@ -666,9 +660,9 @@
       },
       "deleteFailed": "削除に失敗しました",
       "chapter": {
-        "summaryLabel": "Summary · まとめ",
-        "transcriptLabel": "Transcript · 話したこと",
-        "quietVoice": "ききて · Quiet voice"
+        "summaryLabel": "Summary",
+        "transcriptLabel": "Transcript",
+        "quietVoice": "Quiet voice"
       }
     }
   }

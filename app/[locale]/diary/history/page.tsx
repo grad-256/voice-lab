@@ -5,6 +5,8 @@ export const runtime = "edge";
 
 import { BottomTab, Cap, PageHeader, Rule } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
+import { formatMonoDate } from "@/lib/chapterDate";
+import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -16,35 +18,6 @@ type DiaryItem = {
   message_count: number;
   created_at: string;
 };
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
-const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
-
-// 「4·21·26」形式の mono 表示。Chapter の archive 行で「日付箱」の下に添える。
-function formatMonoDate(
-  iso: string,
-  locale: string
-): {
-  day: string;
-  dayNum: string;
-  month: string;
-} {
-  const d = new Date(iso);
-  const tag = locale === "ja" ? "ja-JP" : "en-US";
-  const weekday = d
-    .toLocaleDateString(tag, { weekday: "short" })
-    .replace(/曜日?/, "")
-    .toUpperCase();
-  const month =
-    locale === "ja"
-      ? `${d.getMonth() + 1}月`.toUpperCase()
-      : d.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
-  return {
-    day: weekday,
-    dayNum: String(d.getDate()).padStart(2, "0"),
-    month,
-  };
-}
 
 export default function DiaryHistoryPage() {
   const router = useRouter();
@@ -108,8 +81,7 @@ export default function DiaryHistoryPage() {
           className="text-3xl sm:text-4xl md:text-5xl tracking-tight"
           style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
         >
-          {t("chapter.titleLead")}{" "}
-          <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
+          {t("chapter.titleLead")} <span>{t("chapter.titleAccent")}</span>
           <br />
           {t("chapter.titleTail")}
         </div>
@@ -141,8 +113,7 @@ export default function DiaryHistoryPage() {
             className="text-3xl sm:text-4xl tracking-tight"
             style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
           >
-            {t("chapter.emptyLead")}{" "}
-            <span style={{ fontStyle: "italic" }}>{t("chapter.emptyItalic")}</span>
+            {t("chapter.emptyLead")} <span>{t("chapter.emptyAccent")}</span>
             <br />
             {t("chapter.emptyTail")}
           </div>

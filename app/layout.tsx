@@ -5,56 +5,48 @@ export const runtime = "edge";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import type { Metadata, Viewport } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
-import {
-  Fraunces,
-  JetBrains_Mono,
-  Noto_Sans_JP,
-  Noto_Serif_JP,
-  Plus_Jakarta_Sans,
-} from "next/font/google";
+import { Fraunces, Inter, Noto_Sans_JP, Shippori_Mincho } from "next/font/google";
 import Script from "next/script";
 import PostHogProvider from "./components/PostHogProvider";
 import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
 import "./globals.css";
 
-const jakartaSans = Plus_Jakarta_Sans({
+// 欧文サンセリフ（本文・UI メイン）。
+// 以前の Plus Jakarta Sans より骨格が中立で、Fraunces / Shippori Mincho と並んだときの
+// 「声の高さ」が揃う。Inter は欧文 UI のデファクトで Latin グリフが安定している。
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-jakarta",
+  variable: "--font-sans",
   display: "swap",
 });
 
+// 和文サンセリフ（本文フォールバック）。
+// CSS の font-family は文字ごとに flip するため、Inter が欧文を担い、和字だけここに流れる。
 const notoSansJP = Noto_Sans_JP({
   subsets: ["latin"],
-  variable: "--font-noto",
+  variable: "--font-sans-jp",
   display: "swap",
   weight: ["400", "500", "700"],
 });
 
 // Chapter 系譜の見出しに使う欧文セリフ体。
-// italic で "活字の呼吸" を出すため ital 軸込みで読み込む。
-// 日本語文字は CSS フォールバックで Noto Serif JP に流す。
+// 以前は italic 軸込みで読み込んでいたが、italic を UI から撤去したため normal のみに縮退。
+// 日本語文字は CSS フォールバックで Shippori Mincho に流す。
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-serif",
   display: "swap",
   weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
 });
 
-// 和文セリフ体のフォールバック用（欧文は Fraunces が主、和文はこれが受け止める）。
-const notoSerifJP = Noto_Serif_JP({
+// 和文セリフ体（Fraunces との和文ペア）。
+// Noto Serif JP は中立的すぎて Fraunces の温度感と噛み合わないため、
+// より文学的で筆致の温度が近い Shippori Mincho に置き換えた。
+const shipporiMincho = Shippori_Mincho({
   subsets: ["latin"],
-  variable: "--font-noto-serif",
+  variable: "--font-serif-jp",
   display: "swap",
-  weight: ["400", "500"],
-});
-
-// 等幅：数字・時間・タグなど活字リズムの要所に使う。
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  display: "swap",
-  weight: ["300", "400", "500"],
+  weight: ["400", "500", "600"],
 });
 
 // ルートの metadata はロケール非依存（icons のみ）。
@@ -108,7 +100,7 @@ export default async function RootLayout({
     // 限定される（子ツリーには波及しない）Next.js / next-themes 標準パターン。
     <html
       lang={locale}
-      className={`${jakartaSans.variable} ${notoSansJP.variable} ${fraunces.variable} ${notoSerifJP.variable} ${jetbrainsMono.variable}`}
+      className={`${inter.variable} ${notoSansJP.variable} ${fraunces.variable} ${shipporiMincho.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-[var(--bg)] text-[var(--fg)] antialiased flex flex-col">

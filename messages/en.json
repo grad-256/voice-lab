@@ -254,9 +254,9 @@
   },
   "resetPassword": {
     "chapter": {
-      "cap": "Recover · 再発行",
+      "cap": "Recover",
       "titleLead": "Set a new",
-      "titleItalic": "key",
+      "titleAccent": "key",
       "titleTail": "."
     },
     "description": "Choose a new password here. From your next sign-in, please use this one.",
@@ -280,23 +280,23 @@
   },
   "me": {
     "chapter": {
-      "cap": "Me · じぶん",
+      "cap": "Me",
       "titleLead": "Your ",
-      "titleItalic": "page",
+      "titleAccent": "page",
       "titleTail": ".",
       "memberSince": "Member since {date}",
-      "voiceSection": "Voice · 声",
-      "accountSection": "Account · アカウント",
-      "privacySection": "Privacy · プライバシー",
-      "confirmCap": "Confirm · 確認"
+      "voiceSection": "Voice",
+      "accountSection": "Account",
+      "privacySection": "Privacy",
+      "confirmCap": "Confirm"
     },
     "voice": {
       "cardTitle": "Voice",
       "cardSubtitle": "The voice that reads your diary back to you",
       "chapter": {
-        "cap": "Voice · 声を選ぶ",
+        "cap": "Voice",
         "titleLead": "Who should",
-        "titleItalic": "listen",
+        "titleAccent": "listen",
         "titleTail": " to you?"
       },
       "previewAria": "Preview {label}",
@@ -311,17 +311,14 @@
       "presets": {
         "ethan": {
           "label": "Ethan",
-          "jp": "おだやか",
           "description": "A calm male voice (default)"
         },
         "sarah": {
           "label": "Sarah",
-          "jp": "やさしい",
           "description": "A gentle female voice"
         },
         "adam": {
           "label": "Adam",
-          "jp": "ふかい",
           "description": "A deep, steady male voice"
         }
       }
@@ -350,9 +347,9 @@
       "title": "Change password",
       "subtitle": "Set a new password for your account",
       "chapter": {
-        "cap": "Password · パスワード",
+        "cap": "Password",
         "titleLead": "Change",
-        "titleItalic": "your key",
+        "titleAccent": "your key",
         "titleTail": "."
       },
       "newPassword": "New password",
@@ -394,17 +391,17 @@
     "billing": {
       "rowTitle": "Billing",
       "rowSubtitle": "Next charge and payment method",
-      "sectionCap": "Billing · 請求",
+      "sectionCap": "Billing",
       "chapter": {
-        "cap": "Billing · 請求",
+        "cap": "Billing",
         "titleLead": "A quiet ",
-        "titleItalic": "year",
+        "titleAccent": "year",
         "titleTail": ", continuing."
       },
       "sections": {
-        "nextCharge": "Next charge · 次回請求",
-        "paymentMethod": "Payment method · 支払方法",
-        "history": "History · 請求履歴"
+        "nextCharge": "Next charge",
+        "paymentMethod": "Payment method",
+        "history": "History"
       },
       "nextCharge": {
         "empty": "You're not on a paid plan right now.",
@@ -440,16 +437,15 @@
   },
   "pricing": {
     "chapter": {
-      "cap": "Pricing · 料金",
+      "cap": "Pricing",
       "titleLead": "At your pace, ",
-      "titleItalic": "keep going",
+      "titleAccent": "keep going",
       "titleTail": ".",
       "lead": "Try briefly, stay with it, or shape a whole year. Pick from three plans."
     },
     "plans": {
       "still": {
         "name": "Still",
-        "jp": "",
         "price": "¥0",
         "period": "Free",
         "tagline": "Start by saying it out loud.",
@@ -462,7 +458,6 @@
       },
       "quiet": {
         "name": "Quiet",
-        "jp": "",
         "price": "¥980",
         "period": "/ month",
         "tagline": "Stay close to your daily rhythm.",
@@ -477,7 +472,6 @@
       },
       "year": {
         "name": "Year",
-        "jp": "",
         "price": "¥9,800",
         "period": "/ year",
         "tagline": "Keep a whole year, quietly.",
@@ -495,9 +489,9 @@
   },
   "faq": {
     "chapter": {
-      "cap": "FAQ · よくある質問",
+      "cap": "FAQ",
       "titleLead": "Quiet ",
-      "titleItalic": "answers",
+      "titleAccent": "answers",
       "titleTail": " to small questions."
     },
     "items": {
@@ -527,9 +521,9 @@
   },
   "releaseNotes": {
     "chapter": {
-      "cap": "Release notes · 更新履歴",
+      "cap": "Release notes",
       "titleLead": "Quiet ",
-      "titleItalic": "updates",
+      "titleAccent": "updates",
       "titleTail": ", kept."
     },
     "versionLabel": "v{version}",
@@ -591,8 +585,8 @@
     },
     "hint": "Say \"end\" or tap the button above to turn this into a diary entry",
     "chapter": {
-      "liveLabel": "Live · what you're saying",
-      "quietVoice": "Quiet voice · ききて"
+      "liveLabel": "Live",
+      "quietVoice": "Quiet voice"
     },
     "errors": {
       "bootstrap": "Couldn't start the AI. Please try again.",
@@ -630,25 +624,25 @@
       "emptyCta": "Start your first entry",
       "loadFailed": "Couldn't load.",
       "chapter": {
-        "archiveLabel": "Archive · 記録",
+        "archiveLabel": "Archive",
         "titleLead": "A small",
-        "titleItalic": "quiet",
+        "titleAccent": "quiet",
         "titleTail": "archive.",
         "countSuffix": "entries",
         "emptyLead": "Nothing",
-        "emptyItalic": "spoken",
+        "emptyAccent": "spoken",
         "emptyTail": "yet."
       }
     },
     "insights": {
-      "cap": "Insights · 気づき",
+      "cap": "Insights",
       "headingLead": "April, in",
-      "headingItalic": "shape",
+      "headingAccent": "shape",
       "headingTail": ".",
       "stats": "17 entries · 4h 12m total · avg 14m",
       "dummyNotice": "※ Placeholder values. Real data view coming soon.",
-      "warmthLabel": "Warmth · over the month",
-      "tonesLabel": "Tones · 色調",
+      "warmthLabel": "Warmth",
+      "tonesLabel": "Tones",
       "tones": {
         "still": "Still",
         "tender": "Tender",
@@ -676,9 +670,9 @@
       },
       "deleteFailed": "Couldn't delete.",
       "chapter": {
-        "summaryLabel": "Summary · まとめ",
-        "transcriptLabel": "Transcript · what you said",
-        "quietVoice": "Quiet voice · ききて"
+        "summaryLabel": "Summary",
+        "transcriptLabel": "Transcript",
+        "quietVoice": "Quiet voice"
       }
     }
   }

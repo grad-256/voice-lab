@@ -4,9 +4,10 @@
 // /diary/history/[id] の要約 TTS 再生で使う。波形は装飾（TTS は可変生成のため事前計算できない）。
 // クリック時に `onFetchAudio` が呼ばれ、Blob を返す → 再生して currentTime / duration を追う。
 
+import { formatSeconds } from "@/lib/formatDuration";
+import { MONO_FAMILY } from "@/lib/typography";
+import { useMountedRef } from "@/lib/useMountedRef";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
 
 // 波形バーの高さ（静的な疑似ランダム）。40 本。
 // 実データの波形解析はしない（TTS は可変生成 + edge runtime + 計算コスト回避）。
@@ -17,13 +18,6 @@ const WAVEFORM_HEIGHTS = [
   0.3, 0.75, 0.6, 0.4, 0.85, 0.5, 0.3, 0.65, 0.45, 0.8, 0.55, 0.35, 0.7, 0.5, 0.85, 0.4, 0.6, 0.75,
   0.3, 0.55, 0.7, 0.45,
 ] as const;
-
-function formatTime(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
 
 type AudioPlayerProps = {
   /** クリック時に Blob を返す関数。null 返却時は再生を中止する（エラー相当）。 */
@@ -41,12 +35,12 @@ export function AudioPlayer({ onFetchAudio, playLabel, pauseLabel }: AudioPlayer
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
-  const mountedRef = useRef(true);
+  const mountedRef = useMountedRef();
 
+  // アンマウント時に再生中音声を止め、object URL を解放する。
+  // mountedRef はこの useEffect とは独立で、useMountedRef が別途管理する。
   useEffect(() => {
-    mountedRef.current = true;
     return () => {
-      mountedRef.current = false;
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
@@ -207,7 +201,7 @@ export function AudioPlayer({ onFetchAudio, playLabel, pauseLabel }: AudioPlayer
         className="shrink-0 text-xs sm:text-sm tabular-nums tracking-[0.02em] whitespace-nowrap"
         style={{ fontFamily: MONO_FAMILY, color: "var(--fg-muted)" }}
       >
-        {formatTime(currentTime)} / {duration > 0 ? formatTime(duration) : "--:--"}
+        {formatSeconds(currentTime)} / {duration > 0 ? formatSeconds(duration) : "--:--"}
       </span>
     </div>
   );

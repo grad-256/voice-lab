@@ -14,10 +14,9 @@ import {
 } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
+import { SERIF_FAMILY } from "@/lib/typography";
 import { useTranslations } from "next-intl";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
 
 const MIN_PASSWORD_LENGTH = 6;
 
@@ -30,7 +29,7 @@ const MIN_PASSWORD_LENGTH = 6;
  */
 export default function SettingsPasswordPage() {
   const t = useTranslations("me.password");
-  // 確認モーダルの Cap "Confirm · 確認" は /me と /me/password で共用するため
+  // 確認モーダルの Cap（"Confirm"）は /me と /me/password で共用するため
   // 親 namespace `me.chapter.confirmCap` を参照する（重複定義を避ける）。
   const tMe = useTranslations("me");
   const router = useRouter();
@@ -147,7 +146,7 @@ export default function SettingsPasswordPage() {
         >
           {t("chapter.titleLead")}
           <br />
-          <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
+          <span>{t("chapter.titleAccent")}</span>
           {t("chapter.titleTail")}
         </div>
       </div>

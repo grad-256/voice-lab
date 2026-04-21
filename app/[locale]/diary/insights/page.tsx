@@ -6,11 +6,9 @@ export const dynamic = "force-dynamic";
 
 import { BottomTab, Cap, PageHeader, Rule } from "@/app/components/chapter";
 import { Link } from "@/i18n/routing";
+import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
 import { useTranslations } from "next-intl";
 import { useId } from "react";
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
-const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
 
 // ダミーの暖かさ推移（0-1 の 12 週分）。Issue #66 で実データに差し替える。
 const WARMTH_POINTS = [0.4, 0.6, 0.45, 0.7, 0.55, 0.85, 0.72, 0.9, 0.78, 0.95, 0.88, 0.8];
@@ -67,7 +65,7 @@ export default function DiaryInsightsPage() {
             fontWeight: 400,
           }}
         >
-          {t("headingLead")} <span style={{ fontStyle: "italic" }}>{t("headingItalic")}</span>
+          {t("headingLead")} <span>{t("headingAccent")}</span>
           {t("headingTail")}
         </div>
         <div
@@ -124,7 +122,7 @@ export default function DiaryInsightsPage() {
               className="text-sm sm:text-base"
               style={{
                 fontFamily: SERIF_FAMILY,
-                fontStyle: i === 0 ? "italic" : "normal",
+                fontWeight: i === 0 ? 600 : 400,
               }}
             >
               {tTones(row.key as ToneKey)}
@@ -156,10 +154,7 @@ export default function DiaryInsightsPage() {
       {/* Quiet reading：一文の Fraunces italic で "今月の手触り" を返す */}
       <div className="mt-[18px]" style={{ borderLeft: "1.5px solid var(--fg)", paddingLeft: 12 }}>
         <Cap mb={4}>{t("quietReadingLabel")}</Cap>
-        <div
-          className="text-sm sm:text-base italic leading-relaxed"
-          style={{ fontFamily: SERIF_FAMILY }}
-        >
+        <div className="text-sm sm:text-base leading-relaxed" style={{ fontFamily: SERIF_FAMILY }}>
           {t("quietReadingBody")}
         </div>
       </div>

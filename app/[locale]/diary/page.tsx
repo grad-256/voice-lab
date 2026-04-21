@@ -6,6 +6,7 @@ export const runtime = "edge";
 import { useAuth } from "@/app/components/auth/AuthContext";
 import { BtnGhost, BtnPrimary, Cap, PageHeader, Rule, Waves } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
+import { formatElapsedMs } from "@/lib/formatDuration";
 import {
   GUEST_LIMIT,
   getGuestCount,
@@ -13,6 +14,8 @@ import {
   isGuestLimitReached,
 } from "@/lib/guestUsage";
 import { mapGetUserMediaError, pickBrowserMimeType } from "@/lib/recordingMime";
+import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
+import { useMountedRef } from "@/lib/useMountedRef";
 import { Mic, Square } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -36,9 +39,6 @@ type SummaryResult = {
   summary: string;
   language: Language;
 };
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
-const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
 
 const MIN_RECORDING_MS = 1500;
 
@@ -83,15 +83,6 @@ function isEndCommand(text: string): boolean {
   return false;
 }
 
-// 録音経過時間（mm:ss）。Chapter の MONO 表示に渡す。
-function formatElapsed(ms: number): string {
-  const clamped = ms < 0 ? 0 : ms;
-  const total = Math.floor(clamped / 1000);
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
-
 export default function DiaryPage() {
   const router = useRouter();
   const { openDialog, user, loading: authLoading } = useAuth();
@@ -125,19 +116,17 @@ export default function DiaryPage() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const processAudioRef = useRef<(() => Promise<void>) | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
-  // アンマウント後の state 更新・音声再生継続を防ぐための参照
-  const mountedRef = useRef(true);
+  // アンマウント後の state 更新を防ぐための参照（useMountedRef が管理）
+  const mountedRef = useMountedRef();
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   // 「はじめる」連打による多重 assistant-first 起動を防ぐ
   const startingRef = useRef(false);
   // 終了フロー（要約生成 + 保存）の多重起動ガード
   const finalizingRef = useRef(false);
 
-  // アンマウント時に state 更新を止め、再生中音声を停止する
+  // アンマウント時に再生中音声を停止する（mountedRef 管理は useMountedRef 側）
   useEffect(() => {
-    mountedRef.current = true;
     return () => {
-      mountedRef.current = false;
       if (currentAudioRef.current) {
         currentAudioRef.current.pause();
         currentAudioRef.current = null;
@@ -601,7 +590,7 @@ export default function DiaryPage() {
       <div className="mt-6">
         <Cap mb={10}>{tHub("promptLabel")}</Cap>
         <div
-          className="text-xl sm:text-2xl italic leading-tight tracking-tight"
+          className="text-xl sm:text-2xl leading-tight tracking-tight"
           style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
         >
           {tHub("promptBody")}
@@ -684,7 +673,7 @@ export default function DiaryPage() {
                     {t("chapter.quietVoice")}
                   </div>
                   <div
-                    className="text-sm sm:text-base italic leading-normal"
+                    className="text-sm sm:text-base leading-normal"
                     style={{
                       fontFamily: SERIF_FAMILY,
                       color: "var(--fg)",
@@ -722,7 +711,7 @@ export default function DiaryPage() {
                   className="text-xs sm:text-sm tracking-[0.06em]"
                   style={{ fontFamily: MONO_FAMILY, color: "var(--fg)" }}
                 >
-                  {formatElapsed(elapsedMs)}
+                  {formatElapsedMs(elapsedMs)}
                 </span>
                 <div className="flex-1">
                   <Waves n={40} h={14} active={wavesActive} />
@@ -782,7 +771,7 @@ export default function DiaryPage() {
           >
             <Cap mb={6}>{t("summary.heading")}</Cap>
             <h2
-              className="mb-4 text-2xl sm:text-3xl italic leading-tight tracking-tight"
+              className="mb-4 text-2xl sm:text-3xl leading-tight tracking-tight"
               style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
             >
               {summaryResult.title}
@@ -850,7 +839,7 @@ export default function DiaryPage() {
           >
             <Cap mb={6}>{t("summary.heading")}</Cap>
             <h2
-              className="mb-3 text-xl sm:text-2xl italic leading-tight tracking-tight"
+              className="mb-3 text-xl sm:text-2xl leading-tight tracking-tight"
               style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
             >
               {t("guestLimitModal.title", { limit: GUEST_LIMIT })}

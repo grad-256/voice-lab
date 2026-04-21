@@ -6,13 +6,12 @@ export const runtime = "edge";
 import { useAuth } from "@/app/components/auth/AuthContext";
 import { BottomTab, BtnPrimary, Cap, PageHeader, Rule } from "@/app/components/chapter";
 import { Link } from "@/i18n/routing";
+import { formatDateCap } from "@/lib/chapterDate";
+import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
 import type { User } from "@supabase/supabase-js";
 import { User as UserIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
-const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
 
 type RawDiaryItem = {
   id: string;
@@ -34,14 +33,6 @@ function getGreetingKey(hour: number): GreetingKey {
   if (hour >= 11 && hour < 17) return "greetingAfternoon";
   if (hour >= 17 && hour < 22) return "greetingEvening";
   return "greetingNight";
-}
-
-// 日付の "Cap" 表示。JA/EN ロケール問わず Chapter 系譜として英語固定
-// （下の 7 日グリッドも Mon/Tue/… 英語固定なので、同一画面での二重描画を避ける）。
-function formatDateCap(date: Date): string {
-  const weekday = date.toLocaleDateString("en-US", { weekday: "long" });
-  const md = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  return `${weekday} · ${md}`;
 }
 
 // 直近 7 日ぶんのセルを「今日 → 6 日前」の順で生成。
@@ -173,7 +164,7 @@ export default function HubPage() {
           {greetingKey && isAuthed && (
             <>
               <br />
-              <span style={{ fontStyle: "italic" }}>{name}.</span>
+              <span>{name}.</span>
             </>
           )}
         </div>
@@ -193,7 +184,7 @@ export default function HubPage() {
       >
         <Cap mb={10}>{t("chapter.promptLabel")}</Cap>
         <div
-          className="text-xl sm:text-2xl leading-tight tracking-tight italic"
+          className="text-xl sm:text-2xl leading-tight tracking-tight"
           style={{
             fontFamily: SERIF_FAMILY,
             fontWeight: 400,
@@ -258,7 +249,7 @@ export default function HubPage() {
                     className="text-base sm:text-lg tracking-tight"
                     style={{
                       fontFamily: SERIF_FAMILY,
-                      fontStyle: x.isToday ? "italic" : "normal",
+                      fontWeight: x.isToday ? 600 : 400,
                     }}
                   >
                     {x.dayNum}

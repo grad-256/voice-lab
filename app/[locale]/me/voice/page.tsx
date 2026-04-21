@@ -6,6 +6,7 @@ export const runtime = "edge";
 
 import { BottomTab, Cap, PageHeader, Rule } from "@/app/components/chapter";
 import { Link } from "@/i18n/routing";
+import { SERIF_FAMILY } from "@/lib/typography";
 import {
   type PresetVoiceId,
   getAvailableVoices,
@@ -14,8 +15,6 @@ import {
 } from "@/lib/voicePreferences";
 import { useTranslations } from "next-intl";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
 
 /**
  * `/me/voice` — 日記の返答をどの声で聞くか選ぶ画面。
@@ -161,7 +160,7 @@ export default function VoiceSettingsPage() {
         >
           {t("chapter.titleLead")}
           <br />
-          <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
+          <span>{t("chapter.titleAccent")}</span>
           {t("chapter.titleTail")}
         </div>
       </div>
@@ -185,7 +184,6 @@ export default function VoiceSettingsPage() {
           const isSelected = selectedId === voice.id;
           const isPreviewing = previewingId === voice.id;
           const label = t(`presets.${voice.id}.label`);
-          const jp = t(`presets.${voice.id}.jp`);
           const description = t(`presets.${voice.id}.description`);
           return (
             <li
@@ -205,12 +203,11 @@ export default function VoiceSettingsPage() {
                     className="text-xl sm:text-2xl tracking-tight"
                     style={{
                       fontFamily: SERIF_FAMILY,
-                      fontStyle: isSelected ? "italic" : "normal",
+                      fontWeight: isSelected ? 600 : 400,
                     }}
                   >
                     {label}
                   </span>
-                  <span className="text-xs sm:text-sm text-[var(--fg-muted)]">{jp}</span>
                 </div>
                 <div className="text-xs sm:text-sm text-[var(--fg-muted)] mt-[2px] leading-[1.45]">
                   {description}

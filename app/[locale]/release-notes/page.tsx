@@ -9,11 +9,9 @@ export const runtime = "edge";
 import { Cap, PageHeader, Rule } from "@/app/components/chapter";
 import { Link } from "@/i18n/routing";
 import { RELEASE_NOTES } from "@/lib/releaseNotes";
+import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
 import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
-const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
 
 export default function ReleaseNotesPage() {
   const t = useTranslations("releaseNotes");
@@ -37,7 +35,7 @@ export default function ReleaseNotesPage() {
           style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
         >
           {t("chapter.titleLead")}
-          <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
+          <span>{t("chapter.titleAccent")}</span>
           {t("chapter.titleTail")}
         </div>
       </div>

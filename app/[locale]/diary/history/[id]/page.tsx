@@ -14,8 +14,11 @@ import {
   Rule,
 } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
+import { formatMonoDateTime } from "@/lib/chapterDate";
+import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
+import { useMountedRef } from "@/lib/useMountedRef";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type TranscriptItem = { role: "user" | "assistant"; text: string };
 
@@ -28,25 +31,6 @@ type DiaryEntry = {
   message_count: number;
   created_at: string;
 };
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
-const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
-
-// Chapter 詳細ヘッダ用の mono 日時。"TUE · 04·21·26 · 07:42" 形式にする。
-function formatMonoDateTime(iso: string, locale: string): string {
-  const d = new Date(iso);
-  const tag = locale === "ja" ? "ja-JP" : "en-US";
-  const weekday = d
-    .toLocaleDateString(tag, { weekday: "short" })
-    .replace(/曜日?/, "")
-    .toUpperCase();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const yy = String(d.getFullYear()).slice(-2);
-  const h = String(d.getHours()).padStart(2, "0");
-  const min = String(d.getMinutes()).padStart(2, "0");
-  return `${weekday} · ${m}·${dd}·${yy} · ${h}:${min}`;
-}
 
 export default function DiaryDetailPage({
   params,
@@ -62,14 +46,7 @@ export default function DiaryDetailPage({
   const [showTranscript, setShowTranscript] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const mountedRef = useRef(true);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  const mountedRef = useMountedRef();
 
   useEffect(() => {
     params.then((p) => {
@@ -208,7 +185,7 @@ export default function DiaryDetailPage({
           <div style={{ borderLeft: "1.5px solid var(--fg)", paddingLeft: 14 }}>
             <Cap mb={6}>{t("chapter.summaryLabel")}</Cap>
             <div
-              className="text-sm sm:text-base md:text-lg italic leading-relaxed"
+              className="text-sm sm:text-base md:text-lg leading-relaxed"
               style={{
                 fontFamily: SERIF_FAMILY,
                 color: "var(--fg)",
@@ -264,7 +241,7 @@ export default function DiaryDetailPage({
                           {t("chapter.quietVoice")}
                         </div>
                         <div
-                          className="text-sm sm:text-base italic leading-normal"
+                          className="text-sm sm:text-base leading-normal"
                           style={{
                             fontFamily: SERIF_FAMILY,
                             color: "var(--fg)",
@@ -309,7 +286,7 @@ export default function DiaryDetailPage({
           >
             <Cap mb={6}>{t("chapter.summaryLabel")}</Cap>
             <h2
-              className="mb-3 text-xl sm:text-2xl md:text-3xl italic leading-tight tracking-tight"
+              className="mb-3 text-xl sm:text-2xl md:text-3xl leading-tight tracking-tight"
               style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
             >
               {t("deleteConfirm.title")}

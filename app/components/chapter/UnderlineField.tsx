@@ -5,9 +5,8 @@
 //
 // パスワード入力専用（eye 切替を内蔵）。テキスト入力には流用しない。
 
+import { MONO_FAMILY } from "@/lib/typography";
 import { Eye, EyeOff } from "lucide-react";
-
-const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
 
 type UnderlineFieldProps = {
   id: string;
