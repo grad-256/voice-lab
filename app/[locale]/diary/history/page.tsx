@@ -3,10 +3,10 @@
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
+import { BottomTab, Cap, PageHeader, Rule } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
-import { ArrowLeft, Calendar, ChevronRight, Plus } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 type DiaryItem = {
@@ -18,17 +18,38 @@ type DiaryItem = {
   created_at: string;
 };
 
-function formatDate(iso: string): string {
+const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
+const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
+
+// 「4·21·26」形式の mono 表示。Chapter の archive 行で「日付箱」の下に添える。
+function formatMonoDate(
+  iso: string,
+  locale: string
+): {
+  day: string;
+  dayNum: string;
+  month: string;
+} {
   const d = new Date(iso);
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const h = String(d.getHours()).padStart(2, "0");
-  const min = String(d.getMinutes()).padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${dd} ${h}:${min}`;
+  const tag = locale === "ja" ? "ja-JP" : "en-US";
+  const weekday = d
+    .toLocaleDateString(tag, { weekday: "short" })
+    .replace(/曜日?/, "")
+    .toUpperCase();
+  const month =
+    locale === "ja"
+      ? `${d.getMonth() + 1}月`.toUpperCase()
+      : d.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+  return {
+    day: weekday,
+    dayNum: String(d.getDate()).padStart(2, "0"),
+    month,
+  };
 }
 
 export default function DiaryHistoryPage() {
   const router = useRouter();
+  const locale = useLocale();
   const t = useTranslations("diary.history");
   const [items, setItems] = useState<DiaryItem[] | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -72,92 +93,149 @@ export default function DiaryHistoryPage() {
     };
   }, [router, t]);
 
-  return (
-    <main className="flex-1 w-full max-w-5xl mx-auto px-6 pt-10 pb-16 sm:pt-12 sm:pb-20 animate-fadeIn">
-      {/* 極薄ヘッダー：戻る・新規。Day One 風に控えめ */}
-      <header className="flex items-center justify-between mb-12 text-sm tracking-wide">
-        <Link
-          href="/app"
-          className="inline-flex items-center gap-1.5 text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
-        >
-          <ArrowLeft strokeWidth={1.5} className="w-4 h-4" aria-hidden="true" />
-          {t("back")}
-        </Link>
-        <Link
-          href="/diary"
-          className="inline-flex items-center gap-1.5 text-[var(--accent)] hover:text-[var(--accent-strong)] transition-colors"
-        >
-          <Plus strokeWidth={1.5} className="w-4 h-4" aria-hidden="true" />
-          {t("new")}
-        </Link>
-      </header>
+  const total = items?.length ?? 0;
+  const pageNo = String(total).padStart(3, "0");
 
-      {/* 大見出し：Day One 的にタイトルを大きく配置 */}
-      <div className="mb-12">
-        <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--fg)] leading-relaxed tracking-wide">
-          {t("title")}
-        </h1>
+  return (
+    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-3">
+      <PageHeader right={`No. ${pageNo}`} />
+
+      {/* 章題：静けさの記録。活字で「余白」を italic に抜く。 */}
+      <div className="mt-6">
+        <div className="flex items-baseline justify-between">
+          <Cap mb={8}>{t("chapter.archiveLabel")}</Cap>
+          <Link
+            href="/diary/insights"
+            className="uppercase text-[9px] tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
+          >
+            Insights →
+          </Link>
+        </div>
+        <div
+          style={{
+            fontFamily: SERIF_FAMILY,
+            fontSize: 30,
+            fontWeight: 400,
+            lineHeight: 1.05,
+            letterSpacing: "-0.025em",
+          }}
+        >
+          {t("chapter.titleLead")}{" "}
+          <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
+          <br />
+          {t("chapter.titleTail")}
+        </div>
+        <div
+          className="text-[11px] text-[var(--fg-muted)] mt-[6px]"
+          style={{ fontFamily: MONO_FAMILY, letterSpacing: "0.06em" }}
+        >
+          {pageNo} · {t("chapter.countSuffix")}
+        </div>
       </div>
 
+      <Rule mv={20} />
+
       {errorMsg && (
-        <div className="mb-6 px-4 py-3 bg-[var(--error-bg)] border border-[var(--error)] text-[var(--error)] text-xs text-center rounded-md">
-          {errorMsg}
-        </div>
+        <div className="mb-4 text-[11px] text-[var(--error)] text-center">{errorMsg}</div>
       )}
 
+      {/* 読み込み中：薄く Loading 表記 */}
       {items === null && !errorMsg && (
-        <div className="text-center text-[var(--fg-subtle)] py-20 text-sm tracking-wide">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-[var(--fg-subtle)] py-14 text-center">
           {t("loading")}
         </div>
       )}
 
+      {/* 空状態：3 行の静かな活字で不在を告げる。Begin で /diary へ */}
       {items !== null && items.length === 0 && (
-        <div className="text-center py-24">
-          <p className="text-lg text-[var(--fg-muted)] mb-8 leading-relaxed">{t("empty")}</p>
+        <div className="flex-1 flex flex-col items-start justify-start pt-8 gap-6">
+          <div
+            style={{
+              fontFamily: SERIF_FAMILY,
+              fontSize: 26,
+              fontWeight: 400,
+              lineHeight: 1.15,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {t("chapter.emptyLead")}{" "}
+            <span style={{ fontStyle: "italic" }}>{t("chapter.emptyItalic")}</span>
+            <br />
+            {t("chapter.emptyTail")}
+          </div>
           <Link
             href="/diary"
-            className="inline-flex items-center gap-2 border border-[var(--accent)] text-[var(--accent)] px-6 py-3 rounded-md text-sm hover:bg-[var(--accent-subtle)] transition-colors"
+            className="uppercase text-[9px] tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
           >
-            <Plus strokeWidth={1.5} className="w-4 h-4" aria-hidden="true" />
-            {t("emptyCta")}
+            {t("emptyCta")} →
           </Link>
         </div>
       )}
 
+      {/* 日記一覧：日付箱 | タイトル列 | 矢印、の 3 カラム行。0.5px の細罫で区切る */}
       {items && items.length > 0 && (
-        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {items.map((item) => (
-            <li key={item.id}>
-              <Link
-                href={`/diary/history/${item.id}`}
-                className="group relative block h-full bg-[var(--bg-elevated)] rounded-lg p-6 border border-[var(--border)] hover:border-accent-60 transition-colors"
-              >
-                <div className="flex items-center gap-1.5">
-                  <Calendar
-                    strokeWidth={1.5}
-                    className="w-3.5 h-3.5 text-[var(--fg-subtle)]"
-                    aria-hidden="true"
-                  />
-                  <time className="font-mono-jp text-[11px] uppercase tracking-widest text-[var(--fg-subtle)]">
-                    {formatDate(item.created_at)}
-                  </time>
-                </div>
-                <h2 className="mt-3 text-lg font-medium text-[var(--fg)] group-hover:text-[var(--accent-strong)] transition-colors leading-snug line-clamp-2">
-                  {item.title}
-                </h2>
-                <p className="mt-3 text-sm text-[var(--fg-muted)] leading-relaxed line-clamp-3 whitespace-pre-wrap">
-                  {item.summary}
-                </p>
-                <ChevronRight
-                  strokeWidth={1.5}
-                  aria-hidden="true"
-                  className="absolute bottom-5 right-5 w-4 h-4 text-[var(--fg-subtle)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
-                />
-              </Link>
-            </li>
-          ))}
+        <ul className="flex-1 overflow-y-auto -mx-1">
+          {items.map((item) => {
+            const d = formatMonoDate(item.created_at, locale);
+            return (
+              <li key={item.id}>
+                <Link
+                  href={`/diary/history/${item.id}`}
+                  className="grid items-center gap-3 px-1 py-[14px] border-b border-[var(--border)] hover:bg-[var(--chip)] transition-colors"
+                  style={{ gridTemplateColumns: "52px 1fr auto" }}
+                >
+                  <div>
+                    <div className="text-[8px] uppercase tracking-[0.2em] text-[var(--fg-muted)]">
+                      {d.day}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: SERIF_FAMILY,
+                        fontSize: 24,
+                        letterSpacing: "-0.02em",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {d.dayNum}
+                    </div>
+                    <div className="text-[8px] uppercase tracking-[0.2em] text-[var(--fg-muted)] mt-[2px]">
+                      {d.month}
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <div
+                      style={{
+                        fontFamily: SERIF_FAMILY,
+                        fontSize: 15,
+                        letterSpacing: "-0.005em",
+                        lineHeight: 1.25,
+                      }}
+                      className="line-clamp-2 text-[var(--fg)]"
+                    >
+                      {item.title}
+                    </div>
+                    <div className="flex gap-[10px] mt-1 text-[9.5px] uppercase tracking-[0.14em] text-[var(--fg-muted)]">
+                      <span>{item.language.toUpperCase()}</span>
+                      <span aria-hidden>·</span>
+                      <span>{item.message_count.toString().padStart(2, "0")} turns</span>
+                    </div>
+                  </div>
+                  <div
+                    style={{ fontFamily: MONO_FAMILY }}
+                    className="text-[11px] text-[var(--fg-muted)]"
+                  >
+                    →
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
+
+      <div className="mt-auto pt-3">
+        <BottomTab />
+      </div>
     </main>
   );
 }

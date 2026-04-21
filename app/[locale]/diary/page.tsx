@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
 import { useAuth } from "@/app/components/auth/AuthContext";
+import { BtnGhost, BtnPrimary, Cap, PageHeader, Rule, Waves } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
 import {
   GUEST_LIMIT,
@@ -13,7 +14,7 @@ import {
 } from "@/lib/guestUsage";
 import { mapGetUserMediaError, pickBrowserMimeType } from "@/lib/recordingMime";
 import { createClient } from "@/lib/supabase/client";
-import { ArrowLeft, ArrowRight, Mic } from "lucide-react";
+import { Mic, Square } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -36,6 +37,9 @@ type SummaryResult = {
   summary: string;
   language: Language;
 };
+
+const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
+const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
 
 const MIN_RECORDING_MS = 1500;
 
@@ -80,12 +84,23 @@ function isEndCommand(text: string): boolean {
   return false;
 }
 
+// 録音経過時間（mm:ss）。Chapter の MONO 表示に渡す。
+function formatElapsed(ms: number): string {
+  const clamped = ms < 0 ? 0 : ms;
+  const total = Math.floor(clamped / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
 export default function DiaryPage() {
   const router = useRouter();
   const { openDialog } = useAuth();
   // UI ロケール（ja/en）。Whisper の language ヒントと chat ルートのシステムプロンプトへ渡す。
   const locale = useLocale();
   const t = useTranslations("diary");
+  // プロンプト見出しは /app と共用するため hub.chapter 側の訳を使う。
+  const tHub = useTranslations("hub.chapter");
 
   const [authStatus, setAuthStatus] = useState<AuthStatus>("unknown");
   const [isStarted, setIsStarted] = useState(false);
@@ -97,6 +112,8 @@ export default function DiaryPage() {
   const [pastSummaries, setPastSummaries] = useState<string[]>([]);
   const [summaryResult, setSummaryResult] = useState<SummaryResult | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  // 録音経過時間の表示用（1 秒刻み）。録音停止時点の値を保持し、processing 中も残す。
+  const [elapsedMs, setElapsedMs] = useState(0);
 
   const isGuest = authStatus === "guest";
 
@@ -106,7 +123,7 @@ export default function DiaryPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const processAudioRef = useRef<(() => Promise<void>) | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const transcriptEndRef = useRef<HTMLDivElement | null>(null);
   // アンマウント後の state 更新・音声再生継続を防ぐための参照
   const mountedRef = useRef(true);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -159,8 +176,17 @@ export default function DiaryPage() {
   // 会話が進むたびに末尾までスクロール
   // biome-ignore lint/correctness/useExhaustiveDependencies: messages.length で意図的にトリガー
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  // 録音中だけ elapsed を 1 秒刻みで更新する。状態が切り替わった瞬間の値で止める。
+  useEffect(() => {
+    if (status !== "recording") return;
+    const tick = () => setElapsedMs(Date.now() - startedAtRef.current);
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [status]);
 
   // ユーザー発話が 1 件以上あり、まだ保存完了していない間は離脱警告を出す。
   // 要約プレビュー中はユーザーが「保存する」を押す前なので、むしろ警告が必要。
@@ -485,6 +511,7 @@ export default function DiaryPage() {
       recorderRef.current = recorder;
       chunksRef.current = [];
       startedAtRef.current = Date.now();
+      setElapsedMs(0);
 
       recorder.ondataavailable = (ev) => {
         if (ev.data.size > 0) chunksRef.current.push(ev.data);
@@ -539,192 +566,293 @@ export default function DiaryPage() {
           : t("status.idle");
 
   const hasUserContent = messages.some((m) => m.role === "user");
+  const isRecording = status === "recording";
+  const isBusy = status === "processing" || status === "speaking";
+  const wavesActive = isRecording ? 1 : isBusy ? 0.35 : 0.2;
 
   return (
-    <main className="flex flex-col h-screen w-full max-w-2xl mx-auto px-4 overflow-hidden">
-      {/* ヘッダー：pt は他ページと統一。pb-6 は h-screen 会話画面でマイクボタン領域を
-         縦に確保するため、他ページの pb-16 sm:pb-20 とは意図的に違う値を採用 */}
-      <header className="flex items-center justify-between pt-10 sm:pt-12 pb-6">
-        <Link
-          href="/app"
-          className="inline-flex items-center gap-1.5 text-sm tracking-wide text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
-        >
-          <ArrowLeft size={14} strokeWidth={1.5} aria-hidden="true" />
-          {t("header.back")}
-        </Link>
-        <h1 className="text-sm tracking-wide text-[var(--fg-subtle)]">{t("header.title")}</h1>
-        {/* 終了ボタン：会話開始かつユーザー発話があるときは常時押せる。
-           processing/speaking 中でも押せる（多重起動は finalizingRef でガード済） */}
-        {isStarted && hasUserContent && !summaryResult ? (
-          <button
-            type="button"
-            onClick={() => handleFinish()}
-            className="text-sm tracking-wide text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
-          >
-            {t("header.finish")}
-          </button>
-        ) : (
-          <div className="w-12" />
-        )}
-      </header>
+    <main className="flex flex-col h-screen w-full max-w-md mx-auto px-7 pt-14 pb-6 overflow-hidden">
+      <PageHeader
+        center={
+          isStarted ? (
+            <span className="uppercase tracking-[0.32em] text-[9px] text-[var(--fg-muted)]">
+              {isRecording ? t("status.recording") : t("header.title")}
+            </span>
+          ) : null
+        }
+        right={
+          isStarted && hasUserContent && !summaryResult ? (
+            <button
+              type="button"
+              onClick={() => handleFinish()}
+              className="uppercase tracking-[0.32em] text-[9px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors bg-transparent border-0 cursor-pointer p-0"
+            >
+              {t("header.finish")}
+            </button>
+          ) : (
+            <Link
+              href="/app"
+              className="uppercase tracking-[0.32em] text-[9px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
+            >
+              ← {t("header.back")}
+            </Link>
+          )
+        }
+      />
 
-      {/* ゲスト残数（会話開始後のみ表示） */}
-      {isStarted && isGuest && !summaryResult && (
-        <div className="mb-3 text-center text-xs text-[var(--fg-subtle)]">
-          {t("guestRemaining", {
-            remaining: Math.max(0, GUEST_LIMIT - guestCount),
-            total: GUEST_LIMIT,
-          })}
+      {/* プロンプト柱：/app と同じ「今日の問い」を Fraunces italic で静かに再掲する。
+         /app から Begin で来た流れを断ち切らないため、視覚の連続性を優先。 */}
+      <div className="mt-6">
+        <Cap mb={10}>{tHub("promptLabel")}</Cap>
+        <div
+          style={{
+            fontFamily: SERIF_FAMILY,
+            fontSize: 20,
+            fontWeight: 400,
+            lineHeight: 1.28,
+            letterSpacing: "-0.01em",
+            fontStyle: "italic",
+          }}
+        >
+          {tHub("promptBody")}
         </div>
-      )}
+      </div>
+
+      <Rule mv={18} />
 
       {!isStarted ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6 text-center animate-fadeIn">
-          <p className="text-sm text-[var(--fg-muted)] leading-relaxed max-w-md">
-            {t("prompt.body")}
-          </p>
-          <button
-            type="button"
-            onClick={handleStart}
-            disabled={status === "processing" || status === "speaking"}
-            className="mt-4 border border-[var(--border-strong)] hover:border-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--fg)] px-10 py-3 rounded-md text-sm tracking-wide transition-colors"
-          >
-            {status === "processing" ? t("prompt.starting") : t("prompt.start")}
-          </button>
-          {errorMsg && <div className="mt-2 text-xs text-[var(--error)]">{errorMsg}</div>}
+        <div className="flex-1 flex flex-col items-stretch gap-5 animate-fadeIn">
+          {isGuest && (
+            <Cap mb={0}>
+              {t("guestRemaining", {
+                remaining: Math.max(0, GUEST_LIMIT - guestCount),
+                total: GUEST_LIMIT,
+              })}
+            </Cap>
+          )}
+          <p className="text-[12px] text-[var(--fg-muted)] leading-relaxed">{t("prompt.body")}</p>
+          {errorMsg && <div className="text-[11px] text-[var(--error)]">{errorMsg}</div>}
+          <div className="mt-1">
+            <BtnPrimary
+              big
+              full
+              onClick={handleStart}
+              disabled={status === "processing" || status === "speaking"}
+            >
+              {status === "processing" ? t("prompt.starting") : t("prompt.start")}
+            </BtnPrimary>
+          </div>
           {authStatus === "authed" && (
             <Link
               href="/diary/history"
-              className="inline-flex items-center gap-1.5 text-sm text-[var(--fg-subtle)] hover:text-[var(--accent)] transition-colors mt-2"
+              className="uppercase text-[9px] tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors self-start"
             >
-              {t("prompt.viewHistory")}
-              <ArrowRight size={14} strokeWidth={1.5} aria-hidden="true" />
+              {t("prompt.viewHistory")} →
             </Link>
           )}
+          <div className="flex-1" />
         </div>
       ) : (
         <>
-          {/* 会話ログ（LINE 風バブル廃止 → 手紙引用風） */}
-          <div className="flex-1 overflow-y-auto space-y-6 py-4">
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`flex animate-fadeSlideUp ${m.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[80%] text-sm leading-relaxed whitespace-pre-wrap px-4 py-3 rounded-2xl ${
-                    m.role === "user"
-                      ? "bg-[var(--accent)] text-white rounded-tr-sm"
-                      : "bg-[var(--bg-elevated)] text-[var(--fg)] rounded-tl-sm"
-                  }`}
-                >
-                  {m.text}
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* エラー */}
-          {errorMsg && !summaryResult && (
-            <div className="mb-3 px-3 py-2 bg-[var(--error-bg)] border border-[var(--error)] rounded-lg text-[var(--error)] text-xs text-center">
-              {errorMsg}
+          {isGuest && !summaryResult && (
+            <div className="mb-2">
+              <Cap mb={0}>
+                {t("guestRemaining", {
+                  remaining: Math.max(0, GUEST_LIMIT - guestCount),
+                  total: GUEST_LIMIT,
+                })}
+              </Cap>
             </div>
           )}
 
-          {/* マイクボタン + ステータス（要約プレビュー中は隠す） */}
+          {/* 流れるトランスクリプト：user は Fraunces の本文、assistant は
+             「ききて」として左縦罫の引用。バブルを捨て、活字のリズムで階層を作る。 */}
+          <div className="flex-1 overflow-y-auto pt-2 pb-4 space-y-5">
+            <Cap mb={0}>{t("chapter.liveLabel")}</Cap>
+            {messages.map((m) =>
+              m.role === "user" ? (
+                <div
+                  key={m.id}
+                  className="animate-fadeSlideUp"
+                  style={{
+                    fontFamily: SERIF_FAMILY,
+                    fontSize: 15,
+                    lineHeight: 1.75,
+                    letterSpacing: "-0.003em",
+                    color: "var(--fg)",
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
+                  {m.text}
+                </div>
+              ) : (
+                <div
+                  key={m.id}
+                  className="animate-fadeSlideUp"
+                  style={{ borderLeft: "1.5px solid var(--fg)", paddingLeft: 12 }}
+                >
+                  <div className="text-[9px] uppercase tracking-[0.3em] text-[var(--fg-muted)] mb-1">
+                    {t("chapter.quietVoice")}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: SERIF_FAMILY,
+                      fontStyle: "italic",
+                      fontSize: 14,
+                      lineHeight: 1.55,
+                      color: "var(--fg)",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {m.text}
+                  </div>
+                </div>
+              )
+            )}
+            <div ref={transcriptEndRef} />
+          </div>
+
+          {errorMsg && !summaryResult && (
+            <div className="mb-3 text-[11px] text-[var(--error)] text-center">{errorMsg}</div>
+          )}
+
+          {/* 録音パネル：Waves + 経過時間 + ステータス + マイクボタン。
+             Chapter 設計の 3 段構成を踏襲しつつ、既存の単一マイク操作 UX を保つ。 */}
           {!summaryResult && (
-            <div className="flex flex-col items-center gap-3 pb-6">
-              <button
-                type="button"
-                onClick={handleMicClick}
-                disabled={status === "processing" || status === "speaking"}
-                className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all ${
-                  status === "recording"
-                    ? "bg-[var(--accent-subtle)] border border-[var(--accent)] animate-breathe"
-                    : status === "idle"
-                      ? "bg-[var(--bg-elevated)] border border-[var(--border-strong)] animate-glow-soft"
-                      : "bg-[var(--bg-elevated)] border border-[var(--border)] opacity-60"
-                } disabled:cursor-not-allowed`}
-                aria-label={status === "recording" ? t("micAria.recording") : t("micAria.idle")}
-              >
-                <Mic
-                  className="w-7 h-7 text-[var(--accent)]"
-                  strokeWidth={1.5}
-                  aria-hidden="true"
+            <div className="border-t border-[var(--border)] pt-4">
+              <div className="flex items-center gap-3">
+                <span
+                  aria-hidden
+                  className="inline-block w-[7px] h-[7px] rounded-full"
+                  style={{
+                    backgroundColor: "var(--fg)",
+                    opacity: isRecording ? 1 : 0.35,
+                  }}
                 />
-              </button>
-              <span className="text-sm text-[var(--fg-muted)]">{statusLabel}</span>
-              <span className="text-xs text-[var(--fg-subtle)]">{t("hint")}</span>
+                <span
+                  className="text-[11px] tracking-[0.06em]"
+                  style={{ fontFamily: MONO_FAMILY, color: "var(--fg)" }}
+                >
+                  {formatElapsed(elapsedMs)}
+                </span>
+                <div className="flex-1">
+                  <Waves n={40} h={14} active={wavesActive} />
+                </div>
+                <span className="text-[9px] uppercase tracking-[0.3em] text-[var(--fg-muted)]">
+                  {statusLabel}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-center mt-4">
+                <button
+                  type="button"
+                  onClick={handleMicClick}
+                  disabled={isBusy}
+                  className="relative w-16 h-16 rounded-full flex items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{
+                    background: isRecording ? "var(--fg)" : "transparent",
+                    border: isRecording
+                      ? "0.5px solid var(--fg)"
+                      : "0.5px solid var(--border-strong)",
+                  }}
+                  aria-label={isRecording ? t("micAria.recording") : t("micAria.idle")}
+                >
+                  {isRecording ? (
+                    <Square
+                      size={18}
+                      strokeWidth={1.2}
+                      style={{ color: "var(--bg)" }}
+                      fill="var(--bg)"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Mic
+                      size={20}
+                      strokeWidth={1.2}
+                      style={{ color: "var(--fg)" }}
+                      aria-hidden="true"
+                    />
+                  )}
+                </button>
+              </div>
+
+              <div className="mt-3 text-[9px] uppercase tracking-[0.3em] text-[var(--fg-subtle)] text-center">
+                {t("hint")}
+              </div>
             </div>
           )}
         </>
       )}
 
-      {/* 要約プレビューモーダル */}
+      {/* 要約プレビューモーダル（Chapter 系の 0.5px 罫と Fraunces を徹底） */}
       {summaryResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-overlay)] p-4 animate-fadeIn">
-          <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
-            <div className="text-xs tracking-wide text-[var(--fg-subtle)] mb-2">
-              {t("summary.heading")}
-            </div>
-            <h2 className="text-xl font-medium text-[var(--fg)] mb-4 leading-relaxed">
+          <div
+            className="w-full max-w-md max-h-[85vh] overflow-y-auto p-6 bg-[var(--bg)] text-[var(--fg)]"
+            style={{ border: "0.5px solid var(--fg)" }}
+          >
+            <Cap mb={6}>{t("summary.heading")}</Cap>
+            <h2
+              style={{
+                fontFamily: SERIF_FAMILY,
+                fontSize: 22,
+                fontWeight: 400,
+                lineHeight: 1.25,
+                letterSpacing: "-0.01em",
+                fontStyle: "italic",
+              }}
+              className="mb-4"
+            >
               {summaryResult.title}
             </h2>
-            <p className="text-sm text-[var(--fg-muted)] leading-relaxed whitespace-pre-wrap mb-6">
+            <p
+              className="text-[13px] leading-relaxed whitespace-pre-wrap mb-6"
+              style={{ color: "var(--fg-muted)" }}
+            >
               {summaryResult.summary}
             </p>
 
             {saveStatus === "error" && (
-              <div className="mb-4 px-3 py-2 bg-[var(--error-bg)] border border-[var(--error)] rounded-lg text-[var(--error)] text-xs text-center">
+              <div className="mb-4 text-[11px] text-[var(--error)] text-center">
                 {t("errors.saveFailed")}
               </div>
             )}
 
             {authStatus === "guest" ? (
               <>
-                <p className="text-xs text-[var(--fg-muted)] mb-4 leading-relaxed">
+                <p className="text-[11px] text-[var(--fg-muted)] mb-4 leading-relaxed">
                   {t("summary.guestNote")}
                 </p>
                 <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => openDialog("signup")}
-                    className="flex-1 px-4 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white text-sm font-medium rounded-md text-center transition-colors"
-                  >
-                    {t("summary.guestSave")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDiscard}
-                    className="px-4 py-2.5 bg-transparent border border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)] text-sm rounded-md transition-colors"
-                  >
-                    {t("summary.guestDiscard")}
-                  </button>
+                  <div className="flex-1">
+                    <BtnPrimary accent full onClick={() => openDialog("signup")}>
+                      {t("summary.guestSave")}
+                    </BtnPrimary>
+                  </div>
+                  <BtnGhost onClick={handleDiscard}>{t("summary.guestDiscard")}</BtnGhost>
                 </div>
               </>
             ) : (
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleSaveSummary}
-                  disabled={saveStatus === "saving" || saveStatus === "saved"}
-                  className="flex-1 px-4 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-strong)] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md transition-colors"
-                >
-                  {saveStatus === "saving"
-                    ? t("summary.saving")
-                    : saveStatus === "saved"
-                      ? t("summary.saved")
-                      : t("summary.save")}
-                </button>
-                <button
-                  type="button"
+                <div className="flex-1">
+                  <BtnPrimary
+                    full
+                    onClick={handleSaveSummary}
+                    disabled={saveStatus === "saving" || saveStatus === "saved"}
+                  >
+                    {saveStatus === "saving"
+                      ? t("summary.saving")
+                      : saveStatus === "saved"
+                        ? t("summary.saved")
+                        : t("summary.save")}
+                  </BtnPrimary>
+                </div>
+                <BtnGhost
                   onClick={handleDiscard}
                   disabled={saveStatus === "saving" || saveStatus === "saved"}
-                  className="px-4 py-2.5 bg-transparent border border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)] disabled:opacity-50 disabled:cursor-not-allowed text-sm rounded-md transition-colors"
                 >
                   {t("summary.discard")}
-                </button>
+                </BtnGhost>
               </div>
             )}
           </div>
@@ -734,32 +862,44 @@ export default function DiaryPage() {
       {/* ゲスト上限モーダル */}
       {showLimitModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-overlay)] p-4 animate-fadeIn">
-          <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-6 max-w-sm w-full">
-            <h2 className="text-xl font-medium text-[var(--fg)] mb-3 leading-relaxed">
+          <div
+            className="w-full max-w-sm p-6 bg-[var(--bg)] text-[var(--fg)]"
+            style={{ border: "0.5px solid var(--fg)" }}
+          >
+            <Cap mb={6}>{t("summary.heading")}</Cap>
+            <h2
+              style={{
+                fontFamily: SERIF_FAMILY,
+                fontSize: 20,
+                fontWeight: 400,
+                lineHeight: 1.25,
+                letterSpacing: "-0.01em",
+                fontStyle: "italic",
+              }}
+              className="mb-3"
+            >
               {t("guestLimitModal.title", { limit: GUEST_LIMIT })}
             </h2>
-            <p className="text-sm text-[var(--fg-muted)] mb-5 leading-relaxed">
+            <p className="text-[12px] leading-relaxed mb-5" style={{ color: "var(--fg-muted)" }}>
               {t("guestLimitModal.desc")}
             </p>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  // ゲスト上限モーダルを閉じてからサインアップダイアログを開く（モーダル二重表示回避）
-                  setShowLimitModal(false);
-                  openDialog("signup");
-                }}
-                className="flex-1 px-4 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white text-sm font-medium rounded-md text-center transition-colors"
-              >
-                {t("guestLimitModal.signup")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowLimitModal(false)}
-                className="px-4 py-2.5 bg-transparent border border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)] text-sm rounded-md transition-colors"
-              >
+              <div className="flex-1">
+                <BtnPrimary
+                  accent
+                  full
+                  onClick={() => {
+                    // ゲスト上限モーダルを閉じてからサインアップダイアログを開く（モーダル二重表示回避）
+                    setShowLimitModal(false);
+                    openDialog("signup");
+                  }}
+                >
+                  {t("guestLimitModal.signup")}
+                </BtnPrimary>
+              </div>
+              <BtnGhost onClick={() => setShowLimitModal(false)}>
                 {t("guestLimitModal.later")}
-              </button>
+              </BtnGhost>
             </div>
           </div>
         </div>

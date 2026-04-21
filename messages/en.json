@@ -386,6 +386,10 @@
       "idle": "Start recording"
     },
     "hint": "Say \"end\" or tap the button above to turn this into a diary entry",
+    "chapter": {
+      "liveLabel": "Live · what you're saying",
+      "quietVoice": "Quiet voice · ききて"
+    },
     "errors": {
       "bootstrap": "Couldn't start the AI. Please try again.",
       "bootstrapShort": "Couldn't start the AI.",
@@ -419,13 +423,40 @@
       "title": "Past diary entries",
       "new": "New entry",
       "loading": "Loading…",
-      "empty": "No diary entries yet",
       "emptyCta": "Start your first entry",
-      "loadFailed": "Couldn't load."
+      "loadFailed": "Couldn't load.",
+      "chapter": {
+        "archiveLabel": "Archive · 記録",
+        "titleLead": "A small",
+        "titleItalic": "quiet",
+        "titleTail": "archive.",
+        "countSuffix": "entries",
+        "emptyLead": "Nothing",
+        "emptyItalic": "spoken",
+        "emptyTail": "yet."
+      }
+    },
+    "insights": {
+      "cap": "Insights · 気づき",
+      "headingLead": "April, in",
+      "headingItalic": "shape",
+      "headingTail": ".",
+      "stats": "17 entries · 4h 12m total · avg 14m",
+      "dummyNotice": "※ Placeholder values. Real data view coming soon.",
+      "warmthLabel": "Warmth · over the month",
+      "tonesLabel": "Tones · 色調",
+      "tones": {
+        "still": "Still",
+        "tender": "Tender",
+        "bright": "Bright",
+        "heavy": "Heavy",
+        "anxious": "Anxious"
+      },
+      "quietReadingLabel": "Quiet reading",
+      "quietReadingBody": "Your mornings are the quietest. The most tender words arrive after 10pm."
     },
     "detail": {
       "back": "History",
-      "title": "Diary",
       "loading": "Loading…",
       "notFound": "Not found",
       "loadFailed": "Couldn't load.",
@@ -433,15 +464,18 @@
       "playing": "Playing…",
       "delete": "Delete",
       "deleting": "Deleting…",
-      "showTranscript": "Read the original conversation",
-      "hideTranscript": "Hide the original conversation",
       "deleteConfirm": {
         "title": "Delete this diary entry?",
         "desc": "This action can't be undone.",
         "confirm": "Delete",
         "cancel": "Cancel"
       },
-      "deleteFailed": "Couldn't delete."
+      "deleteFailed": "Couldn't delete.",
+      "chapter": {
+        "summaryLabel": "Summary · まとめ",
+        "transcriptLabel": "Transcript · what you said",
+        "quietVoice": "Quiet voice · ききて"
+      }
     }
   }
 }
