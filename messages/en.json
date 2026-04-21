@@ -169,17 +169,9 @@
     "login": "Log in",
     "settings": "Settings",
     "myPage": "My page",
-    "heading": "How was your day?",
-    "subheading": "Just talk. It becomes a diary.",
-    "diary": {
-      "title": "Start a diary",
-      "desc": "Reflect on your day by talking with AI. What you said is kept in a form you can read later."
-    },
-    "viewHistory": "Read past entries",
     "guestStatusBefore": "Trying as a guest (",
     "guestStatusLogin": "log in",
     "guestStatusAfter": " to keep your diary)",
-    "loggedIn": "Logged in",
     "chapter": {
       "greetingMorning": "Good morning,",
       "greetingAfternoon": "Good afternoon,",

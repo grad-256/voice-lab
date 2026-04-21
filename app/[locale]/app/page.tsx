@@ -90,6 +90,13 @@ export default function HubPage() {
 
   const [entries, setEntries] = useState<RawDiaryItem[]>([]);
 
+  // SSR と クライアントで時刻が変わると hydration mismatch になるため、
+  // 描画開始はクライアントで now が確定した後に限定する。初回 SSR では null。
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+  }, []);
+
   // ログイン済みのとき、直近 7 日の streak 表示用にエントリ一覧を取得する。
   // /api/diary?limit=100 で十分（7 日分の判定なら 1 日 10 件でも間に合う）。
   useEffect(() => {
@@ -110,11 +117,10 @@ export default function HubPage() {
     };
   }, [isAuthed]);
 
-  const now = new Date();
-  const greetingKey = getGreetingKey(now.getHours());
+  const greetingKey = now ? getGreetingKey(now.getHours()) : null;
   const name = extractName(user, t("chapter.noName"));
-  const dateCap = formatDateCap(now, locale);
-  const days = buildLast7Days(entries, locale);
+  const dateCap = now ? formatDateCap(now, locale) : null;
+  const days = now ? buildLast7Days(entries, locale) : [];
   const streakCount = days.filter((d) => d.hasEntry).length;
 
   return (
@@ -141,7 +147,7 @@ export default function HubPage() {
               <UserIcon size={14} strokeWidth={1.5} aria-hidden />
               <span
                 aria-hidden
-                className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-emerald-400 ring-2 ring-[var(--bg)]"
+                className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-[var(--accent)] ring-2 ring-[var(--bg)]"
               />
             </Link>
           )
@@ -149,9 +155,11 @@ export default function HubPage() {
       />
 
       {/* 挨拶：時刻 + 相手の名前。Fraunces italic で紙に近い気配を作る。
-          グラデは globals.css の --grad-title-* を再利用（Light/Dark 自動追従）。 */}
+          グラデは globals.css の --grad-title-* を再利用（Light/Dark 自動追従）。
+          now が null のあいだ（SSR + hydration 直後）は空枠で占位し、
+          レイアウトの上下ジャンプを防ぐ。 */}
       <div className="mt-6">
-        <Cap mb={8}>{dateCap}</Cap>
+        <Cap mb={8}>{dateCap ?? " "}</Cap>
         <div
           style={{
             fontFamily: SERIF_FAMILY,
@@ -159,6 +167,7 @@ export default function HubPage() {
             fontWeight: 400,
             lineHeight: 1.06,
             letterSpacing: "-0.025em",
+            minHeight: 36 * 2 + 4,
             backgroundImage:
               "linear-gradient(90deg, var(--grad-title-from), var(--grad-title-via), var(--grad-title-to))",
             WebkitBackgroundClip: "text",
@@ -166,8 +175,8 @@ export default function HubPage() {
             color: "transparent",
           }}
         >
-          {t(`chapter.${greetingKey}`)}
-          {isAuthed && (
+          {greetingKey && t(`chapter.${greetingKey}`)}
+          {greetingKey && isAuthed && (
             <>
               <br />
               <span style={{ fontStyle: "italic" }}>{name}.</span>
@@ -206,8 +215,25 @@ export default function HubPage() {
         </div>
       </div>
 
-      {/* 直近 7 日：ログイン済みのみ表示（ゲスト時は streak を集計できない） */}
-      {isAuthed && (
+      {/* ゲスト告知：ログインで日記が保存されることを伝える一行。
+          旧 Hub の guestStatus* を再利用し、空白はキー側で維持。 */}
+      {isAuthed === false && (
+        <div className="mt-[14px] text-[11px] text-[var(--fg-muted)] leading-relaxed">
+          {t("guestStatusBefore")}
+          <button
+            type="button"
+            onClick={() => openDialog("login")}
+            className="underline underline-offset-2 decoration-[var(--fg-muted)] hover:text-[var(--fg)] bg-transparent border-0 p-0 cursor-pointer text-[11px]"
+          >
+            {t("guestStatusLogin")}
+          </button>
+          {t("guestStatusAfter")}
+        </div>
+      )}
+
+      {/* 直近 7 日：ログイン済みのみ表示（ゲスト時は streak を集計できない）。
+          now が null の間は 7 日グリッドを描画せずスケルトンなしで自然に省略する。 */}
+      {isAuthed && now && (
         <div className="mt-[22px]">
           <div className="flex justify-between items-baseline">
             <Cap mb={0}>{t("chapter.streakLabel")}</Cap>

@@ -163,17 +163,9 @@
     "login": "ログイン",
     "settings": "設定",
     "myPage": "マイページ",
-    "heading": "どんな1日でしたか？",
-    "subheading": "話すだけで、日記になる。",
-    "diary": {
-      "title": "日記を始める",
-      "desc": "今日あったことを、AI と話しながら振り返る。話した内容は、あとで読めるかたちで残ります。"
-    },
-    "viewHistory": "過去の日記を読む",
     "guestStatusBefore": "ゲストとして体験中（",
     "guestStatusLogin": "ログイン",
     "guestStatusAfter": "で日記が保存できます）",
-    "loggedIn": "ログイン中",
     "chapter": {
       "greetingMorning": "おはようございます、",
       "greetingAfternoon": "こんにちは、",
