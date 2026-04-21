@@ -3,20 +3,23 @@
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
-import { useRouter } from "@/i18n/routing";
+import { Cap, PageHeader, Rule, UnderlineField } from "@/app/components/chapter";
+import { Link, useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
-import { Eye, EyeOff, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { type CSSProperties, useState } from "react";
 
-// 入力フィールド共通クラス（Quiet Journal 仕様）
-// 左側にアイコン用の余白（pl-10）、右側はパスワード切替アイコン用に pr-10
-const inputClass =
-  "w-full pl-10 pr-10 py-3 bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--fg)] placeholder:text-[var(--fg-subtle)] rounded-md focus:border-[var(--accent)] focus:outline-none transition-colors";
+const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
+const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
 
-const leadingIconClass =
-  "pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-subtle)]";
+const MIN_PASSWORD_LENGTH = 6;
 
+/**
+ * `/reset-password` — Supabase recovery トークンで PKCE セッションを得たユーザーが
+ * 新しいパスワードを設定する画面。`updateUser` が成功するとハブ（/app）へ遷移する。
+ *
+ * Chapter 系譜：中央寄せ Cap + Fraunces 章題 + 下罫線フォーム。
+ */
 export default function ResetPasswordPage() {
   const t = useTranslations("resetPassword");
   const router = useRouter();
@@ -28,12 +31,19 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const canSubmit = !loading && password.length >= MIN_PASSWORD_LENGTH && password === confirm;
+
+  // React 19 の FormEvent 型は deprecated 扱いになるため、preventDefault は呼び出し側で
+  // 行い、本関数はイベントを受け取らない設計にする。
+  const submitNewPassword = async () => {
     setErrorMsg(null);
 
     if (password !== confirm) {
       setErrorMsg(t("errors.mismatch"));
+      return;
+    }
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setErrorMsg(t("errors.tooShort"));
       return;
     }
 
@@ -58,98 +68,116 @@ export default function ResetPasswordPage() {
     }
   };
 
+  // Save Primary（big + full）
+  const primaryStyle: CSSProperties = {
+    width: "100%",
+    padding: "16px 22px",
+    fontSize: 12,
+    fontWeight: 600,
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    background: "var(--fg)",
+    color: "var(--bg)",
+    border: "none",
+    cursor: canSubmit ? "pointer" : "default",
+    opacity: canSubmit ? 1 : 0.4,
+  };
+
   return (
-    <main className="flex flex-col items-center justify-center flex-1 px-6 pt-10 pb-16 sm:pt-12 sm:pb-20 animate-fadeIn">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
-          <h1 className="text-xl sm:text-2xl font-semibold text-[var(--fg)] leading-relaxed">
-            {t("title")}
-          </h1>
-          <p className="text-sm text-[var(--fg-muted)] mt-3 leading-relaxed">{t("subtitle")}</p>
+    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-8 animate-fadeIn">
+      <PageHeader />
+
+      <div className="flex-1 flex flex-col justify-center">
+        <Cap mb={10}>{t("chapter.cap")}</Cap>
+        <div
+          style={{
+            fontFamily: SERIF_FAMILY,
+            fontSize: 32,
+            fontWeight: 400,
+            lineHeight: 1.05,
+            letterSpacing: "-0.025em",
+          }}
+        >
+          {t("chapter.titleLead")}
+          <br />
+          <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
+          {t("chapter.titleTail")}
         </div>
+        <p className="text-[12px] text-[var(--fg-muted)] mt-3 max-w-[280px] leading-[1.55]">
+          {t("description")}
+        </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-xs text-[var(--fg-muted)] mb-2 tracking-wide"
-            >
-              {t("newPassword")}
-            </label>
-            <div className="relative">
-              <Lock size={16} strokeWidth={1.5} className={leadingIconClass} />
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder={t("placeholderNew")}
-                minLength={6}
-                className={inputClass}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--fg-subtle)] hover:text-[var(--fg-muted)] transition-colors"
-                aria-label={showPassword ? t("hidePassword") : t("showPassword")}
-              >
-                {showPassword ? (
-                  <Eye size={16} strokeWidth={1.5} />
-                ) : (
-                  <EyeOff size={16} strokeWidth={1.5} />
-                )}
-              </button>
-            </div>
-          </div>
+        <Rule mv={20} />
 
-          <div>
-            <label
-              htmlFor="confirm"
-              className="block text-xs text-[var(--fg-muted)] mb-2 tracking-wide"
-            >
-              {t("confirmPassword")}
-            </label>
-            <div className="relative">
-              <Lock size={16} strokeWidth={1.5} className={leadingIconClass} />
-              <input
-                id="confirm"
-                type={showConfirm ? "text" : "password"}
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                required
-                placeholder={t("placeholderConfirm")}
-                minLength={6}
-                className={inputClass}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirm((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--fg-subtle)] hover:text-[var(--fg-muted)] transition-colors"
-                aria-label={showConfirm ? t("hidePassword") : t("showPassword")}
-              >
-                {showConfirm ? (
-                  <Eye size={16} strokeWidth={1.5} />
-                ) : (
-                  <EyeOff size={16} strokeWidth={1.5} />
-                )}
-              </button>
-            </div>
-          </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void submitNewPassword();
+          }}
+        >
+          <UnderlineField
+            id="password"
+            label={t("newPassword")}
+            value={password}
+            onChange={setPassword}
+            placeholder={t("placeholderNew")}
+            autoComplete="new-password"
+            isVisible={showPassword}
+            onToggleVisibility={() => setShowPassword((v) => !v)}
+            sub={t("hintMinLength", { min: MIN_PASSWORD_LENGTH })}
+            showLabel={t("showPassword")}
+            hideLabel={t("hidePassword")}
+            minLength={MIN_PASSWORD_LENGTH}
+          />
+          <UnderlineField
+            id="confirm"
+            label={t("confirmPassword")}
+            value={confirm}
+            onChange={setConfirm}
+            placeholder={t("placeholderConfirm")}
+            autoComplete="new-password"
+            isVisible={showConfirm}
+            onToggleVisibility={() => setShowConfirm((v) => !v)}
+            showLabel={t("showPassword")}
+            hideLabel={t("hidePassword")}
+            minLength={MIN_PASSWORD_LENGTH}
+          />
 
           {errorMsg && (
-            <div className="px-4 py-3 bg-[var(--error-bg)] border border-[var(--error)] text-[var(--error)] text-xs rounded-md">
+            <div
+              role="alert"
+              className="mt-4 px-3 py-2 text-[var(--error)] text-[11px]"
+              style={{ border: "0.5px solid var(--error)" }}
+            >
               {errorMsg}
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[var(--accent)] hover:bg-[var(--accent-strong)] disabled:opacity-50 text-white px-6 py-3 rounded-md transition-colors text-sm tracking-wide"
+          <div className="mt-7">
+            <button type="submit" disabled={!canSubmit} style={primaryStyle}>
+              {loading ? t("submitting") : `${t("submit")} →`}
+            </button>
+          </div>
+
+          {/* リンクの有効期限切れ等で行き詰まったら、ホーム経由で再度ログインできるよう導線を残す */}
+          <div
+            className="text-center mt-3 text-[var(--fg-muted)]"
+            style={{
+              fontFamily: MONO_FAMILY,
+              fontSize: 10,
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+            }}
           >
-            {loading ? t("submitting") : t("submit")}
-          </button>
+            <span>{t("rememberItPrefix")} </span>
+            <Link
+              href="/"
+              className="text-[var(--fg)] hover:opacity-80 transition-opacity"
+              style={{ textDecoration: "underline", textUnderlineOffset: 3 }}
+            >
+              {t("signInLink")}
+            </Link>
+          </div>
         </form>
       </div>
     </main>

@@ -4,6 +4,7 @@
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
+import { Cap, PageHeader, Rule } from "@/app/components/chapter";
 import { Link } from "@/i18n/routing";
 import {
   type PresetVoiceId,
@@ -11,16 +12,17 @@ import {
   getSelectedVoiceId,
   setSelectedVoiceId,
 } from "@/lib/voicePreferences";
-import { ArrowLeft, Check, Play } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
+
+const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
 
 /**
  * `/me/voice` — 日記の返答をどの声で聞くか選ぶ画面。
  *
  * 保存は localStorage のみ（認証不要）。プリセット声の一覧を `getAvailableVoices()` から取り、
  * 選択は即 `setSelectedVoiceId` で確定する（1.5 秒「保存しました」トースト）。
- * Quiet Journal 仕様に合わせ、墨青アクセント + セリフ見出しで統一。
+ * Chapter 系譜：左に声名（選択中は Fraunces italic）+ 副情報、右に試聴円ボタン + 選択ラジオ円。
  */
 export default function VoiceSettingsPage() {
   const t = useTranslations("me.voice");
@@ -43,8 +45,6 @@ export default function VoiceSettingsPage() {
   useEffect(() => {
     return () => {
       if (audioRef.current) {
-        // 古い audio の error/ended ハンドラを外してから停止し、
-        // 破棄時に error イベントが誤発火して state が書き換えられるのを防ぐ
         audioRef.current.onerror = null;
         audioRef.current.onended = null;
         audioRef.current.pause();
@@ -63,8 +63,6 @@ export default function VoiceSettingsPage() {
   const handleSelect = (id: PresetVoiceId) => {
     setSelectedVoiceId(id);
     setSelectedId(id);
-
-    // 1.5 秒トースト
     setToastVisible(true);
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     toastTimerRef.current = setTimeout(() => setToastVisible(false), 1500);
@@ -114,7 +112,6 @@ export default function VoiceSettingsPage() {
       const audio = new Audio(url);
       audioRef.current = audio;
       audio.onended = () => {
-        // ended は成功完了。URL を解放して idle に戻す
         if (audioRef.current === audio) {
           if (objectUrlRef.current) {
             URL.revokeObjectURL(objectUrlRef.current);
@@ -125,7 +122,6 @@ export default function VoiceSettingsPage() {
         }
       };
       audio.onerror = () => {
-        // 現在の audio インスタンスに紐付くエラーだけを反映
         if (audioRef.current === audio) {
           setPreviewError(t("errors.playbackFailed"));
           setPreviewingId(null);
@@ -138,79 +134,146 @@ export default function VoiceSettingsPage() {
     }
   };
 
-  return (
-    <main className="flex-1 w-full max-w-2xl mx-auto px-6 pt-10 pb-16 sm:pt-12 sm:pb-20 animate-fadeIn">
-      {/* 戻る */}
-      <header className="mb-10 text-sm tracking-wide">
-        <Link
-          href="/me"
-          className="inline-flex items-center gap-2 text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
-        >
-          <ArrowLeft size={14} strokeWidth={1.5} />
-          {t("back")}
-        </Link>
-      </header>
+  const backLink: CSSProperties = {
+    color: "inherit",
+    textDecoration: "none",
+  };
 
-      {/* タイトル */}
-      <div className="mb-10">
-        <h1 className="text-xl sm:text-2xl font-semibold text-[var(--fg)] leading-relaxed">
-          {t("pageTitle")}
-        </h1>
-        <p className="mt-3 text-sm text-[var(--fg-muted)] leading-relaxed">{t("pageSubtitle")}</p>
+  return (
+    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-8 animate-fadeIn">
+      <PageHeader
+        left={
+          <Link href="/me" style={backLink} className="hover:text-[var(--fg)] transition-colors">
+            ← Me
+          </Link>
+        }
+      />
+
+      {/* 章題：Cap + Fraunces 章題 */}
+      <div className="mt-6">
+        <Cap mb={8}>{t("chapter.cap")}</Cap>
+        <div
+          style={{
+            fontFamily: SERIF_FAMILY,
+            fontSize: 26,
+            fontWeight: 400,
+            lineHeight: 1.1,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          {t("chapter.titleLead")}
+          <br />
+          <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
+          {t("chapter.titleTail")}
+        </div>
       </div>
+
+      <Rule mv={20} />
 
       {/* 試聴エラー */}
       {previewError && (
-        <div className="mb-6 px-4 py-3 bg-[var(--error-bg)] border border-[var(--error)] text-[var(--error)] text-xs rounded-md">
+        <div
+          role="alert"
+          className="mb-4 px-3 py-2 text-[var(--error)] text-[11px]"
+          style={{ border: "0.5px solid var(--error)" }}
+        >
           {previewError}
         </div>
       )}
 
-      {/* 声の一覧 */}
-      <ul className="space-y-3">
+      {/* 声の一覧：Chapter 行レイアウト */}
+      <ul className="flex-1">
         {voices.map((voice) => {
           const isSelected = selectedId === voice.id;
           const isPreviewing = previewingId === voice.id;
           const label = t(`presets.${voice.id}.label`);
+          const jp = t(`presets.${voice.id}.jp`);
           const description = t(`presets.${voice.id}.description`);
           return (
-            <li key={voice.id}>
-              <div
-                className={`flex items-start justify-between gap-4 p-5 rounded-lg border transition-colors ${
-                  isSelected
-                    ? "border-accent-60 bg-[var(--accent-subtle)]"
-                    : "border-[var(--border)] bg-elevated-50 hover:border-[var(--border-strong)]"
-                }`}
+            <li
+              key={voice.id}
+              className="grid grid-cols-[1fr_auto] gap-3 items-center py-[14px]"
+              style={{ borderBottom: "0.5px solid var(--border)" }}
+            >
+              {/* 左：声名（選択中は Fraunces italic）+ 副情報 */}
+              <button
+                type="button"
+                onClick={() => handleSelect(voice.id)}
+                aria-pressed={isSelected}
+                className="text-left bg-transparent border-0 p-0 cursor-pointer min-w-0"
               >
-                {/* 選択ボタン（カード全体の幅をとる） */}
-                <button
-                  type="button"
-                  onClick={() => handleSelect(voice.id)}
-                  className="flex-1 min-w-0 text-left"
-                  aria-pressed={isSelected}
-                >
-                  <div className="text-base font-medium text-[var(--fg)]">{label}</div>
-                  <div className="text-xs text-[var(--fg-muted)] mt-1 leading-relaxed">
-                    {description}
-                  </div>
-                </button>
-                {/* 試聴ボタン */}
+                <div className="flex items-baseline gap-[10px]">
+                  <span
+                    style={{
+                      fontFamily: SERIF_FAMILY,
+                      fontStyle: isSelected ? "italic" : "normal",
+                      fontSize: 20,
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    {label}
+                  </span>
+                  <span className="text-[10px] text-[var(--fg-muted)]">{jp}</span>
+                </div>
+                <div className="text-[11px] text-[var(--fg-muted)] mt-[2px] leading-[1.45]">
+                  {description}
+                </div>
+              </button>
+
+              {/* 右：試聴円ボタン（28px、▶︎）+ 選択ラジオ円（16px、塗りつぶし） */}
+              <div className="flex items-center gap-[10px]">
                 <button
                   type="button"
                   onClick={() => {
                     if (!isPreviewing) handlePreview(voice.voiceId, voice.id);
                   }}
                   disabled={isPreviewing}
-                  className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-sm tracking-wide transition-colors ${
-                    isPreviewing
-                      ? "border-[var(--border)] text-[var(--fg-subtle)]"
-                      : "border-[var(--border)] text-[var(--fg-muted)] hover:border-accent-60 hover:text-[var(--fg)]"
-                  }`}
                   aria-label={t("previewAria", { label })}
+                  className="inline-flex items-center justify-center"
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "50%",
+                    border: "0.5px solid var(--fg)",
+                    background: "transparent",
+                    cursor: isPreviewing ? "default" : "pointer",
+                    opacity: isPreviewing ? 0.5 : 1,
+                  }}
                 >
-                  <Play size={14} strokeWidth={1.5} />
-                  {isPreviewing ? t("previewing") : t("preview")}
+                  {/* 三角形（▶︎） */}
+                  <span
+                    aria-hidden
+                    style={{
+                      width: 0,
+                      height: 0,
+                      borderLeft: "6px solid var(--fg)",
+                      borderTop: "4px solid transparent",
+                      borderBottom: "4px solid transparent",
+                      marginLeft: 2,
+                    }}
+                  />
                 </button>
+                <span
+                  aria-hidden
+                  className="inline-flex items-center justify-center"
+                  style={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: "50%",
+                    border: "0.5px solid var(--fg)",
+                  }}
+                >
+                  {isSelected && (
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        background: "var(--fg)",
+                      }}
+                    />
+                  )}
+                </span>
               </div>
             </li>
           );
@@ -218,16 +281,16 @@ export default function VoiceSettingsPage() {
       </ul>
 
       {voices.length === 0 && (
-        <p className="text-sm text-[var(--fg-muted)] py-10 text-center">{t("empty")}</p>
+        <p className="text-[11px] text-[var(--fg-muted)] py-10 text-center">{t("empty")}</p>
       )}
 
       {/* 保存完了トースト */}
       {toastVisible && (
         <output
           aria-live="polite"
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 inline-flex items-center gap-2 px-5 py-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-strong)] text-[var(--fg)] text-xs tracking-wide shadow-lg"
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 inline-flex items-center px-5 py-3 bg-[var(--bg-elevated)] text-[var(--fg)] text-[10px] uppercase tracking-[0.2em] shadow-lg"
+          style={{ border: "0.5px solid var(--border)" }}
         >
-          <Check size={14} strokeWidth={1.5} className="text-[var(--accent-strong)]" />
           {t("saved")}
         </output>
       )}

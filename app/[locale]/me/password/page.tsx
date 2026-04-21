@@ -4,18 +4,15 @@
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
+import { Cap, ConfirmDialog, PageHeader, Rule, UnderlineField } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
-import { ArrowLeft, Eye, EyeOff, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 
-// 入力フィールド共通クラス（reset-password と統一）
-const inputClass =
-  "w-full pl-10 pr-10 py-3 bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--fg)] placeholder:text-[var(--fg-subtle)] rounded-md focus:border-[var(--accent)] focus:outline-none transition-colors";
+const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
 
-const leadingIconClass =
-  "pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-subtle)]";
+const MIN_PASSWORD_LENGTH = 6;
 
 /**
  * `/me/password` — ログイン中のユーザーがマイページからパスワードを変更する画面。
@@ -26,6 +23,9 @@ const leadingIconClass =
  */
 export default function SettingsPasswordPage() {
   const t = useTranslations("me.password");
+  // 確認モーダルの Cap "Confirm · 確認" は /me と /me/password で共用するため
+  // 親 namespace `me.chapter.confirmCap` を参照する（重複定義を避ける）。
+  const tMe = useTranslations("me");
   const router = useRouter();
   const supabase = createClient();
   const [password, setPassword] = useState("");
@@ -35,11 +35,10 @@ export default function SettingsPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
-  // 破壊的操作前の確認モーダル
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  // 誤送信防止：未入力・短すぎ・不一致の間は送信不可（送信中・成功後も同様）
-  const canSubmit = !loading && !showToast && password.length >= 6 && password === confirm;
+  const canSubmit =
+    !loading && !showToast && password.length >= MIN_PASSWORD_LENGTH && password === confirm;
 
   // 成功トーストを少し見せてから設定画面へ戻すためのタイマー
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,22 +58,20 @@ export default function SettingsPasswordPage() {
 
   useEffect(() => {
     return () => {
-      if (redirectTimerRef.current) {
-        clearTimeout(redirectTimerRef.current);
-      }
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
     };
   }, []);
 
   // フォーム送信：バリデーション後に確認モーダルを開く（updateUser はモーダル CTA で）
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // React 19 の FormEvent 型は deprecated 扱いになるため、preventDefault は呼び出し側で
+  // 行い、本関数はイベントを受け取らない設計にする。
+  const validateAndOpenConfirm = () => {
     setErrorMsg(null);
-
     if (password !== confirm) {
       setErrorMsg(t("errors.mismatch"));
       return;
     }
-    if (password.length < 6) {
+    if (password.length < MIN_PASSWORD_LENGTH) {
       setErrorMsg(t("errors.tooShort"));
       return;
     }
@@ -106,161 +103,159 @@ export default function SettingsPasswordPage() {
     }
   };
 
-  return (
-    <main className="flex flex-col items-center justify-center flex-1 px-6 pt-10 pb-16 sm:pt-12 sm:pb-20 animate-fadeIn">
-      <div className="w-full max-w-sm">
-        {/* 極薄ヘッダー：戻るリンクのみ */}
-        <header className="mb-10">
-          <Link
-            href="/me"
-            className="inline-flex items-center gap-2 text-sm tracking-wide text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
-          >
-            <ArrowLeft size={14} strokeWidth={1.5} />
-            {t("back")}
-          </Link>
-        </header>
+  const backLink: CSSProperties = { color: "inherit", textDecoration: "none" };
 
-        <div className="text-center mb-10">
-          <h1 className="text-xl sm:text-2xl font-semibold text-[var(--fg)] leading-relaxed">
-            {t("title")}
-          </h1>
-          <p className="text-sm text-[var(--fg-muted)] mt-3 leading-relaxed">{t("subtitle")}</p>
+  // Cancel Ghost / Save Primary（章末のボタンペア）
+  const baseBtn: CSSProperties = {
+    padding: "13px 20px",
+    fontSize: 11,
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    cursor: "pointer",
+    flex: 1,
+  };
+  const ghostStyle: CSSProperties = {
+    ...baseBtn,
+    fontWeight: 500,
+    background: "transparent",
+    color: "var(--fg)",
+    border: "0.5px solid var(--fg)",
+  };
+  const primaryStyle: CSSProperties = {
+    ...baseBtn,
+    fontWeight: 600,
+    background: "var(--fg)",
+    color: "var(--bg)",
+    border: "none",
+    opacity: canSubmit ? 1 : 0.4,
+  };
+
+  return (
+    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-8 animate-fadeIn">
+      <PageHeader
+        left={
+          <Link href="/me" style={backLink} className="hover:text-[var(--fg)] transition-colors">
+            ← Me
+          </Link>
+        }
+      />
+
+      {/* 章題：Cap + Fraunces 章題 */}
+      <div className="mt-6">
+        <Cap mb={8}>{t("chapter.cap")}</Cap>
+        <div
+          style={{
+            fontFamily: SERIF_FAMILY,
+            fontSize: 26,
+            fontWeight: 400,
+            lineHeight: 1.1,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          {t("chapter.titleLead")}
+          <br />
+          <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
+          {t("chapter.titleTail")}
+        </div>
+      </div>
+
+      <Rule mv={16} />
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          validateAndOpenConfirm();
+        }}
+        className="flex-1 flex flex-col"
+      >
+        <div>
+          <UnderlineField
+            id="password"
+            label={t("newPassword")}
+            value={password}
+            onChange={setPassword}
+            placeholder={t("placeholderNew")}
+            autoComplete="new-password"
+            isVisible={showPassword}
+            onToggleVisibility={() => setShowPassword((v) => !v)}
+            sub={t("hintMinLength", { min: MIN_PASSWORD_LENGTH })}
+            showLabel={t("showPassword")}
+            hideLabel={t("hidePassword")}
+            minLength={MIN_PASSWORD_LENGTH}
+          />
+          <UnderlineField
+            id="confirm"
+            label={t("confirmPassword")}
+            value={confirm}
+            onChange={setConfirm}
+            placeholder={t("placeholderConfirm")}
+            autoComplete="new-password"
+            isVisible={showConfirm}
+            onToggleVisibility={() => setShowConfirm((v) => !v)}
+            showLabel={t("showPassword")}
+            hideLabel={t("hidePassword")}
+            minLength={MIN_PASSWORD_LENGTH}
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-xs text-[var(--fg-muted)] mb-2 tracking-wide"
-            >
-              {t("newPassword")}
-            </label>
-            <div className="relative">
-              <Lock size={16} strokeWidth={1.5} className={leadingIconClass} />
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder={t("placeholderNew")}
-                minLength={6}
-                autoComplete="new-password"
-                className={inputClass}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--fg-subtle)] hover:text-[var(--fg-muted)] transition-colors"
-                aria-label={showPassword ? t("hidePassword") : t("showPassword")}
-              >
-                {showPassword ? (
-                  <EyeOff size={16} strokeWidth={1.5} />
-                ) : (
-                  <Eye size={16} strokeWidth={1.5} />
-                )}
-              </button>
-            </div>
-          </div>
+        {/* Supabase は updateUser でパスワードを更新すると、現在のセッション以外の
+            リフレッシュトークンを失効させる。他端末からは再ログインが必要になる旨を
+            送信前に明示する（デザインソース b-section の "We'll sign you out..." 相当）。 */}
+        <div className="text-[10.5px] text-[var(--fg-muted)] leading-[1.6] mt-4">
+          {t("signOutNotice")}
+        </div>
 
-          <div>
-            <label
-              htmlFor="confirm"
-              className="block text-xs text-[var(--fg-muted)] mb-2 tracking-wide"
-            >
-              {t("confirmPassword")}
-            </label>
-            <div className="relative">
-              <Lock size={16} strokeWidth={1.5} className={leadingIconClass} />
-              <input
-                id="confirm"
-                type={showConfirm ? "text" : "password"}
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                required
-                placeholder={t("placeholderConfirm")}
-                minLength={6}
-                autoComplete="new-password"
-                className={inputClass}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirm((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--fg-subtle)] hover:text-[var(--fg-muted)] transition-colors"
-                aria-label={showConfirm ? t("hidePassword") : t("showPassword")}
-              >
-                {showConfirm ? (
-                  <EyeOff size={16} strokeWidth={1.5} />
-                ) : (
-                  <Eye size={16} strokeWidth={1.5} />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {errorMsg && (
-            <div
-              role="alert"
-              className="px-4 py-3 bg-[var(--error-bg)] border border-[var(--error)] text-[var(--error)] text-xs rounded-md"
-            >
-              {errorMsg}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className="w-full bg-[var(--accent)] hover:bg-[var(--accent-strong)] disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-md transition-colors text-sm tracking-wide"
+        {errorMsg && (
+          <div
+            role="alert"
+            className="mt-4 px-3 py-2 text-[var(--error)] text-[11px]"
+            style={{ border: "0.5px solid var(--error)" }}
           >
+            {errorMsg}
+          </div>
+        )}
+
+        <div className="flex-1" />
+
+        <div className="flex gap-3 mt-6">
+          <button
+            type="button"
+            onClick={() => router.push("/me")}
+            disabled={loading}
+            style={ghostStyle}
+          >
+            {t("cancel")}
+          </button>
+          <button type="submit" disabled={!canSubmit} style={primaryStyle}>
             {loading ? t("submitting") : t("submit")}
           </button>
+        </div>
 
-          {/* 成功トースト：スクリーンリーダー向けに aria-live を付与 */}
-          <output
-            aria-live="polite"
-            className={`block text-center text-xs text-[var(--fg-muted)] transition-opacity ${
-              showToast ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            {showToast ? t("successToast") : ""}
-          </output>
-        </form>
-      </div>
+        {/* 成功トースト：スクリーンリーダー向けに aria-live を付与 */}
+        <output
+          aria-live="polite"
+          className={`block text-center text-[10px] uppercase tracking-[0.2em] text-[var(--fg-muted)] mt-4 transition-opacity ${
+            showToast ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          {showToast ? t("successToast") : ""}
+        </output>
+      </form>
 
       {/* 変更前の最終確認モーダル */}
       {showConfirmModal && (
-        <dialog
-          open
-          aria-labelledby="password-confirm-title"
-          className="fixed inset-0 z-50 m-0 max-w-none max-h-none w-screen h-screen p-4 border-0 bg-[var(--bg-overlay)] flex items-center justify-center animate-fadeIn"
-        >
-          <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-6 max-w-sm w-full">
-            <h2 id="password-confirm-title" className="text-lg font-semibold text-[var(--fg)] mb-2">
-              {t("confirmModal.title")}
-            </h2>
-            <p className="text-sm text-[var(--fg-muted)] mb-6 leading-relaxed">
-              {t("confirmModal.desc")}
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => setShowConfirmModal(false)}
-                disabled={loading}
-                className="border border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)] px-4 py-2.5 rounded-md text-sm transition-colors disabled:opacity-50"
-              >
-                {t("confirmModal.cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={executePasswordUpdate}
-                disabled={loading}
-                className="bg-[var(--accent)] hover:bg-[var(--accent-strong)] disabled:opacity-50 text-white px-4 py-2.5 rounded-md text-sm transition-colors"
-              >
-                {loading ? t("submitting") : t("confirmModal.confirm")}
-              </button>
-            </div>
-          </div>
-        </dialog>
+        <ConfirmDialog
+          titleId="password-confirm-title"
+          cap={tMe("chapter.confirmCap")}
+          title={t("confirmModal.title")}
+          desc={t("confirmModal.desc")}
+          errorMsg={null}
+          cancelLabel={t("confirmModal.cancel")}
+          confirmLabel={loading ? t("submitting") : t("confirmModal.confirm")}
+          isProcessing={loading}
+          onCancel={() => setShowConfirmModal(false)}
+          onConfirm={executePasswordUpdate}
+        />
       )}
     </main>
   );
