@@ -5,7 +5,13 @@ export const runtime = "edge";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import type { Metadata, Viewport } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
-import { Noto_Sans_JP, Noto_Serif_JP, Plus_Jakarta_Sans } from "next/font/google";
+import {
+  Fraunces,
+  JetBrains_Mono,
+  Noto_Sans_JP,
+  Noto_Serif_JP,
+  Plus_Jakarta_Sans,
+} from "next/font/google";
 import Script from "next/script";
 import PostHogProvider from "./components/PostHogProvider";
 import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
@@ -24,13 +30,31 @@ const notoSansJP = Noto_Sans_JP({
   weight: ["400", "500", "700"],
 });
 
-// Quiet Journal の見出しに使うセリフ体。
-// globals.css の `.font-serif-jp` ユーティリティと `--font-serif` を繋ぐ。
-const notoSerifJP = Noto_Serif_JP({
+// Chapter 系譜の見出しに使う欧文セリフ体。
+// italic で "活字の呼吸" を出すため ital 軸込みで読み込む。
+// 日本語文字は CSS フォールバックで Noto Serif JP に流す。
+const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-serif",
   display: "swap",
-  weight: ["400", "600"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+});
+
+// 和文セリフ体のフォールバック用（欧文は Fraunces が主、和文はこれが受け止める）。
+const notoSerifJP = Noto_Serif_JP({
+  subsets: ["latin"],
+  variable: "--font-noto-serif",
+  display: "swap",
+  weight: ["400", "500"],
+});
+
+// 等幅：数字・時間・タグなど活字リズムの要所に使う。
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+  weight: ["300", "400", "500"],
 });
 
 // ルートの metadata はロケール非依存（icons のみ）。
@@ -84,7 +108,7 @@ export default async function RootLayout({
     // 限定される（子ツリーには波及しない）Next.js / next-themes 標準パターン。
     <html
       lang={locale}
-      className={`${jakartaSans.variable} ${notoSansJP.variable} ${notoSerifJP.variable}`}
+      className={`${jakartaSans.variable} ${notoSansJP.variable} ${fraunces.variable} ${notoSerifJP.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-[var(--bg)] text-[var(--fg)] antialiased flex flex-col">
