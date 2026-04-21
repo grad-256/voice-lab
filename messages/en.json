@@ -250,16 +250,24 @@
     }
   },
   "resetPassword": {
-    "title": "Set a new password",
-    "subtitle": "Please enter your new password",
+    "chapter": {
+      "cap": "Recover · 再発行",
+      "titleLead": "Set a new",
+      "titleItalic": "key",
+      "titleTail": "."
+    },
+    "description": "Choose a new password here. From your next sign-in, please use this one.",
     "newPassword": "New password",
     "confirmPassword": "Confirm password",
     "placeholderNew": "At least 6 characters",
     "placeholderConfirm": "Enter it again",
+    "hintMinLength": "At least {min} characters",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "submit": "Update password",
     "submitting": "Updating…",
+    "rememberItPrefix": "Remember it?",
+    "signInLink": "Sign in",
     "errors": {
       "mismatch": "Passwords don't match",
       "sessionMissing": "This reset link has expired. Please request a new one.",
@@ -268,16 +276,26 @@
     }
   },
   "me": {
-    "back": "Back",
-    "title": "My page",
+    "chapter": {
+      "cap": "Me · じぶん",
+      "titleLead": "Your ",
+      "titleItalic": "page",
+      "titleTail": ".",
+      "memberSince": "Member since {date}",
+      "voiceSection": "Voice · 声",
+      "accountSection": "Account · アカウント",
+      "privacySection": "Privacy · プライバシー",
+      "confirmCap": "Confirm · 確認"
+    },
     "voice": {
       "cardTitle": "Voice",
       "cardSubtitle": "The voice that reads your diary back to you",
-      "back": "Back to my page",
-      "pageTitle": "Choose a voice",
-      "pageSubtitle": "Which voice do you want to hear your diary in?",
-      "preview": "Preview",
-      "previewing": "Playing…",
+      "chapter": {
+        "cap": "Voice · 声を選ぶ",
+        "titleLead": "Who should",
+        "titleItalic": "listen",
+        "titleTail": " to you?"
+      },
       "previewAria": "Preview {label}",
       "errors": {
         "previewFailed": "Couldn't play the preview. Please try again later.",
@@ -290,14 +308,17 @@
       "presets": {
         "ethan": {
           "label": "Ethan",
+          "jp": "おだやか",
           "description": "A calm male voice (default)"
         },
         "sarah": {
           "label": "Sarah",
+          "jp": "やさしい",
           "description": "A gentle female voice"
         },
         "adam": {
           "label": "Adam",
+          "jp": "ふかい",
           "description": "A deep, steady male voice"
         }
       }
@@ -320,21 +341,28 @@
     "delete": {
       "cardTitle": "Delete account",
       "cardSubtitle": "All your data will be deleted. This action cannot be undone.",
-      "action": "Delete",
       "failed": "Could not delete your account. Please try again later."
     },
     "password": {
       "title": "Change password",
       "subtitle": "Set a new password for your account",
-      "back": "Back to my page",
+      "chapter": {
+        "cap": "Password · パスワード",
+        "titleLead": "Change",
+        "titleItalic": "your key",
+        "titleTail": "."
+      },
       "newPassword": "New password",
       "confirmPassword": "Confirm password",
       "placeholderNew": "At least 6 characters",
       "placeholderConfirm": "Enter it again",
+      "hintMinLength": "At least {min} characters",
       "showPassword": "Show password",
       "hidePassword": "Hide password",
+      "cancel": "Cancel",
       "submit": "Change password",
       "submitting": "Updating…",
+      "signOutNotice": "You will be signed out from other devices. Sign in again with the new password next time.",
       "successToast": "Password changed",
       "errors": {
         "mismatch": "Passwords don't match",

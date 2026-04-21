@@ -244,16 +244,24 @@
     }
   },
   "resetPassword": {
-    "title": "パスワード再設定",
-    "subtitle": "新しいパスワードを入力してください",
+    "chapter": {
+      "cap": "Recover · 再発行",
+      "titleLead": "あたらしい",
+      "titleItalic": "鍵",
+      "titleTail": "を渡します。"
+    },
+    "description": "ここで新しいパスワードを設定できます。次回以降は、この新しいパスワードでサインインしてください。",
     "newPassword": "新しいパスワード",
     "confirmPassword": "パスワード（確認）",
     "placeholderNew": "6文字以上",
     "placeholderConfirm": "もう一度入力",
+    "hintMinLength": "{min} 文字以上",
     "showPassword": "パスワードを表示",
     "hidePassword": "パスワードを隠す",
     "submit": "パスワードを更新する",
     "submitting": "更新中…",
+    "rememberItPrefix": "思い出しましたか？",
+    "signInLink": "ログインへ",
     "errors": {
       "mismatch": "パスワードが一致しません",
       "sessionMissing": "リンクの有効期限が切れています。再度パスワードリセットをお試しください。",
@@ -262,16 +270,26 @@
     }
   },
   "me": {
-    "back": "戻る",
-    "title": "マイページ",
+    "chapter": {
+      "cap": "Me · じぶん",
+      "titleLead": "あなたの",
+      "titleItalic": "ページ",
+      "titleTail": "。",
+      "memberSince": "{date} 登録",
+      "voiceSection": "Voice · 声",
+      "accountSection": "Account · アカウント",
+      "privacySection": "Privacy · プライバシー",
+      "confirmCap": "Confirm · 確認"
+    },
     "voice": {
       "cardTitle": "声を選ぶ",
       "cardSubtitle": "日記の返答を読み上げる声",
-      "back": "マイページに戻る",
-      "pageTitle": "声を選ぶ",
-      "pageSubtitle": "日記の返答を、どの声で聞きますか",
-      "preview": "試聴",
-      "previewing": "再生中…",
+      "chapter": {
+        "cap": "Voice · 声を選ぶ",
+        "titleLead": "あなたに",
+        "titleItalic": "寄り添う",
+        "titleTail": "声を。"
+      },
       "previewAria": "{label} を試聴",
       "errors": {
         "previewFailed": "試聴に失敗しました。しばらく経ってから再度お試しください。",
@@ -284,14 +302,17 @@
       "presets": {
         "ethan": {
           "label": "Ethan",
+          "jp": "おだやか",
           "description": "落ち着いた男性の声（既定）"
         },
         "sarah": {
           "label": "Sarah",
+          "jp": "やさしい",
           "description": "穏やかな女性の声"
         },
         "adam": {
           "label": "Adam",
+          "jp": "ふかい",
           "description": "深く落ち着いた男性の声"
         }
       }
@@ -314,21 +335,28 @@
     "delete": {
       "cardTitle": "アカウントを削除する",
       "cardSubtitle": "登録情報がすべて削除されます。この操作は取り消せません。",
-      "action": "削除する",
       "failed": "アカウントの削除に失敗しました。しばらく経ってから再度お試しください。"
     },
     "password": {
       "title": "パスワード変更",
       "subtitle": "新しいパスワードを設定します",
-      "back": "マイページに戻る",
+      "chapter": {
+        "cap": "Password · パスワード",
+        "titleLead": "鍵を",
+        "titleItalic": "替える",
+        "titleTail": "。"
+      },
       "newPassword": "新しいパスワード",
       "confirmPassword": "パスワード（確認）",
       "placeholderNew": "6文字以上",
       "placeholderConfirm": "もう一度入力",
+      "hintMinLength": "{min} 文字以上",
       "showPassword": "パスワードを表示",
       "hidePassword": "パスワードを隠す",
+      "cancel": "やめる",
       "submit": "パスワードを変更する",
       "submitting": "更新中…",
+      "signOutNotice": "他の端末からは自動的にサインアウトされます。次回、新しいパスワードでログインしてください。",
       "successToast": "パスワードを変更しました",
       "errors": {
         "mismatch": "パスワードが一致しません",

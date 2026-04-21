@@ -4,7 +4,9 @@
 export { BottomTab } from "./BottomTab";
 export { BtnGhost, BtnPrimary } from "./Buttons";
 export { Cap } from "./Cap";
+export { ConfirmDialog } from "./ConfirmDialog";
 export { PageHeader } from "./PageHeader";
 export { Rule } from "./Rule";
 export { SettingRow } from "./SettingRow";
+export { UnderlineField } from "./UnderlineField";
 export { Waves } from "./Waves";
