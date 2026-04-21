@@ -250,7 +250,7 @@ function HistoryMock({
                 className="text-[var(--fg-subtle)]"
                 aria-hidden="true"
               />
-              <p className="font-mono-jp text-[10px] text-[var(--fg-subtle)] tracking-widest-tabular uppercase">
+              <p className="font-mono-jp text-xs sm:text-sm text-[var(--fg-subtle)] tracking-widest-tabular uppercase">
                 {e.date}
               </p>
             </div>

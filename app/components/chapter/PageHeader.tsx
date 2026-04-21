@@ -10,8 +10,9 @@ type PageHeaderProps = {
 };
 
 export function PageHeader({ left = "MyVoiceLab", center, right }: PageHeaderProps) {
+  // Cap と同じレンジで、広い画面では柱の活字を少し大きく見せる。
   return (
-    <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.32em] text-[var(--fg-muted)]">
+    <div className="flex items-center justify-between text-xs sm:text-sm uppercase tracking-[0.32em] text-[var(--fg-muted)]">
       <span>{left}</span>
       {center != null && <span>{center}</span>}
       <span>{right}</span>

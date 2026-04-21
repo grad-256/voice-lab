@@ -35,15 +35,23 @@ export function SettingRow({
     borderBottom: last ? "none" : "0.5px solid var(--border)",
   };
 
+  // Tailwind 標準スケールに乗せて、狭い画面では従来の見た目、sm:/md: 以上で 1〜2 段大きくする。
+  // label 13 → 14 → 16、sub 10.5 → 12 → 14、value 11 → 12 → 14、jp 10 → 11 → 12
   const content = (
     <div className="grid grid-cols-[1fr_auto] gap-3 py-[14px]" style={rowStyle}>
       <div>
-        <div className="text-[13px] font-medium tracking-[-0.005em] text-[var(--fg)]">{label}</div>
-        {sub != null && <div className="text-[10.5px] text-[var(--fg-muted)] mt-[2px]">{sub}</div>}
-        {jp != null && <div className="text-[10px] text-[var(--fg-muted)] mt-[1px]">{jp}</div>}
+        <div className="text-sm sm:text-base font-medium tracking-[-0.005em] text-[var(--fg)]">
+          {label}
+        </div>
+        {sub != null && (
+          <div className="text-xs sm:text-sm text-[var(--fg-muted)] mt-[2px]">{sub}</div>
+        )}
+        {jp != null && (
+          <div className="text-xs sm:text-sm text-[var(--fg-muted)] mt-[1px]">{jp}</div>
+        )}
       </div>
       {value !== undefined && (
-        <div className="font-mono-jp text-[11px] text-[var(--fg-muted)] self-center tracking-[0.02em]">
+        <div className="font-mono-jp text-xs sm:text-sm text-[var(--fg-muted)] self-center tracking-[0.02em]">
           {value}
         </div>
       )}

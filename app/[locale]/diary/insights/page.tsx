@@ -46,7 +46,7 @@ export default function DiaryInsightsPage() {
   const path = buildWarmthPath();
 
   return (
-    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-3">
+    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-24">
       <PageHeader />
 
       {/* 章題：今月の輪郭。italic の一語を差し込むことで Chapter 系譜を保つ */}
@@ -55,31 +55,29 @@ export default function DiaryInsightsPage() {
           <Cap mb={8}>{t("cap")}</Cap>
           <Link
             href="/diary/history"
-            className="uppercase text-[9px] tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
+            className="uppercase text-xs sm:text-sm tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
           >
             ← Archive
           </Link>
         </div>
         <div
+          className="text-3xl sm:text-4xl tracking-tight"
           style={{
             fontFamily: SERIF_FAMILY,
-            fontSize: 30,
             fontWeight: 400,
-            lineHeight: 1.05,
-            letterSpacing: "-0.025em",
           }}
         >
           {t("headingLead")} <span style={{ fontStyle: "italic" }}>{t("headingItalic")}</span>
           {t("headingTail")}
         </div>
         <div
-          className="text-[11px] text-[var(--fg-muted)] mt-[6px]"
-          style={{ fontFamily: MONO_FAMILY, letterSpacing: "0.04em" }}
+          className="text-xs sm:text-sm text-[var(--fg-muted)] mt-[6px] tracking-wider"
+          style={{ fontFamily: MONO_FAMILY }}
         >
           {t("stats")}
         </div>
         {/* P1 は UI + ダミーのみ。実データ化は #66 で追従（memory 参照） */}
-        <div className="mt-2 text-[10px] uppercase tracking-[0.18em] text-[var(--fg-subtle)]">
+        <div className="mt-2 text-xs sm:text-sm uppercase tracking-[0.18em] text-[var(--fg-subtle)]">
           {t("dummyNotice")}
         </div>
       </div>
@@ -102,7 +100,7 @@ export default function DiaryInsightsPage() {
           <path d={`${path} L 300 96 L 0 96 Z`} fill="var(--fg)" opacity="0.06" />
         </svg>
         <div
-          className="flex justify-between text-[9px] text-[var(--fg-muted)] mt-1"
+          className="flex justify-between text-xs sm:text-sm text-[var(--fg-muted)] mt-1"
           style={{ fontFamily: MONO_FAMILY }}
         >
           <span>01</span>
@@ -123,10 +121,10 @@ export default function DiaryInsightsPage() {
             style={{ gridTemplateColumns: "96px 1fr 40px" }}
           >
             <div
+              className="text-sm sm:text-base"
               style={{
                 fontFamily: SERIF_FAMILY,
                 fontStyle: i === 0 ? "italic" : "normal",
-                fontSize: 14,
               }}
             >
               {tTones(row.key as ToneKey)}
@@ -146,7 +144,7 @@ export default function DiaryInsightsPage() {
               />
             </div>
             <div
-              className="text-[10px] text-[var(--fg-muted)] text-right"
+              className="text-xs sm:text-sm text-[var(--fg-muted)] text-right"
               style={{ fontFamily: MONO_FAMILY }}
             >
               {row.pct}%
@@ -159,13 +157,8 @@ export default function DiaryInsightsPage() {
       <div className="mt-[18px]" style={{ borderLeft: "1.5px solid var(--fg)", paddingLeft: 12 }}>
         <Cap mb={4}>{t("quietReadingLabel")}</Cap>
         <div
-          style={{
-            fontFamily: SERIF_FAMILY,
-            fontSize: 14,
-            fontStyle: "italic",
-            lineHeight: 1.6,
-            letterSpacing: "-0.003em",
-          }}
+          className="text-sm sm:text-base italic leading-relaxed"
+          style={{ fontFamily: SERIF_FAMILY }}
         >
           {t("quietReadingBody")}
         </div>

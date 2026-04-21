@@ -5,7 +5,6 @@ export const runtime = "edge";
 
 import { BottomTab, Cap, PageHeader, Rule } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
-import { createClient } from "@/lib/supabase/client";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -55,16 +54,10 @@ export default function DiaryHistoryPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    // 未ログインの退避は AuthGate が担当。ここでは API を直接叩き、
+    // 401 が返った場合のみ /app に退避する（レア：AuthGate との競合時のフォールバック）。
     let aborted = false;
     const load = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/app");
-        return;
-      }
       try {
         const res = await fetch("/api/diary");
         if (aborted) return;
@@ -97,7 +90,7 @@ export default function DiaryHistoryPage() {
   const pageNo = String(total).padStart(3, "0");
 
   return (
-    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-3">
+    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-24">
       <PageHeader right={`No. ${pageNo}`} />
 
       {/* 章題：静けさの記録。活字で「余白」を italic に抜く。 */}
@@ -106,19 +99,14 @@ export default function DiaryHistoryPage() {
           <Cap mb={8}>{t("chapter.archiveLabel")}</Cap>
           <Link
             href="/diary/insights"
-            className="uppercase text-[9px] tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
+            className="text-xs sm:text-sm uppercase tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
           >
             Insights →
           </Link>
         </div>
         <div
-          style={{
-            fontFamily: SERIF_FAMILY,
-            fontSize: 30,
-            fontWeight: 400,
-            lineHeight: 1.05,
-            letterSpacing: "-0.025em",
-          }}
+          className="text-3xl sm:text-4xl md:text-5xl tracking-tight"
+          style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
         >
           {t("chapter.titleLead")}{" "}
           <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
@@ -126,8 +114,8 @@ export default function DiaryHistoryPage() {
           {t("chapter.titleTail")}
         </div>
         <div
-          className="text-[11px] text-[var(--fg-muted)] mt-[6px]"
-          style={{ fontFamily: MONO_FAMILY, letterSpacing: "0.06em" }}
+          className="text-xs sm:text-sm text-[var(--fg-muted)] mt-[6px] tracking-wider"
+          style={{ fontFamily: MONO_FAMILY }}
         >
           {pageNo} · {t("chapter.countSuffix")}
         </div>
@@ -136,12 +124,12 @@ export default function DiaryHistoryPage() {
       <Rule mv={20} />
 
       {errorMsg && (
-        <div className="mb-4 text-[11px] text-[var(--error)] text-center">{errorMsg}</div>
+        <div className="mb-4 text-xs sm:text-sm text-[var(--error)] text-center">{errorMsg}</div>
       )}
 
       {/* 読み込み中：薄く Loading 表記 */}
       {items === null && !errorMsg && (
-        <div className="text-[10px] uppercase tracking-[0.3em] text-[var(--fg-subtle)] py-14 text-center">
+        <div className="text-xs sm:text-sm uppercase tracking-[0.3em] text-[var(--fg-subtle)] py-14 text-center">
           {t("loading")}
         </div>
       )}
@@ -150,13 +138,8 @@ export default function DiaryHistoryPage() {
       {items !== null && items.length === 0 && (
         <div className="flex-1 flex flex-col items-start justify-start pt-8 gap-6">
           <div
-            style={{
-              fontFamily: SERIF_FAMILY,
-              fontSize: 26,
-              fontWeight: 400,
-              lineHeight: 1.15,
-              letterSpacing: "-0.02em",
-            }}
+            className="text-3xl sm:text-4xl tracking-tight"
+            style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
           >
             {t("chapter.emptyLead")}{" "}
             <span style={{ fontStyle: "italic" }}>{t("chapter.emptyItalic")}</span>
@@ -165,7 +148,7 @@ export default function DiaryHistoryPage() {
           </div>
           <Link
             href="/diary"
-            className="uppercase text-[9px] tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
+            className="text-xs sm:text-sm uppercase tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
           >
             {t("emptyCta")} →
           </Link>
@@ -185,36 +168,27 @@ export default function DiaryHistoryPage() {
                   style={{ gridTemplateColumns: "52px 1fr auto" }}
                 >
                   <div>
-                    <div className="text-[8px] uppercase tracking-[0.2em] text-[var(--fg-muted)]">
+                    <div className="text-xs sm:text-sm uppercase tracking-[0.2em] text-[var(--fg-muted)]">
                       {d.day}
                     </div>
                     <div
-                      style={{
-                        fontFamily: SERIF_FAMILY,
-                        fontSize: 24,
-                        letterSpacing: "-0.02em",
-                        lineHeight: 1,
-                      }}
+                      className="text-2xl sm:text-3xl md:text-4xl tracking-tight"
+                      style={{ fontFamily: SERIF_FAMILY }}
                     >
                       {d.dayNum}
                     </div>
-                    <div className="text-[8px] uppercase tracking-[0.2em] text-[var(--fg-muted)] mt-[2px]">
+                    <div className="text-xs sm:text-sm uppercase tracking-[0.2em] text-[var(--fg-muted)] mt-[2px]">
                       {d.month}
                     </div>
                   </div>
                   <div className="min-w-0">
                     <div
-                      style={{
-                        fontFamily: SERIF_FAMILY,
-                        fontSize: 15,
-                        letterSpacing: "-0.005em",
-                        lineHeight: 1.25,
-                      }}
-                      className="line-clamp-2 text-[var(--fg)]"
+                      style={{ fontFamily: SERIF_FAMILY }}
+                      className="text-base sm:text-lg leading-tight tracking-tight line-clamp-2 text-[var(--fg)]"
                     >
                       {item.title}
                     </div>
-                    <div className="flex gap-[10px] mt-1 text-[9.5px] uppercase tracking-[0.14em] text-[var(--fg-muted)]">
+                    <div className="flex gap-[10px] mt-1 text-xs sm:text-sm uppercase tracking-[0.14em] text-[var(--fg-muted)]">
                       <span>{item.language.toUpperCase()}</span>
                       <span aria-hidden>·</span>
                       <span>{item.message_count.toString().padStart(2, "0")} turns</span>
@@ -222,7 +196,7 @@ export default function DiaryHistoryPage() {
                   </div>
                   <div
                     style={{ fontFamily: MONO_FAMILY }}
-                    className="text-[11px] text-[var(--fg-muted)]"
+                    className="text-xs sm:text-sm text-[var(--fg-muted)]"
                   >
                     →
                   </div>
@@ -233,9 +207,7 @@ export default function DiaryHistoryPage() {
         </ul>
       )}
 
-      <div className="mt-auto pt-3">
-        <BottomTab />
-      </div>
+      <BottomTab />
     </main>
   );
 }

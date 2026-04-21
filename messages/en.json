@@ -176,7 +176,7 @@
       "greetingMorning": "Good morning,",
       "greetingAfternoon": "Good afternoon,",
       "greetingEvening": "Good evening,",
-      "greetingNight": "Quiet night,",
+      "greetingNight": "Good night,",
       "subline": "Today's prompt is quietly waiting.",
       "promptLabel": "Today's prompt",
       "promptBody": "When did your heart stir the most today?",
@@ -189,6 +189,9 @@
   "footer": {
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "releaseNotes": "Release notes",
     "noteAriaLabel": "MyVoiceLab magazine on note",
     "xAriaLabel": "UCLab on X (formerly Twitter)"
   },
@@ -387,6 +390,180 @@
       "desc": "All your data will be deleted. This action cannot be undone.",
       "confirm": "Yes, delete it",
       "cancel": "Cancel"
+    },
+    "billing": {
+      "rowTitle": "Billing",
+      "rowSubtitle": "Next charge and payment method",
+      "sectionCap": "Billing · 請求",
+      "chapter": {
+        "cap": "Billing · 請求",
+        "titleLead": "A quiet ",
+        "titleItalic": "year",
+        "titleTail": ", continuing."
+      },
+      "sections": {
+        "nextCharge": "Next charge · 次回請求",
+        "paymentMethod": "Payment method · 支払方法",
+        "history": "History · 請求履歴"
+      },
+      "nextCharge": {
+        "empty": "You're not on a paid plan right now.",
+        "amount": "{amount} / {period}",
+        "dateLabel": "Charge date",
+        "planLabel": "Plan",
+        "dummyDate": "2026-05-15",
+        "dummyPlan": "Quiet",
+        "dummyAmount": "¥980",
+        "dummyPeriod": "month"
+      },
+      "paymentMethod": {
+        "cardLabel": "Card",
+        "cardValue": "•••• •••• •••• {last4}",
+        "expires": "Expires {month}/{year}",
+        "change": "Change payment method",
+        "dummyLast4": "4242",
+        "dummyMonth": "12",
+        "dummyYear": "2028"
+      },
+      "history": {
+        "empty": "No billing history yet.",
+        "downloadInvoice": "Invoice"
+      },
+      "actions": {
+        "changePlan": "Change plan",
+        "cancelPlan": "Cancel plan",
+        "changePlanSub": "Upgrade or downgrade",
+        "cancelPlanSub": "Stops from the next charge date"
+      },
+      "stripePendingToast": "Payments are coming soon"
+    }
+  },
+  "pricing": {
+    "chapter": {
+      "cap": "Pricing · 料金",
+      "titleLead": "At your pace, ",
+      "titleItalic": "keep going",
+      "titleTail": ".",
+      "lead": "Try briefly, stay with it, or shape a whole year. Pick from three plans."
+    },
+    "plans": {
+      "still": {
+        "name": "Still",
+        "jp": "",
+        "price": "¥0",
+        "period": "Free",
+        "tagline": "Start by saying it out loud.",
+        "features": [
+          "Up to 10 exchanges per day",
+          "1 default voice",
+          "History for the last 7 days"
+        ],
+        "cta": "Stay on Still"
+      },
+      "quiet": {
+        "name": "Quiet",
+        "jp": "",
+        "price": "¥980",
+        "period": "/ month",
+        "tagline": "Stay close to your daily rhythm.",
+        "features": [
+          "Unlimited diary exchanges",
+          "3 voices to choose from",
+          "Full history and Insights",
+          "Monthly summary reports"
+        ],
+        "cta": "Choose Quiet",
+        "badge": "Popular"
+      },
+      "year": {
+        "name": "Year",
+        "jp": "",
+        "price": "¥9,800",
+        "period": "/ year",
+        "tagline": "Keep a whole year, quietly.",
+        "features": [
+          "Everything in Quiet",
+          "Save 17% (2 months off)",
+          "Year-end archive export",
+          "Priority support"
+        ],
+        "cta": "Choose Year"
+      }
+    },
+    "note": "Cancel anytime. Billing stops from the next charge date.",
+    "stripePendingNote": "※ Payments are coming soon."
+  },
+  "faq": {
+    "chapter": {
+      "cap": "FAQ · よくある質問",
+      "titleLead": "Quiet ",
+      "titleItalic": "answers",
+      "titleTail": " to small questions."
+    },
+    "items": {
+      "q01": {
+        "question": "Where is what I say stored?",
+        "answer": "It's stored encrypted, tied to your account. No one else can read it."
+      },
+      "q02": {
+        "question": "What happens to my past diaries if I cancel?",
+        "answer": "You can still read them, but you can't add new entries. To remove everything, use Delete account on /me."
+      },
+      "q03": {
+        "question": "Are my conversations used to train AI?",
+        "answer": "No. Your diaries are never used to train AI models. See our Privacy Policy for details."
+      },
+      "q04": {
+        "question": "Can I use it offline?",
+        "answer": "You can browse some pages offline, but recording and summarizing need an internet connection."
+      },
+      "q05": {
+        "question": "Can I use the same account on multiple devices?",
+        "answer": "Yes. Sign in with your email and password on any device to reach the same diaries."
+      }
+    },
+    "expand": "Open",
+    "collapse": "Close"
+  },
+  "releaseNotes": {
+    "chapter": {
+      "cap": "Release notes · 更新履歴",
+      "titleLead": "Quiet ",
+      "titleItalic": "updates",
+      "titleTail": ", kept."
+    },
+    "versionLabel": "v{version}",
+    "entries": {
+      "v1_2_0": {
+        "version": "1.2.0",
+        "date": "2026-04-21",
+        "title": "SaaS surface added",
+        "items": [
+          "New Pricing, FAQ, and Release notes pages",
+          "New Billing page (UI only)",
+          "Billing link added to /me"
+        ]
+      },
+      "v1_1_0": {
+        "version": "1.1.0",
+        "date": "2026-04-19",
+        "title": "A shift toward journaling",
+        "items": [
+          "Redesigned the UI as Quiet Journal",
+          "Added Dark / Light / System theme toggle",
+          "Reworked the landing page around diary"
+        ]
+      },
+      "v1_0_0": {
+        "version": "1.0.0",
+        "date": "2026-04-17",
+        "title": "PWA support",
+        "items": [
+          "Add to home screen support",
+          "URL-based Japanese / English switching",
+          "Cloudflare AI Gateway for stability"
+        ]
+      }
     }
   },
   "diary": {

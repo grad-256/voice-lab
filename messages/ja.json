@@ -167,15 +167,15 @@
     "guestStatusLogin": "ログイン",
     "guestStatusAfter": "で日記が保存できます）",
     "chapter": {
-      "greetingMorning": "おはようございます、",
-      "greetingAfternoon": "こんにちは、",
-      "greetingEvening": "こんばんは、",
-      "greetingNight": "ゆっくりと、",
-      "subline": "今日の問いが、そっと待っています。",
+      "greetingMorning": "Good morning,",
+      "greetingAfternoon": "Good afternoon,",
+      "greetingEvening": "Good evening,",
+      "greetingNight": "Good night,",
+      "subline": "Today's prompt is quietly waiting.",
       "promptLabel": "今日の問い",
-      "promptBody": "今日いちばん、心が動いたのはいつでしたか。",
+      "promptBody": "When did your heart stir the most today?",
       "beginLabel": "話しはじめる",
-      "streakLabel": "ここ 7 日",
+      "streakLabel": "Last 7 days",
       "streakCount": "{count} / 7",
       "noName": "あなた"
     }
@@ -183,6 +183,9 @@
   "footer": {
     "terms": "利用規約",
     "privacy": "プライバシーポリシー",
+    "pricing": "料金",
+    "faq": "よくある質問",
+    "releaseNotes": "更新履歴",
     "noteAriaLabel": "note の MyVoiceLab マガジン",
     "xAriaLabel": "X (旧 Twitter) の UCLab アカウント"
   },
@@ -246,9 +249,9 @@
   "resetPassword": {
     "chapter": {
       "cap": "Recover · 再発行",
-      "titleLead": "あたらしい",
-      "titleItalic": "鍵",
-      "titleTail": "を渡します。"
+      "titleLead": "Set a new",
+      "titleItalic": "key",
+      "titleTail": "."
     },
     "description": "ここで新しいパスワードを設定できます。次回以降は、この新しいパスワードでサインインしてください。",
     "newPassword": "新しいパスワード",
@@ -272,9 +275,9 @@
   "me": {
     "chapter": {
       "cap": "Me · じぶん",
-      "titleLead": "あなたの",
-      "titleItalic": "ページ",
-      "titleTail": "。",
+      "titleLead": "Your ",
+      "titleItalic": "page",
+      "titleTail": ".",
       "memberSince": "{date} 登録",
       "voiceSection": "Voice · 声",
       "accountSection": "Account · アカウント",
@@ -286,9 +289,9 @@
       "cardSubtitle": "日記の返答を読み上げる声",
       "chapter": {
         "cap": "Voice · 声を選ぶ",
-        "titleLead": "あなたに",
-        "titleItalic": "寄り添う",
-        "titleTail": "声を。"
+        "titleLead": "Who should",
+        "titleItalic": "listen",
+        "titleTail": " to you?"
       },
       "previewAria": "{label} を試聴",
       "errors": {
@@ -342,9 +345,9 @@
       "subtitle": "新しいパスワードを設定します",
       "chapter": {
         "cap": "Password · パスワード",
-        "titleLead": "鍵を",
-        "titleItalic": "替える",
-        "titleTail": "。"
+        "titleLead": "Change",
+        "titleItalic": "your key",
+        "titleTail": "."
       },
       "newPassword": "新しいパスワード",
       "confirmPassword": "パスワード（確認）",
@@ -381,6 +384,176 @@
       "desc": "登録情報がすべて削除されます。この操作は取り消せません。",
       "confirm": "はい、削除します",
       "cancel": "やめる"
+    },
+    "billing": {
+      "rowTitle": "請求情報",
+      "rowSubtitle": "次回請求日と支払方法の確認",
+      "sectionCap": "Billing · 請求",
+      "chapter": {
+        "cap": "Billing · 請求",
+        "titleLead": "A quiet ",
+        "titleItalic": "year",
+        "titleTail": ", continuing."
+      },
+      "sections": {
+        "nextCharge": "Next charge · 次回請求",
+        "paymentMethod": "Payment method · 支払方法",
+        "history": "History · 請求履歴"
+      },
+      "nextCharge": {
+        "empty": "現在、有料プランには加入していません。",
+        "amount": "{amount} / {period}",
+        "dateLabel": "次回請求日",
+        "planLabel": "プラン",
+        "dummyDate": "2026-05-15",
+        "dummyPlan": "Quiet",
+        "dummyAmount": "¥980",
+        "dummyPeriod": "月"
+      },
+      "paymentMethod": {
+        "cardLabel": "カード",
+        "cardValue": "•••• •••• •••• {last4}",
+        "expires": "有効期限 {month}/{year}",
+        "change": "支払方法を変更",
+        "dummyLast4": "4242",
+        "dummyMonth": "12",
+        "dummyYear": "2028"
+      },
+      "history": {
+        "empty": "請求履歴はまだありません。",
+        "downloadInvoice": "領収書"
+      },
+      "actions": {
+        "changePlan": "プランを変更",
+        "cancelPlan": "解約する",
+        "changePlanSub": "アップグレード・ダウングレード",
+        "cancelPlanSub": "次回請求日から停止します"
+      },
+      "stripePendingToast": "決済機能は近日公開予定です"
+    }
+  },
+  "pricing": {
+    "chapter": {
+      "cap": "Pricing · 料金",
+      "titleLead": "At your pace, ",
+      "titleItalic": "keep going",
+      "titleTail": ".",
+      "lead": "短く試す、じっくり続ける、一年を描く。3 つのプランから選べます。"
+    },
+    "plans": {
+      "still": {
+        "name": "Still",
+        "jp": "しずか",
+        "price": "¥0",
+        "period": "無料",
+        "tagline": "まず、声に出してみる。",
+        "features": ["1 日 10 往復までの日記", "基本の声 1 種", "過去 7 日分の履歴"],
+        "cta": "このまま続ける"
+      },
+      "quiet": {
+        "name": "Quiet",
+        "jp": "しずけさ",
+        "price": "¥980",
+        "period": "/ 月",
+        "tagline": "毎日のリズムに、深く寄り添う。",
+        "features": [
+          "無制限の日記・会話往復",
+          "3 種類の声から選べる",
+          "全期間の履歴と Insights",
+          "月ごとのまとめレポート"
+        ],
+        "cta": "Quiet を選ぶ",
+        "badge": "人気"
+      },
+      "year": {
+        "name": "Year",
+        "jp": "ねん",
+        "price": "¥9,800",
+        "period": "/ 年",
+        "tagline": "一年をまるごと、静かに残す。",
+        "features": [
+          "Quiet のすべての機能",
+          "年間 17% お得（2 か月分）",
+          "年末の年間アーカイブ書き出し",
+          "優先サポート"
+        ],
+        "cta": "Year を選ぶ"
+      }
+    },
+    "note": "いつでも解約できます。請求は次の請求日から停止します。",
+    "stripePendingNote": "※ 決済機能は近日公開予定です。"
+  },
+  "faq": {
+    "chapter": {
+      "cap": "FAQ · よくある質問",
+      "titleLead": "Quiet ",
+      "titleItalic": "answers",
+      "titleTail": " to small questions."
+    },
+    "items": {
+      "q01": {
+        "question": "話した内容は、どこに保存されますか？",
+        "answer": "あなたのアカウントに紐づく形で、暗号化された状態で保存されます。あなた以外は読めません。"
+      },
+      "q02": {
+        "question": "解約したら、過去の日記はどうなりますか？",
+        "answer": "解約後も閲覧はできますが、新しい日記は書けません。完全に削除したい場合は /me からアカウント削除を選んでください。"
+      },
+      "q03": {
+        "question": "AI との会話は学習に使われますか？",
+        "answer": "いいえ。あなたの日記は AI モデルの学習には一切使われません。詳細はプライバシーポリシーをご確認ください。"
+      },
+      "q04": {
+        "question": "オフラインでも使えますか？",
+        "answer": "一部の機能はオフラインで閲覧できますが、日記の録音・要約にはインターネット接続が必要です。"
+      },
+      "q05": {
+        "question": "複数のデバイスで同じアカウントを使えますか？",
+        "answer": "はい。メールアドレスとパスワードでログインすれば、どのデバイスからでも同じ日記にアクセスできます。"
+      }
+    },
+    "expand": "開く",
+    "collapse": "閉じる"
+  },
+  "releaseNotes": {
+    "chapter": {
+      "cap": "Release notes · 更新履歴",
+      "titleLead": "Quiet ",
+      "titleItalic": "updates",
+      "titleTail": ", kept."
+    },
+    "versionLabel": "v{version}",
+    "entries": {
+      "v1_2_0": {
+        "version": "1.2.0",
+        "date": "2026-04-21",
+        "title": "SaaS サーフェスの追加",
+        "items": [
+          "料金ページ・FAQ・更新履歴を新設",
+          "請求情報ページ（UI のみ）を追加",
+          "/me に請求情報への導線を追加"
+        ]
+      },
+      "v1_1_0": {
+        "version": "1.1.0",
+        "date": "2026-04-19",
+        "title": "日記特化への転換",
+        "items": [
+          "UI を Quiet Journal に刷新",
+          "ダーク / ライト / システムのテーマ切替を追加",
+          "LP を日記にフォーカスした構成へ"
+        ]
+      },
+      "v1_0_0": {
+        "version": "1.0.0",
+        "date": "2026-04-17",
+        "title": "PWA 対応",
+        "items": [
+          "ホーム画面への追加に対応",
+          "日本語・英語の URL ベース切替を追加",
+          "Cloudflare AI Gateway による安定化"
+        ]
+      }
     }
   },
   "diary": {
@@ -448,20 +621,20 @@
       "loadFailed": "読み込みに失敗しました",
       "chapter": {
         "archiveLabel": "Archive · 記録",
-        "titleLead": "静かな",
-        "titleItalic": "余白",
-        "titleTail": "の記録。",
+        "titleLead": "A small",
+        "titleItalic": "quiet",
+        "titleTail": "archive.",
         "countSuffix": "件の日記",
-        "emptyLead": "まだ、なにも",
-        "emptyItalic": "語られて",
-        "emptyTail": "いません。"
+        "emptyLead": "Nothing",
+        "emptyItalic": "spoken",
+        "emptyTail": "yet."
       }
     },
     "insights": {
       "cap": "Insights · 気づき",
-      "headingLead": "4 月の、",
-      "headingItalic": "かたち",
-      "headingTail": "。",
+      "headingLead": "April, in",
+      "headingItalic": "shape",
+      "headingTail": ".",
       "stats": "17 件の日記 · 計 4 時間 12 分 · 平均 14 分",
       "dummyNotice": "※ 仮の値です。実データ表示は近日公開予定",
       "warmthLabel": "Warmth · あたたかさの推移",

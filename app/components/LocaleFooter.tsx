@@ -14,7 +14,7 @@
 
 import { NoteIcon } from "@/app/components/icons/note-icon";
 import { XIcon } from "@/app/components/icons/x-icon";
-import { usePathname } from "@/i18n/routing";
+import { Link, usePathname } from "@/i18n/routing";
 import { LEGAL_URLS } from "@/lib/legalUrls";
 import { useTranslations } from "next-intl";
 
@@ -36,6 +36,21 @@ export function LocaleFooter() {
 
   return (
     <footer className="border-t border-[var(--border)] py-8 px-6 text-center">
+      {/* SaaS サーフェスの内部リンク（Pricing / FAQ / Release notes）。
+          既存の逆三角形 2 段（法務 + SNS）とは独立した行として上段に置く。
+          P3 #105 で追加。 */}
+      <div className="mb-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm tracking-wide text-[var(--fg-subtle)]">
+        <Link href="/pricing" className="hover:text-[var(--fg)] transition-colors">
+          {t("pricing")}
+        </Link>
+        <Link href="/faq" className="hover:text-[var(--fg)] transition-colors">
+          {t("faq")}
+        </Link>
+        <Link href="/release-notes" className="hover:text-[var(--fg)] transition-colors">
+          {t("releaseNotes")}
+        </Link>
+      </div>
+
       {/* モバイル: 上段（note / X）と下段（利用規約 / プライバシー）の 2 段で逆三角形に並べる。
           デスクトップ（sm 以上）は sm:contents でラッパーを透過し、従来どおり 1 段で並べる。 */}
       <div className="flex flex-col items-center gap-3 text-sm tracking-wide text-[var(--fg-subtle)] sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-8 sm:gap-y-3">

@@ -4,7 +4,14 @@
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
-import { Cap, ConfirmDialog, PageHeader, Rule, UnderlineField } from "@/app/components/chapter";
+import {
+  BottomTab,
+  Cap,
+  ConfirmDialog,
+  PageHeader,
+  Rule,
+  UnderlineField,
+} from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
@@ -43,18 +50,8 @@ export default function SettingsPasswordPage() {
   // 成功トーストを少し見せてから設定画面へ戻すためのタイマー
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 未ログインユーザーは設定変更不可。AuthGate が /app へ退避するが、
-  // 保護ページ直アクセス時の API 叩き開始を防ぐため、ここでも /app へ退避する。
-  useEffect(() => {
-    let cancelled = false;
-    void supabase.auth.getUser().then(({ data }) => {
-      if (cancelled) return;
-      if (!data.user) router.push("/app");
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [router, supabase]);
+  // 未ログインユーザーの退避は AuthGate（AuthContext の user 監視）が担当。
+  // ページ側で重複チェックはしない。
 
   useEffect(() => {
     return () => {
@@ -108,8 +105,6 @@ export default function SettingsPasswordPage() {
   // Cancel Ghost / Save Primary（章末のボタンペア）
   const baseBtn: CSSProperties = {
     padding: "13px 20px",
-    fontSize: 11,
-    letterSpacing: "0.14em",
     textTransform: "uppercase",
     cursor: "pointer",
     flex: 1,
@@ -131,7 +126,7 @@ export default function SettingsPasswordPage() {
   };
 
   return (
-    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-8 animate-fadeIn">
+    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-24 animate-fadeIn">
       <PageHeader
         left={
           <Link href="/me" style={backLink} className="hover:text-[var(--fg)] transition-colors">
@@ -144,12 +139,10 @@ export default function SettingsPasswordPage() {
       <div className="mt-6">
         <Cap mb={8}>{t("chapter.cap")}</Cap>
         <div
+          className="text-3xl sm:text-4xl leading-tight tracking-tight"
           style={{
             fontFamily: SERIF_FAMILY,
-            fontSize: 26,
             fontWeight: 400,
-            lineHeight: 1.1,
-            letterSpacing: "-0.02em",
           }}
         >
           {t("chapter.titleLead")}
@@ -201,14 +194,14 @@ export default function SettingsPasswordPage() {
         {/* Supabase は updateUser でパスワードを更新すると、現在のセッション以外の
             リフレッシュトークンを失効させる。他端末からは再ログインが必要になる旨を
             送信前に明示する（デザインソース b-section の "We'll sign you out..." 相当）。 */}
-        <div className="text-[10.5px] text-[var(--fg-muted)] leading-[1.6] mt-4">
+        <div className="text-xs sm:text-sm text-[var(--fg-muted)] leading-[1.6] mt-4">
           {t("signOutNotice")}
         </div>
 
         {errorMsg && (
           <div
             role="alert"
-            className="mt-4 px-3 py-2 text-[var(--error)] text-[11px]"
+            className="mt-4 px-3 py-2 text-[var(--error)] text-xs sm:text-sm"
             style={{ border: "0.5px solid var(--error)" }}
           >
             {errorMsg}
@@ -222,11 +215,17 @@ export default function SettingsPasswordPage() {
             type="button"
             onClick={() => router.push("/me")}
             disabled={loading}
+            className="text-xs sm:text-sm tracking-widest"
             style={ghostStyle}
           >
             {t("cancel")}
           </button>
-          <button type="submit" disabled={!canSubmit} style={primaryStyle}>
+          <button
+            type="submit"
+            disabled={!canSubmit}
+            className="text-xs sm:text-sm tracking-widest"
+            style={primaryStyle}
+          >
             {loading ? t("submitting") : t("submit")}
           </button>
         </div>
@@ -234,7 +233,7 @@ export default function SettingsPasswordPage() {
         {/* 成功トースト：スクリーンリーダー向けに aria-live を付与 */}
         <output
           aria-live="polite"
-          className={`block text-center text-[10px] uppercase tracking-[0.2em] text-[var(--fg-muted)] mt-4 transition-opacity ${
+          className={`block text-center text-xs sm:text-sm uppercase tracking-[0.2em] text-[var(--fg-muted)] mt-4 transition-opacity ${
             showToast ? "opacity-100" : "opacity-0"
           }`}
         >
@@ -257,6 +256,8 @@ export default function SettingsPasswordPage() {
           onConfirm={executePasswordUpdate}
         />
       )}
+
+      <BottomTab />
     </main>
   );
 }

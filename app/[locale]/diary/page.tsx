@@ -13,7 +13,6 @@ import {
   isGuestLimitReached,
 } from "@/lib/guestUsage";
 import { mapGetUserMediaError, pickBrowserMimeType } from "@/lib/recordingMime";
-import { createClient } from "@/lib/supabase/client";
 import { Mic, Square } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -95,14 +94,16 @@ function formatElapsed(ms: number): string {
 
 export default function DiaryPage() {
   const router = useRouter();
-  const { openDialog } = useAuth();
+  const { openDialog, user, loading: authLoading } = useAuth();
   // UI ロケール（ja/en）。Whisper の language ヒントと chat ルートのシステムプロンプトへ渡す。
   const locale = useLocale();
   const t = useTranslations("diary");
   // プロンプト見出しは /app と共用するため hub.chapter 側の訳を使う。
   const tHub = useTranslations("hub.chapter");
 
-  const [authStatus, setAuthStatus] = useState<AuthStatus>("unknown");
+  // AuthContext の user / loading から authStatus を派生。AuthContext が
+  // 初回 getUser() を 1 回済ませているので、重複呼び出しはしない。
+  const authStatus: AuthStatus = authLoading ? "unknown" : user ? "authed" : "guest";
   const [isStarted, setIsStarted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<Status>("idle");
@@ -144,13 +145,8 @@ export default function DiaryPage() {
     };
   }, []);
 
-  // 認証状態
+  // ゲスト回数のみローカルから復元。authStatus は AuthContext から派生しているので副作用不要。
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (!mountedRef.current) return;
-      setAuthStatus(data.user ? "authed" : "guest");
-    });
     setGuestCount(getGuestCount());
   }, []);
 
@@ -575,7 +571,7 @@ export default function DiaryPage() {
       <PageHeader
         center={
           isStarted ? (
-            <span className="uppercase tracking-[0.32em] text-[9px] text-[var(--fg-muted)]">
+            <span className="uppercase tracking-[0.32em] text-xs sm:text-sm text-[var(--fg-muted)]">
               {isRecording ? t("status.recording") : t("header.title")}
             </span>
           ) : null
@@ -585,14 +581,14 @@ export default function DiaryPage() {
             <button
               type="button"
               onClick={() => handleFinish()}
-              className="uppercase tracking-[0.32em] text-[9px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors bg-transparent border-0 cursor-pointer p-0"
+              className="uppercase tracking-[0.32em] text-xs sm:text-sm text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors bg-transparent border-0 cursor-pointer p-0"
             >
               {t("header.finish")}
             </button>
           ) : (
             <Link
               href="/app"
-              className="uppercase tracking-[0.32em] text-[9px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
+              className="uppercase tracking-[0.32em] text-xs sm:text-sm text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
             >
               ← {t("header.back")}
             </Link>
@@ -605,14 +601,8 @@ export default function DiaryPage() {
       <div className="mt-6">
         <Cap mb={10}>{tHub("promptLabel")}</Cap>
         <div
-          style={{
-            fontFamily: SERIF_FAMILY,
-            fontSize: 20,
-            fontWeight: 400,
-            lineHeight: 1.28,
-            letterSpacing: "-0.01em",
-            fontStyle: "italic",
-          }}
+          className="text-xl sm:text-2xl italic leading-tight tracking-tight"
+          style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
         >
           {tHub("promptBody")}
         </div>
@@ -630,8 +620,10 @@ export default function DiaryPage() {
               })}
             </Cap>
           )}
-          <p className="text-[12px] text-[var(--fg-muted)] leading-relaxed">{t("prompt.body")}</p>
-          {errorMsg && <div className="text-[11px] text-[var(--error)]">{errorMsg}</div>}
+          <p className="text-xs sm:text-sm text-[var(--fg-muted)] leading-relaxed">
+            {t("prompt.body")}
+          </p>
+          {errorMsg && <div className="text-xs sm:text-sm text-[var(--error)]">{errorMsg}</div>}
           <div className="mt-1">
             <BtnPrimary
               big
@@ -645,7 +637,7 @@ export default function DiaryPage() {
           {authStatus === "authed" && (
             <Link
               href="/diary/history"
-              className="uppercase text-[9px] tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors self-start"
+              className="uppercase text-xs sm:text-sm tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors self-start"
             >
               {t("prompt.viewHistory")} →
             </Link>
@@ -673,12 +665,9 @@ export default function DiaryPage() {
               m.role === "user" ? (
                 <div
                   key={m.id}
-                  className="animate-fadeSlideUp"
+                  className="animate-fadeSlideUp text-base sm:text-lg leading-loose"
                   style={{
                     fontFamily: SERIF_FAMILY,
-                    fontSize: 15,
-                    lineHeight: 1.75,
-                    letterSpacing: "-0.003em",
                     color: "var(--fg)",
                     whiteSpace: "pre-wrap",
                   }}
@@ -691,15 +680,13 @@ export default function DiaryPage() {
                   className="animate-fadeSlideUp"
                   style={{ borderLeft: "1.5px solid var(--fg)", paddingLeft: 12 }}
                 >
-                  <div className="text-[9px] uppercase tracking-[0.3em] text-[var(--fg-muted)] mb-1">
+                  <div className="text-xs sm:text-sm uppercase tracking-[0.3em] text-[var(--fg-muted)] mb-1">
                     {t("chapter.quietVoice")}
                   </div>
                   <div
+                    className="text-sm sm:text-base italic leading-normal"
                     style={{
                       fontFamily: SERIF_FAMILY,
-                      fontStyle: "italic",
-                      fontSize: 14,
-                      lineHeight: 1.55,
                       color: "var(--fg)",
                       whiteSpace: "pre-wrap",
                     }}
@@ -713,7 +700,9 @@ export default function DiaryPage() {
           </div>
 
           {errorMsg && !summaryResult && (
-            <div className="mb-3 text-[11px] text-[var(--error)] text-center">{errorMsg}</div>
+            <div className="mb-3 text-xs sm:text-sm text-[var(--error)] text-center">
+              {errorMsg}
+            </div>
           )}
 
           {/* 録音パネル：Waves + 経過時間 + ステータス + マイクボタン。
@@ -730,7 +719,7 @@ export default function DiaryPage() {
                   }}
                 />
                 <span
-                  className="text-[11px] tracking-[0.06em]"
+                  className="text-xs sm:text-sm tracking-[0.06em]"
                   style={{ fontFamily: MONO_FAMILY, color: "var(--fg)" }}
                 >
                   {formatElapsed(elapsedMs)}
@@ -738,7 +727,7 @@ export default function DiaryPage() {
                 <div className="flex-1">
                   <Waves n={40} h={14} active={wavesActive} />
                 </div>
-                <span className="text-[9px] uppercase tracking-[0.3em] text-[var(--fg-muted)]">
+                <span className="text-xs sm:text-sm uppercase tracking-[0.3em] text-[var(--fg-muted)]">
                   {statusLabel}
                 </span>
               </div>
@@ -776,7 +765,7 @@ export default function DiaryPage() {
                 </button>
               </div>
 
-              <div className="mt-3 text-[9px] uppercase tracking-[0.3em] text-[var(--fg-subtle)] text-center">
+              <div className="mt-3 text-xs sm:text-sm uppercase tracking-[0.3em] text-[var(--fg-subtle)] text-center">
                 {t("hint")}
               </div>
             </div>
@@ -793,34 +782,27 @@ export default function DiaryPage() {
           >
             <Cap mb={6}>{t("summary.heading")}</Cap>
             <h2
-              style={{
-                fontFamily: SERIF_FAMILY,
-                fontSize: 22,
-                fontWeight: 400,
-                lineHeight: 1.25,
-                letterSpacing: "-0.01em",
-                fontStyle: "italic",
-              }}
-              className="mb-4"
+              className="mb-4 text-2xl sm:text-3xl italic leading-tight tracking-tight"
+              style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
             >
               {summaryResult.title}
             </h2>
             <p
-              className="text-[13px] leading-relaxed whitespace-pre-wrap mb-6"
+              className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap mb-6"
               style={{ color: "var(--fg-muted)" }}
             >
               {summaryResult.summary}
             </p>
 
             {saveStatus === "error" && (
-              <div className="mb-4 text-[11px] text-[var(--error)] text-center">
+              <div className="mb-4 text-xs sm:text-sm text-[var(--error)] text-center">
                 {t("errors.saveFailed")}
               </div>
             )}
 
             {authStatus === "guest" ? (
               <>
-                <p className="text-[11px] text-[var(--fg-muted)] mb-4 leading-relaxed">
+                <p className="text-xs sm:text-sm text-[var(--fg-muted)] mb-4 leading-relaxed">
                   {t("summary.guestNote")}
                 </p>
                 <div className="flex gap-2">
@@ -868,19 +850,15 @@ export default function DiaryPage() {
           >
             <Cap mb={6}>{t("summary.heading")}</Cap>
             <h2
-              style={{
-                fontFamily: SERIF_FAMILY,
-                fontSize: 20,
-                fontWeight: 400,
-                lineHeight: 1.25,
-                letterSpacing: "-0.01em",
-                fontStyle: "italic",
-              }}
-              className="mb-3"
+              className="mb-3 text-xl sm:text-2xl italic leading-tight tracking-tight"
+              style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
             >
               {t("guestLimitModal.title", { limit: GUEST_LIMIT })}
             </h2>
-            <p className="text-[12px] leading-relaxed mb-5" style={{ color: "var(--fg-muted)" }}>
+            <p
+              className="text-xs sm:text-sm leading-relaxed mb-5"
+              style={{ color: "var(--fg-muted)" }}
+            >
               {t("guestLimitModal.desc")}
             </p>
             <div className="flex gap-2">

@@ -4,7 +4,7 @@
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
-import { Cap, PageHeader, Rule } from "@/app/components/chapter";
+import { BottomTab, Cap, PageHeader, Rule } from "@/app/components/chapter";
 import { Link } from "@/i18n/routing";
 import {
   type PresetVoiceId,
@@ -140,7 +140,7 @@ export default function VoiceSettingsPage() {
   };
 
   return (
-    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-8 animate-fadeIn">
+    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-24 animate-fadeIn">
       <PageHeader
         left={
           <Link href="/me" style={backLink} className="hover:text-[var(--fg)] transition-colors">
@@ -153,12 +153,10 @@ export default function VoiceSettingsPage() {
       <div className="mt-6">
         <Cap mb={8}>{t("chapter.cap")}</Cap>
         <div
+          className="text-3xl sm:text-4xl leading-tight tracking-tight"
           style={{
             fontFamily: SERIF_FAMILY,
-            fontSize: 26,
             fontWeight: 400,
-            lineHeight: 1.1,
-            letterSpacing: "-0.02em",
           }}
         >
           {t("chapter.titleLead")}
@@ -174,7 +172,7 @@ export default function VoiceSettingsPage() {
       {previewError && (
         <div
           role="alert"
-          className="mb-4 px-3 py-2 text-[var(--error)] text-[11px]"
+          className="mb-4 px-3 py-2 text-[var(--error)] text-xs sm:text-sm"
           style={{ border: "0.5px solid var(--error)" }}
         >
           {previewError}
@@ -204,18 +202,17 @@ export default function VoiceSettingsPage() {
               >
                 <div className="flex items-baseline gap-[10px]">
                   <span
+                    className="text-xl sm:text-2xl tracking-tight"
                     style={{
                       fontFamily: SERIF_FAMILY,
                       fontStyle: isSelected ? "italic" : "normal",
-                      fontSize: 20,
-                      letterSpacing: "-0.01em",
                     }}
                   >
                     {label}
                   </span>
-                  <span className="text-[10px] text-[var(--fg-muted)]">{jp}</span>
+                  <span className="text-xs sm:text-sm text-[var(--fg-muted)]">{jp}</span>
                 </div>
-                <div className="text-[11px] text-[var(--fg-muted)] mt-[2px] leading-[1.45]">
+                <div className="text-xs sm:text-sm text-[var(--fg-muted)] mt-[2px] leading-[1.45]">
                   {description}
                 </div>
               </button>
@@ -281,19 +278,21 @@ export default function VoiceSettingsPage() {
       </ul>
 
       {voices.length === 0 && (
-        <p className="text-[11px] text-[var(--fg-muted)] py-10 text-center">{t("empty")}</p>
+        <p className="text-xs sm:text-sm text-[var(--fg-muted)] py-10 text-center">{t("empty")}</p>
       )}
 
       {/* 保存完了トースト */}
       {toastVisible && (
         <output
           aria-live="polite"
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 inline-flex items-center px-5 py-3 bg-[var(--bg-elevated)] text-[var(--fg)] text-[10px] uppercase tracking-[0.2em] shadow-lg"
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 inline-flex items-center px-5 py-3 bg-[var(--bg-elevated)] text-[var(--fg)] text-xs sm:text-sm uppercase tracking-[0.2em] shadow-lg"
           style={{ border: "0.5px solid var(--border)" }}
         >
           {t("saved")}
         </output>
       )}
+
+      <BottomTab />
     </main>
   );
 }

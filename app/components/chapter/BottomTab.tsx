@@ -60,37 +60,50 @@ export function BottomTab() {
   const pathname = usePathname();
   const active = resolveActive(pathname);
 
+  // 画面下固定（position: fixed）。
+  // - 背景は var(--bg) で塗り、スクロール時に後ろの本文が透けないようにする
+  // - iOS セーフエリアを env(safe-area-inset-bottom) で吸収
+  // - 外側の <nav> は横幅 100% で縁まで伸ばし、中の grid は max-w-md に収める
+  // 利用ページ側は main 末尾の `pb-*` を十分に確保すること（tab の高さ + セーフエリア）。
   return (
     <nav
       aria-label="Primary"
-      className="grid grid-cols-4 border-t border-[var(--border)] pt-[10px]"
+      className="fixed bottom-0 left-0 right-0 z-20 border-t border-[var(--border)]"
+      style={{
+        backgroundColor: "var(--bg)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
     >
-      {TABS.map((tab) => {
-        const isActive = tab.key === active;
-        return (
-          <Link
-            key={tab.key}
-            href={tab.href}
-            className="flex flex-col items-center gap-[2px] no-underline"
-            style={{ color: isActive ? "var(--fg)" : "var(--fg-muted)" }}
-          >
-            <span
-              style={{
-                fontFamily: isActive
-                  ? 'var(--font-serif), "Noto Serif JP", serif'
-                  : "var(--font-jakarta), var(--font-noto), sans-serif",
-                fontStyle: isActive ? "italic" : "normal",
-                fontSize: isActive ? 13 : 11,
-                fontWeight: 400,
-                letterSpacing: "-0.005em",
-              }}
+      <div className="grid grid-cols-4 max-w-md mx-auto px-7 pt-[10px] pb-[10px]">
+        {TABS.map((tab) => {
+          const isActive = tab.key === active;
+          return (
+            <Link
+              key={tab.key}
+              href={tab.href}
+              className="flex flex-col items-center gap-[2px] no-underline"
+              style={{ color: isActive ? "var(--fg)" : "var(--fg-muted)" }}
             >
-              {tab.label}
-            </span>
-            <span className="text-[8px] tracking-[0.2em] opacity-55">{tab.jp}</span>
-          </Link>
-        );
-      })}
+              <span
+                className={
+                  isActive
+                    ? "text-sm sm:text-base italic tracking-tight"
+                    : "text-xs sm:text-sm tracking-tight"
+                }
+                style={{
+                  fontFamily: isActive
+                    ? 'var(--font-serif), "Noto Serif JP", serif'
+                    : "var(--font-jakarta), var(--font-noto), sans-serif",
+                  fontWeight: 400,
+                }}
+              >
+                {tab.label}
+              </span>
+              <span className="text-xs sm:text-sm tracking-[0.2em] opacity-55">{tab.jp}</span>
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }

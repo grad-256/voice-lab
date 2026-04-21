@@ -8,7 +8,7 @@ import { BottomTab, BtnPrimary, Cap, PageHeader, Rule } from "@/app/components/c
 import { Link } from "@/i18n/routing";
 import type { User } from "@supabase/supabase-js";
 import { User as UserIcon } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
@@ -36,28 +36,25 @@ function getGreetingKey(hour: number): GreetingKey {
   return "greetingNight";
 }
 
-// 日付の "Cap" 表示。locale ごとに読める形に整形する。
-// JA: "火曜日 · 4月21日" / EN: "Tuesday · Apr 21"
-function formatDateCap(date: Date, locale: string): string {
-  const tag = locale === "ja" ? "ja-JP" : "en-US";
-  const weekday = date.toLocaleDateString(tag, { weekday: "long" });
-  const md =
-    locale === "ja"
-      ? `${date.getMonth() + 1}月${date.getDate()}日`
-      : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+// 日付の "Cap" 表示。JA/EN ロケール問わず Chapter 系譜として英語固定
+// （下の 7 日グリッドも Mon/Tue/… 英語固定なので、同一画面での二重描画を避ける）。
+function formatDateCap(date: Date): string {
+  const weekday = date.toLocaleDateString("en-US", { weekday: "long" });
+  const md = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   return `${weekday} · ${md}`;
 }
 
 // 直近 7 日ぶんのセルを「今日 → 6 日前」の順で生成。
 // 同日キーは `YYYY-M-D`（0 埋めしない）で比較、ローカルタイム基準。
-function buildLast7Days(entries: RawDiaryItem[], locale: string): DayCell[] {
+function buildLast7Days(entries: RawDiaryItem[]): DayCell[] {
   const entryDates = new Set(
     entries.map((e) => {
       const d = new Date(e.created_at);
       return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
     })
   );
-  const tag = locale === "ja" ? "ja-JP" : "en-US";
+  // 曜日ラベルは Chapter 系譜として常に英語（Mon/Tue/…）に統一する。
+  // 日本語ロケールでも「活字のリズム」を保つため EN 固定（ユーザー指定）。
   const now = new Date();
   const cells: DayCell[] = [];
   for (let i = 0; i < 7; i++) {
@@ -65,7 +62,7 @@ function buildLast7Days(entries: RawDiaryItem[], locale: string): DayCell[] {
     d.setDate(d.getDate() - i);
     const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
     cells.push({
-      dayLabel: d.toLocaleDateString(tag, { weekday: "short" }),
+      dayLabel: d.toLocaleDateString("en-US", { weekday: "short" }),
       dayNum: String(d.getDate()).padStart(2, "0"),
       isToday: i === 0,
       hasEntry: entryDates.has(key),
@@ -84,7 +81,6 @@ function extractName(user: User | null, fallback: string): string {
 
 export default function HubPage() {
   const t = useTranslations("hub");
-  const locale = useLocale();
   const { user, loading, openDialog } = useAuth();
   const isAuthed = loading ? null : user !== null;
 
@@ -119,12 +115,12 @@ export default function HubPage() {
 
   const greetingKey = now ? getGreetingKey(now.getHours()) : null;
   const name = extractName(user, t("chapter.noName"));
-  const dateCap = now ? formatDateCap(now, locale) : null;
-  const days = now ? buildLast7Days(entries, locale) : [];
+  const dateCap = now ? formatDateCap(now) : null;
+  const days = now ? buildLast7Days(entries) : [];
   const streakCount = days.filter((d) => d.hasEntry).length;
 
   return (
-    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-3">
+    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-24">
       {/* 章立てヘッダ：左に MyVoiceLab、右にログイン状態 */}
       <PageHeader
         right={
@@ -134,7 +130,7 @@ export default function HubPage() {
             <button
               type="button"
               onClick={() => openDialog("login")}
-              className="uppercase tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors bg-transparent border-0 cursor-pointer text-[9px] p-0"
+              className="uppercase tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors bg-transparent border-0 cursor-pointer text-xs sm:text-sm p-0"
             >
               {t("login")}
             </button>
@@ -161,12 +157,10 @@ export default function HubPage() {
       <div className="mt-6">
         <Cap mb={8}>{dateCap ?? " "}</Cap>
         <div
+          className="text-4xl sm:text-5xl tracking-tight"
           style={{
             fontFamily: SERIF_FAMILY,
-            fontSize: 34,
             fontWeight: 400,
-            lineHeight: 1.06,
-            letterSpacing: "-0.025em",
             minHeight: 36 * 2 + 4,
             backgroundImage:
               "linear-gradient(90deg, var(--grad-title-from), var(--grad-title-via), var(--grad-title-to))",
@@ -183,7 +177,9 @@ export default function HubPage() {
             </>
           )}
         </div>
-        <div className="text-[12px] text-[var(--fg-muted)] mt-[6px]">{t("chapter.subline")}</div>
+        <div className="text-xs sm:text-sm text-[var(--fg-muted)] mt-[6px]">
+          {t("chapter.subline")}
+        </div>
       </div>
 
       <Rule mv={20} />
@@ -197,13 +193,10 @@ export default function HubPage() {
       >
         <Cap mb={10}>{t("chapter.promptLabel")}</Cap>
         <div
+          className="text-xl sm:text-2xl leading-tight tracking-tight italic"
           style={{
             fontFamily: SERIF_FAMILY,
-            fontSize: 20,
             fontWeight: 400,
-            lineHeight: 1.28,
-            letterSpacing: "-0.01em",
-            fontStyle: "italic",
           }}
         >
           {t("chapter.promptBody")}
@@ -218,12 +211,12 @@ export default function HubPage() {
       {/* ゲスト告知：ログインで日記が保存されることを伝える一行。
           旧 Hub の guestStatus* を再利用し、空白はキー側で維持。 */}
       {isAuthed === false && (
-        <div className="mt-[14px] text-[11px] text-[var(--fg-muted)] leading-relaxed">
+        <div className="mt-[14px] text-xs sm:text-sm text-[var(--fg-muted)] leading-relaxed">
           {t("guestStatusBefore")}
           <button
             type="button"
             onClick={() => openDialog("login")}
-            className="underline underline-offset-2 decoration-[var(--fg-muted)] hover:text-[var(--fg)] bg-transparent border-0 p-0 cursor-pointer text-[11px]"
+            className="underline underline-offset-2 decoration-[var(--fg-muted)] hover:text-[var(--fg)] bg-transparent border-0 p-0 cursor-pointer text-xs sm:text-sm"
           >
             {t("guestStatusLogin")}
           </button>
@@ -239,7 +232,7 @@ export default function HubPage() {
             <Cap mb={0}>{t("chapter.streakLabel")}</Cap>
             <span
               style={{ fontFamily: MONO_FAMILY }}
-              className="text-[10px] text-[var(--fg-muted)]"
+              className="text-xs sm:text-sm text-[var(--fg-muted)]"
             >
               {t("chapter.streakCount", { count: streakCount })}
             </span>
@@ -257,16 +250,15 @@ export default function HubPage() {
                   justifyContent: "space-between",
                 }}
               >
-                <div className="text-[8px] tracking-[0.15em] text-[var(--fg-muted)] uppercase">
+                <div className="text-xs sm:text-sm tracking-[0.15em] text-[var(--fg-muted)] uppercase">
                   {x.dayLabel}
                 </div>
                 <div className="flex justify-between items-end">
                   <div
+                    className="text-base sm:text-lg tracking-tight"
                     style={{
                       fontFamily: SERIF_FAMILY,
                       fontStyle: x.isToday ? "italic" : "normal",
-                      fontSize: 16,
-                      letterSpacing: "-0.02em",
                     }}
                   >
                     {x.dayNum}

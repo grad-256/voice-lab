@@ -48,7 +48,7 @@ export function UnderlineField({
     <div className="py-4" style={{ borderBottom: "0.5px solid var(--border)" }}>
       <label
         htmlFor={id}
-        className="block text-[9px] uppercase tracking-[0.3em] text-[var(--fg-muted)]"
+        className="block text-xs sm:text-sm uppercase tracking-[0.3em] text-[var(--fg-muted)]"
       >
         {label}
       </label>
@@ -62,12 +62,10 @@ export function UnderlineField({
           placeholder={placeholder}
           minLength={minLength}
           autoComplete={autoComplete}
-          className="flex-1 bg-transparent border-0 outline-none text-[var(--fg)] placeholder:text-[var(--fg-subtle)]"
-          style={{
-            fontFamily: MONO_FAMILY,
-            fontSize: 15,
-            letterSpacing: isVisible ? "0.04em" : "0.18em",
-          }}
+          className={`flex-1 bg-transparent border-0 outline-none text-base sm:text-lg text-[var(--fg)] placeholder:text-[var(--fg-subtle)] ${
+            isVisible ? "tracking-wider" : "tracking-[0.18em]"
+          }`}
+          style={{ fontFamily: MONO_FAMILY }}
         />
         <button
           type="button"
@@ -78,7 +76,7 @@ export function UnderlineField({
           {isVisible ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />}
         </button>
       </div>
-      {sub && <div className="text-[10.5px] text-[var(--fg-muted)] mt-1">{sub}</div>}
+      {sub && <div className="text-xs sm:text-sm text-[var(--fg-muted)] mt-1">{sub}</div>}
     </div>
   );
 }

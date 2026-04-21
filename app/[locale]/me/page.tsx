@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
+import { useAuth } from "@/app/components/auth/AuthContext";
 import {
   BottomTab,
   Cap,
@@ -55,7 +56,10 @@ export default function MePage() {
   const tFooter = useTranslations("footer");
   const locale = useLocale();
   const router = useRouter();
+  // 破壊的操作（signOut / delete）用に supabase クライアントは保持する。
+  // user 情報は AuthContext から取り、重複 getUser() は行わない。
   const supabase = createClient();
+  const { user } = useAuth();
 
   // 確認モーダルの開閉（破壊的操作は必ず確認を経由）
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -67,9 +71,10 @@ export default function MePage() {
   // テーマ選択は SSR では決まらないので、マウント後に localStorage から読む。
   // 未マウント時は null にしておき、ボタンのアクティブ表示を抑える（ちらつき防止）。
   const [themePref, setThemePref] = useState<ThemePreference | null>(null);
-  // 章題下のメタ情報用に、一度だけ user を引く
-  const [userEmail, setUserEmail] = useState<string>("");
-  const [memberSince, setMemberSince] = useState<string>("");
+
+  // 章題下のメタ情報は AuthContext の user から直接導出（副作用なし）
+  const userEmail = user?.email ?? "";
+  const memberSince = formatMemberSince(user?.created_at, locale);
 
   useEffect(() => {
     // localStorage から現在の声 ID を取り、i18n のラベルに引き直す
@@ -88,19 +93,6 @@ export default function MePage() {
     if (themePref !== "system") return;
     return subscribeSystemTheme(applyResolvedTheme);
   }, [themePref]);
-
-  // 章題下の email · Member since 用に、マウント後に一度だけ user を取得する
-  useEffect(() => {
-    let cancelled = false;
-    void supabase.auth.getUser().then(({ data }) => {
-      if (cancelled) return;
-      if (data.user?.email) setUserEmail(data.user.email);
-      setMemberSince(formatMemberSince(data.user?.created_at, locale));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [supabase, locale]);
 
   const handleThemeChange = (next: ThemePreference) => {
     setThemePref(next);
@@ -144,27 +136,22 @@ export default function MePage() {
   };
 
   return (
-    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-3 animate-fadeIn">
+    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-24 animate-fadeIn">
       <PageHeader />
 
       {/* 章題：Cap + Fraunces 章題 + メタ情報（email · Member since） */}
       <div className="mt-6">
         <Cap mb={8}>{t("chapter.cap")}</Cap>
         <div
-          style={{
-            fontFamily: SERIF_FAMILY,
-            fontSize: 30,
-            fontWeight: 400,
-            lineHeight: 1.05,
-            letterSpacing: "-0.025em",
-          }}
+          className="text-3xl sm:text-4xl md:text-5xl tracking-tight"
+          style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
         >
           {t("chapter.titleLead")}
           <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
           {t("chapter.titleTail")}
         </div>
         {(userEmail || memberSince) && (
-          <div className="text-[11px] text-[var(--fg-muted)] mt-1">
+          <div className="text-xs sm:text-sm text-[var(--fg-muted)] mt-1">
             {userEmail}
             {userEmail && memberSince && " · "}
             {memberSince && t("chapter.memberSince", { date: memberSince })}
@@ -195,10 +182,10 @@ export default function MePage() {
           style={{ borderBottom: "0.5px solid var(--border)" }}
         >
           <div className="min-w-0">
-            <div className="text-[13px] font-medium tracking-[-0.005em] text-[var(--fg)]">
+            <div className="text-sm sm:text-base font-medium tracking-[-0.005em] text-[var(--fg)]">
               {t("theme.cardTitle")}
             </div>
-            <div className="text-[10.5px] text-[var(--fg-muted)] mt-[2px]">
+            <div className="text-xs sm:text-sm text-[var(--fg-muted)] mt-[2px]">
               {t("theme.cardSubtitle")}
             </div>
           </div>
@@ -245,6 +232,18 @@ export default function MePage() {
         />
       </div>
 
+      {/* Billing セクション：請求情報への導線（UI のみ・Stripe は #55） */}
+      <Cap mb={6}>{t("billing.sectionCap")}</Cap>
+      <div className="mb-4">
+        <SettingRow
+          href="/me/billing"
+          label={t("billing.rowTitle")}
+          sub={t("billing.rowSubtitle")}
+          value="→"
+          last
+        />
+      </div>
+
       {/* Privacy セクション：Logout / Delete account */}
       <Cap mb={6}>{t("chapter.privacySection")}</Cap>
       <div>
@@ -270,7 +269,7 @@ export default function MePage() {
       {errorMsg && !showDeleteConfirm && !showLogoutConfirm && (
         <div
           role="alert"
-          className="mt-4 px-4 py-3 text-[var(--error)] text-[11px]"
+          className="mt-4 px-4 py-3 text-xs sm:text-sm text-[var(--error)]"
           style={{ border: "0.5px solid var(--error)" }}
         >
           {errorMsg}
@@ -283,13 +282,8 @@ export default function MePage() {
           法務リンクは Notion 公開ページ（PWA scope 外）を外部ブラウザで開く。 */}
       <div className="mt-8 pt-4" style={{ borderTop: "0.5px solid var(--border)" }}>
         <div
-          className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[var(--fg-muted)]"
-          style={{
-            fontFamily: MONO_FAMILY,
-            fontSize: 9,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-          }}
+          className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm uppercase tracking-[0.2em] text-[var(--fg-muted)]"
+          style={{ fontFamily: MONO_FAMILY }}
         >
           <a
             href={LEGAL_URLS.terms}
@@ -328,9 +322,7 @@ export default function MePage() {
         </div>
       </div>
 
-      <div className="mt-3">
-        <BottomTab />
-      </div>
+      <BottomTab />
 
       {/* ログアウト確認モーダル */}
       {showLogoutConfirm && (
