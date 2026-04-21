@@ -30,6 +30,10 @@
   --border: #262624;
   --border-strong: #36342f;
 
+  /* Chapter 系譜：トランスクリプトのハイライト等、ink を薄く敷く用途。
+     accent-subtle が青寄りなのに対し、こちらは無彩色（ink 色）の chip。 */
+  --chip: rgba(232, 230, 225, 0.06);
+
   --error: #c26767;
   --error-bg: rgba(194, 103, 103, 0.14);
 
@@ -77,6 +81,9 @@
   --border: #c8beaa;
   --border-strong: #a89f8c;
 
+  /* Chapter 系譜：紙の上ではインク色を薄く敷く chip。 */
+  --chip: rgba(15, 13, 8, 0.05);
+
   --error: #a04444;
   --error-bg: rgba(160, 68, 68, 0.08);
 
@@ -123,14 +130,17 @@ body {
    タイポグラフィのユーティリティ（セリフ見出し用）
    ============================================================ */
 .font-serif-jp {
-  font-family: var(--font-serif), "Noto Serif JP", "YuMincho", "Hiragino Mincho ProN", serif;
+  /* 欧文は Fraunces、和文は Noto Serif JP に自動フォールバックさせる。
+     CSS フォント解決は「次の family に flip」するため、混植テキストでも
+     Fraunces が欧文を、Noto Serif JP が和文をそれぞれ担当する。 */
+  font-family: var(--font-serif), var(--font-noto-serif), "YuMincho", "Hiragino Mincho ProN", serif;
   font-feature-settings: "palt" 1;
 }
 
 .font-mono-jp {
-  /* TODO: 等幅フォントを Next Font で読む場合は root layout で `--font-mono` を定義して先頭に追加する。
-     現状は root で未バインドのため変数参照せずシステム等幅を直接指定する。 */
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* JetBrains Mono を next/font で読み込み済み（layout.tsx）。
+     数字は tabular-nums で等幅に揃え、letter-spacing で活字リズムを作る。 */
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
