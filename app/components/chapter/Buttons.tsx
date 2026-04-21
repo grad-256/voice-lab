@@ -9,6 +9,7 @@
 // 付いてしまうため、external=true のとき素の <a target="_blank"> に分岐する。
 
 import { Link } from "@/i18n/routing";
+import { SANS_FAMILY } from "@/lib/typography";
 import type { CSSProperties, ReactNode } from "react";
 
 type BaseProps = {
@@ -42,7 +43,7 @@ function buildSharedStyle(full: boolean, big: boolean): CSSProperties {
     alignItems: "center",
     justifyContent: "center",
     textDecoration: "none",
-    fontFamily: "var(--font-jakarta), var(--font-noto), sans-serif",
+    fontFamily: SANS_FAMILY,
     border: "none",
   };
 }

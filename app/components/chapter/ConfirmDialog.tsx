@@ -6,10 +6,9 @@
 // 削除など破壊的操作も grayscale + 1 accent のルールに従い、CTA は黒で統一する
 // （色で破壊性を示さず、章題と本文文言で危険度を伝える流儀）。
 
+import { SERIF_FAMILY } from "@/lib/typography";
 import type { CSSProperties } from "react";
 import { Cap } from "./Cap";
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
 
 type ConfirmDialogProps = {
   /** aria-labelledby 用の id（呼び出し側でユニークに） */

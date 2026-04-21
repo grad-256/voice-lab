@@ -7,10 +7,9 @@ export const runtime = "edge";
 
 import { Cap, FaqItem, PageHeader, Rule } from "@/app/components/chapter";
 import { Link } from "@/i18n/routing";
+import { SERIF_FAMILY } from "@/lib/typography";
 import { useTranslations } from "next-intl";
 import { type CSSProperties, useState } from "react";
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
 
 // 並び順と番号表記はコード側で固定。i18n 側に "01" 等の数字は書かない（並び替え耐性のため）。
 const FAQ_KEYS = ["q01", "q02", "q03", "q04", "q05"] as const;
@@ -49,7 +48,7 @@ export default function FaqPage() {
           style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
         >
           {t("chapter.titleLead")}
-          <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
+          <span>{t("chapter.titleAccent")}</span>
           {t("chapter.titleTail")}
         </div>
       </div>

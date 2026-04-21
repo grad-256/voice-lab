@@ -6,11 +6,9 @@ export const runtime = "edge";
 import { Cap, PageHeader, Rule, UnderlineField } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
+import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
 import { useTranslations } from "next-intl";
 import { type CSSProperties, useState } from "react";
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
-const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
 
 const MIN_PASSWORD_LENGTH = 6;
 
@@ -96,7 +94,7 @@ export default function ResetPasswordPage() {
         >
           {t("chapter.titleLead")}
           <br />
-          <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
+          <span>{t("chapter.titleAccent")}</span>
           {t("chapter.titleTail")}
         </div>
         <p className="text-xs sm:text-sm text-[var(--fg-muted)] mt-3 max-w-[280px] leading-[1.55]">

@@ -5,9 +5,8 @@
 // 本文は details/summary 相当の表現だが、カスタムアニメーション（高さ展開）と A11y を両立するため
 // button + aria-expanded + 条件レンダリングで組む。
 
+import { MONO_FAMILY } from "@/lib/typography";
 import type { ReactNode } from "react";
-
-const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
 
 type FaqItemProps = {
   /** "01" 等の 2 桁番号文字列 */

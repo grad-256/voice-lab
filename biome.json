@@ -21,7 +21,12 @@
     "rules": {
       "recommended": true,
       "correctness": {
-        "useExhaustiveDependencies": "warn"
+        "useExhaustiveDependencies": {
+          "level": "warn",
+          "options": {
+            "hooks": [{ "name": "useMountedRef", "stableResult": true }]
+          }
+        }
       }
     }
   },

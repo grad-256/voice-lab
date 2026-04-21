@@ -5,15 +5,12 @@
 // highlighted=true のとき、枠線を濃く・Cap を反転させて "人気プラン" を静かに強調する。
 // CTA は本 PR では Stripe 未接続のため `onSelect` コールバックだけ受ける（ページ側で console.warn）。
 
+import { MONO_FAMILY, SANS_FAMILY, SERIF_FAMILY } from "@/lib/typography";
 import type { CSSProperties, ReactNode } from "react";
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
-const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
 
 type PlanCardProps = {
   name: string;
   /** サブ表記（日本語のプラン名 "しずけさ" 等）。空文字のときは表示しない。 */
-  jp?: string;
   price: string;
   period: string;
   tagline: string;
@@ -30,7 +27,6 @@ type PlanCardProps = {
 
 export function PlanCard({
   name,
-  jp,
   price,
   period,
   tagline,
@@ -66,7 +62,7 @@ export function PlanCard({
     background: highlighted ? "var(--fg)" : "transparent",
     color: highlighted ? "var(--bg)" : "var(--fg)",
     border: highlighted ? "none" : "0.5px solid var(--fg)",
-    fontFamily: "var(--font-jakarta), var(--font-noto), sans-serif",
+    fontFamily: SANS_FAMILY,
     marginTop: 18,
   };
 
@@ -74,7 +70,6 @@ export function PlanCard({
     <article style={cardStyle}>
       <div className="text-xs sm:text-sm tracking-[0.4em]" style={capStyle}>
         {name}
-        {jp && <span style={{ marginLeft: 8, opacity: 0.7 }}>· {jp}</span>}
       </div>
 
       {badge && (

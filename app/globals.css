@@ -120,7 +120,7 @@ body {
     ), radial-gradient(ellipse 60% 50% at 80% 100%, var(--accent-subtle) 0%, transparent 40%);
   background-attachment: fixed;
   color: var(--fg);
-  font-family: var(--font-jakarta), var(--font-noto), sans-serif;
+  font-family: var(--font-sans), var(--font-sans-jp), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -130,17 +130,19 @@ body {
    タイポグラフィのユーティリティ（セリフ見出し用）
    ============================================================ */
 .font-serif-jp {
-  /* 欧文は Fraunces、和文は Noto Serif JP に自動フォールバックさせる。
+  /* 欧文は Fraunces、和文は Shippori Mincho に自動フォールバックさせる。
      CSS フォント解決は「次の family に flip」するため、混植テキストでも
-     Fraunces が欧文を、Noto Serif JP が和文をそれぞれ担当する。 */
-  font-family: var(--font-serif), var(--font-noto-serif), "YuMincho", "Hiragino Mincho ProN", serif;
+     Fraunces が欧文を、Shippori Mincho が和文をそれぞれ担当する。
+     Shippori Mincho は Noto Serif JP より筆致の温度が Fraunces と近い。 */
+  font-family: var(--font-serif), var(--font-serif-jp), "YuMincho", "Hiragino Mincho ProN", serif;
   font-feature-settings: "palt" 1;
 }
 
 .font-mono-jp {
-  /* JetBrains Mono を next/font で読み込み済み（layout.tsx）。
-     数字は tabular-nums で等幅に揃え、letter-spacing で活字リズムを作る。 */
-  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* 旧：JetBrains Mono を別 family として読み込んでいたが、
+     当時の Plus Jakarta Sans / Fraunces と並んだときの「声の高さ」が揃わず廃止。
+     現：body の sans（Inter + Noto Sans JP）を継承し、数字の等幅感だけ tabular-nums +
+     トラッキングで演出する。時刻・タグ・ID など活字リズムの要所で使う用途はそのまま維持できる。 */
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }

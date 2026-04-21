@@ -15,6 +15,7 @@ import {
 import { NoteIcon } from "@/app/components/icons/note-icon";
 import { XIcon } from "@/app/components/icons/x-icon";
 import { useRouter } from "@/i18n/routing";
+import { formatMemberSince } from "@/lib/chapterDate";
 import { LEGAL_URLS } from "@/lib/legalUrls";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -25,13 +26,11 @@ import {
   setStoredThemePreference,
   subscribeSystemTheme,
 } from "@/lib/theme";
+import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
 import { getSelectedVoice } from "@/lib/voicePreferences";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { type CSSProperties, useEffect, useState } from "react";
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
-const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
 
 // テーマ 3 択。表示順とアイコンはブランドで統一（System → Light → Dark）。
 const THEME_OPTIONS: readonly { value: ThemePreference; Icon: typeof Monitor }[] = [
@@ -39,15 +38,6 @@ const THEME_OPTIONS: readonly { value: ThemePreference; Icon: typeof Monitor }[]
   { value: "light", Icon: Sun },
   { value: "dark", Icon: Moon },
 ];
-
-// "Jan 2026" / "2026年1月" の Member since 表示。失敗時は空文字で安全側に倒す
-function formatMemberSince(iso: string | null | undefined, locale: string): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.valueOf())) return "";
-  const tag = locale === "ja" ? "ja-JP" : "en-US";
-  return d.toLocaleDateString(tag, { year: "numeric", month: "short" });
-}
 
 export default function MePage() {
   const t = useTranslations("me");
@@ -147,7 +137,7 @@ export default function MePage() {
           style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
         >
           {t("chapter.titleLead")}
-          <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
+          <span>{t("chapter.titleAccent")}</span>
           {t("chapter.titleTail")}
         </div>
         {(userEmail || memberSince) && (

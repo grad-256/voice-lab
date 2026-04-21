@@ -9,10 +9,9 @@ export const runtime = "edge";
 
 import { Cap, PageHeader, PlanCard, Rule } from "@/app/components/chapter";
 import { Link } from "@/i18n/routing";
+import { SERIF_FAMILY } from "@/lib/typography";
 import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
 
 const PLAN_KEYS = ["still", "quiet", "year"] as const;
 
@@ -45,7 +44,7 @@ export default function PricingPage() {
           style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
         >
           {t("chapter.titleLead")}
-          <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
+          <span>{t("chapter.titleAccent")}</span>
           {t("chapter.titleTail")}
         </div>
         <p className="text-xs sm:text-sm text-[var(--fg-muted)] leading-[1.6] mt-3">
@@ -60,12 +59,10 @@ export default function PricingPage() {
         {PLAN_KEYS.map((key) => {
           const features = t.raw(`plans.${key}.features`) as readonly string[];
           const badgeRaw = key === "quiet" ? t("plans.quiet.badge") : undefined;
-          const jpRaw = t(`plans.${key}.jp`);
           return (
             <PlanCard
               key={key}
               name={t(`plans.${key}.name`)}
-              jp={jpRaw || undefined}
               price={t(`plans.${key}.price`)}
               period={t(`plans.${key}.period`)}
               tagline={t(`plans.${key}.tagline`)}

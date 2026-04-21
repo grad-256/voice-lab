@@ -15,11 +15,9 @@ export const runtime = "edge";
 
 import { BottomTab, Cap, PageHeader, Rule, SettingRow } from "@/app/components/chapter";
 import { Link } from "@/i18n/routing";
+import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
 import { useTranslations } from "next-intl";
 import { type CSSProperties, useState } from "react";
-
-const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
-const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
 
 // 請求履歴の 3 行ダミー。本 PR では i18n を経由せず最小表現にとどめる（金額は JA/EN 共通）。
 // Stripe 連携時 (#55) に Supabase / Stripe から実データで差し替える。
@@ -60,7 +58,7 @@ export default function BillingPage() {
           style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
         >
           {t("chapter.titleLead")}
-          <span style={{ fontStyle: "italic" }}>{t("chapter.titleItalic")}</span>
+          <span>{t("chapter.titleAccent")}</span>
           {t("chapter.titleTail")}
         </div>
       </div>
