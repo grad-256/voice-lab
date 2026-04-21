@@ -4,10 +4,10 @@
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
+import { BtnGhost, BtnPrimary, Cap, PageHeader, Rule } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/client";
-import { ArrowLeft, ChevronDown, ChevronUp, Pause, Play, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type TranscriptItem = { role: "user" | "assistant"; text: string };
@@ -22,13 +22,23 @@ type DiaryEntry = {
   created_at: string;
 };
 
-function formatDate(iso: string): string {
+const SERIF_FAMILY = 'var(--font-serif), "Noto Serif JP", serif';
+const MONO_FAMILY = "var(--font-mono), ui-monospace, monospace";
+
+// Chapter 詳細ヘッダ用の mono 日時。"TUE · 04·21·26 · 07:42" 形式にする。
+function formatMonoDateTime(iso: string, locale: string): string {
   const d = new Date(iso);
+  const tag = locale === "ja" ? "ja-JP" : "en-US";
+  const weekday = d
+    .toLocaleDateString(tag, { weekday: "short" })
+    .replace(/曜日?/, "")
+    .toUpperCase();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
+  const yy = String(d.getFullYear()).slice(-2);
   const h = String(d.getHours()).padStart(2, "0");
   const min = String(d.getMinutes()).padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${dd} ${h}:${min}`;
+  return `${weekday} · ${m}·${dd}·${yy} · ${h}:${min}`;
 }
 
 export default function DiaryDetailPage({
@@ -37,6 +47,7 @@ export default function DiaryDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
+  const locale = useLocale();
   const t = useTranslations("diary.detail");
   const [id, setId] = useState<string | null>(null);
   const [entry, setEntry] = useState<DiaryEntry | null>(null);
@@ -163,140 +174,197 @@ export default function DiaryDetailPage({
   }, [entry, deleting, router, t]);
 
   return (
-    <main className="flex-1 w-full max-w-3xl mx-auto px-6 pt-10 pb-16 sm:pt-12 sm:pb-20 animate-fadeIn">
-      <header className="flex items-center justify-between mb-12 text-sm tracking-wide">
-        <Link
-          href="/diary/history"
-          className="inline-flex items-center gap-1.5 text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
-        >
-          <ArrowLeft strokeWidth={1.5} className="w-4 h-4" aria-hidden="true" />
-          {t("back")}
-        </Link>
-        <div className="w-12" />
-      </header>
+    <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-8">
+      <PageHeader
+        left={
+          <Link
+            href="/diary/history"
+            className="uppercase tracking-[0.32em] text-[9px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
+          >
+            ← {t("back")}
+          </Link>
+        }
+      />
 
       {errorMsg && (
-        <div className="mb-6 px-4 py-3 bg-[var(--error-bg)] border border-[var(--error)] text-[var(--error)] text-xs text-center rounded-md">
-          {errorMsg}
-        </div>
+        <div className="mt-10 text-[11px] text-[var(--error)] text-center">{errorMsg}</div>
       )}
 
       {!entry && !errorMsg && (
-        <div className="text-center text-[var(--fg-subtle)] py-20 text-sm tracking-wide">
+        <div className="mt-14 text-center text-[10px] uppercase tracking-[0.3em] text-[var(--fg-subtle)]">
           {t("loading")}
         </div>
       )}
 
       {entry && (
-        <article>
-          {/* 日付 → タイトル → 区切り → 要約 → 付帯アクション → transcript → 削除 */}
-          {/* Day One 流：日付は極小、タイトルは巨大に */}
-          <time className="block font-mono-jp text-[11px] uppercase tracking-widest text-[var(--fg-subtle)]">
-            {formatDate(entry.created_at)}
-          </time>
-          <h2 className="mt-4 text-2xl sm:text-3xl font-semibold text-[var(--fg)] leading-tight tracking-wide">
-            {entry.title}
-          </h2>
-          <div className="mt-10 border-t border-[var(--border)]" />
-          <p className="mt-10 text-[var(--fg)] leading-loose whitespace-pre-wrap">
-            {entry.summary}
-          </p>
-
-          {/* 付帯アクション（音声再生）。色を抑えて本文を邪魔しない */}
-          <div className="mt-10 flex items-center gap-3 text-sm tracking-wide">
-            <button
-              type="button"
-              onClick={handlePlay}
-              disabled={playing}
-              className="inline-flex items-center gap-2 border border-[var(--border-strong)] text-[var(--fg-muted)] hover:text-[var(--accent-strong)] hover:border-[var(--accent)] px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {playing ? (
-                <Pause strokeWidth={1.5} className="w-4 h-4" aria-hidden="true" />
-              ) : (
-                <Play strokeWidth={1.5} className="w-4 h-4" aria-hidden="true" />
-              )}
-              {playing ? t("playing") : t("play")}
-            </button>
+        <article className="flex-1 flex flex-col">
+          {/* 日時列：Chapter の mono ラベル。曜日・年月日・時刻を中点で繋ぐ */}
+          <div
+            className="mt-6 text-[10px] uppercase tracking-[0.1em] text-[var(--fg-muted)]"
+            style={{ fontFamily: MONO_FAMILY }}
+          >
+            {formatMonoDateTime(entry.created_at, locale)}
           </div>
 
-          {/* transcript：折り畳みで補助情報に退避 */}
+          {/* 本文タイトル：Fraunces で大きく。折り返しは CSS 任せ（italic 強調はデータに頼れないため割愛）。 */}
+          <h2
+            className="mt-2 text-[var(--fg)]"
+            style={{
+              fontFamily: SERIF_FAMILY,
+              fontSize: 28,
+              fontWeight: 400,
+              lineHeight: 1.08,
+              letterSpacing: "-0.022em",
+            }}
+          >
+            {entry.title}
+          </h2>
+
+          <Rule mv={18} />
+
+          {/* 要約ブロック：左縦罫のある引用領域。Chapter 設計の書物感を作る */}
+          <div style={{ borderLeft: "1.5px solid var(--fg)", paddingLeft: 14 }}>
+            <Cap mb={6}>{t("chapter.summaryLabel")}</Cap>
+            <div
+              style={{
+                fontFamily: SERIF_FAMILY,
+                fontSize: 14,
+                fontStyle: "italic",
+                lineHeight: 1.6,
+                letterSpacing: "-0.003em",
+                color: "var(--fg)",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {entry.summary}
+            </div>
+          </div>
+
+          {/* 音声プレビュー再生（TTS）。activeCap 風の小ラベル + Ghost 調ボタン。 */}
+          <div className="mt-5">
+            <BtnGhost onClick={handlePlay} disabled={playing}>
+              {playing ? t("playing") : t("play")}
+            </BtnGhost>
+          </div>
+
+          {/* Transcript セクション：折りたたみ可。流れる活字で再構成。 */}
           {entry.transcript.length > 0 && (
-            <div className="mt-16">
-              <button
-                type="button"
-                onClick={() => setShowTranscript((v) => !v)}
-                className="inline-flex items-center gap-1.5 text-sm tracking-wide text-[var(--fg-subtle)] hover:text-[var(--fg)] transition-colors"
-              >
-                {showTranscript ? (
-                  <ChevronUp strokeWidth={1.5} className="w-3.5 h-3.5" aria-hidden="true" />
-                ) : (
-                  <ChevronDown strokeWidth={1.5} className="w-3.5 h-3.5" aria-hidden="true" />
-                )}
-                {showTranscript ? t("hideTranscript") : t("showTranscript")}
-              </button>
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-3">
+                <button
+                  type="button"
+                  onClick={() => setShowTranscript((v) => !v)}
+                  className="uppercase text-[9px] tracking-[0.4em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors bg-transparent border-0 p-0 cursor-pointer"
+                >
+                  {t("chapter.transcriptLabel")}{" "}
+                  <span aria-hidden>{showTranscript ? "−" : "+"}</span>
+                </button>
+                <div
+                  className="text-[9px] uppercase tracking-[0.12em] text-[var(--fg-muted)]"
+                  style={{ fontFamily: MONO_FAMILY }}
+                >
+                  {entry.language.toUpperCase()} · {entry.message_count.toString().padStart(2, "0")}{" "}
+                  turns
+                </div>
+              </div>
 
               {showTranscript && (
-                <div className="mt-8 space-y-6">
-                  {entry.transcript.map((item, i) => (
-                    <div key={`${item.role}-${i}-${item.text.slice(0, 20)}`}>
-                      {item.role === "user" ? (
-                        <p className="border-l-2 border-[var(--accent)] pl-4 py-1 text-sm text-[var(--fg)] leading-relaxed whitespace-pre-wrap">
+                <div className="space-y-5">
+                  {entry.transcript.map((item, i) =>
+                    item.role === "user" ? (
+                      <div
+                        key={`${item.role}-${i}-${item.text.slice(0, 20)}`}
+                        style={{
+                          fontFamily: SERIF_FAMILY,
+                          fontSize: 14,
+                          lineHeight: 1.75,
+                          letterSpacing: "-0.003em",
+                          color: "var(--fg)",
+                          whiteSpace: "pre-wrap",
+                        }}
+                      >
+                        {item.text}
+                      </div>
+                    ) : (
+                      <div
+                        key={`${item.role}-${i}-${item.text.slice(0, 20)}`}
+                        style={{ borderLeft: "1.5px solid var(--fg)", paddingLeft: 12 }}
+                      >
+                        <div className="text-[9px] uppercase tracking-[0.3em] text-[var(--fg-muted)] mb-1">
+                          {t("chapter.quietVoice")}
+                        </div>
+                        <div
+                          style={{
+                            fontFamily: SERIF_FAMILY,
+                            fontStyle: "italic",
+                            fontSize: 13,
+                            lineHeight: 1.55,
+                            color: "var(--fg)",
+                            whiteSpace: "pre-wrap",
+                          }}
+                        >
                           {item.text}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-[var(--fg-muted)] leading-relaxed whitespace-pre-wrap">
-                          {item.text}
-                        </p>
-                      )}
-                    </div>
-                  ))}
+                        </div>
+                      </div>
+                    )
+                  )}
                 </div>
               )}
             </div>
           )}
 
-          {/* 削除リンク：記事末の控えめな underline に退避 */}
-          <div className="mt-20 pt-8 border-t border-[var(--border)]">
+          <div className="flex-1" />
+
+          {/* 削除リンク：mono の小さな操作列。誤タップしにくい末尾に配置 */}
+          <div
+            className="mt-10 pt-4 border-t border-[var(--border)] flex items-center gap-3 text-[10px] uppercase tracking-[0.18em] text-[var(--fg-muted)]"
+            style={{ fontFamily: MONO_FAMILY }}
+          >
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
               disabled={deleting}
-              className="inline-flex items-center gap-1.5 text-sm tracking-wide text-[var(--fg-subtle)] hover:text-[var(--error)] underline underline-offset-4 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="bg-transparent border-0 p-0 cursor-pointer text-[var(--fg-muted)] hover:text-[var(--error)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              <Trash2 strokeWidth={1.5} className="w-3.5 h-3.5" aria-hidden="true" />
               {deleting ? t("deleting") : t("delete")}
             </button>
           </div>
         </article>
       )}
 
-      {/* 削除確認モーダル */}
+      {/* 削除確認モーダル（Chapter 系の 0.5px 罫 + Fraunces） */}
       {showDeleteConfirm && entry && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-overlay)] p-4 animate-fadeIn">
-          <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-6 max-w-sm w-full">
-            <h2 className="text-lg font-medium text-[var(--fg)] mb-2">
+          <div
+            className="w-full max-w-sm p-6 bg-[var(--bg)] text-[var(--fg)]"
+            style={{ border: "0.5px solid var(--fg)" }}
+          >
+            <Cap mb={6}>{t("chapter.summaryLabel")}</Cap>
+            <h2
+              className="mb-3"
+              style={{
+                fontFamily: SERIF_FAMILY,
+                fontSize: 20,
+                fontWeight: 400,
+                lineHeight: 1.25,
+                letterSpacing: "-0.01em",
+                fontStyle: "italic",
+              }}
+            >
               {t("deleteConfirm.title")}
             </h2>
-            <p className="text-sm text-[var(--fg-muted)] mb-6 leading-relaxed">
+            <p className="text-[12px] leading-relaxed mb-5" style={{ color: "var(--fg-muted)" }}>
               {t("deleteConfirm.desc")}
             </p>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleting}
-                className="flex-1 px-4 py-2.5 bg-[var(--error)] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md transition-opacity"
-              >
-                {deleting ? t("deleting") : t("deleteConfirm.confirm")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={deleting}
-                className="px-4 py-2.5 border border-[var(--border)] text-[var(--fg-muted)] hover:text-[var(--fg)] disabled:opacity-50 text-sm rounded-md transition-colors"
-              >
+              <div className="flex-1">
+                <BtnPrimary full onClick={handleDelete} disabled={deleting}>
+                  {deleting ? t("deleting") : t("deleteConfirm.confirm")}
+                </BtnPrimary>
+              </div>
+              <BtnGhost onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
                 {t("deleteConfirm.cancel")}
-              </button>
+              </BtnGhost>
             </div>
           </div>
         </div>

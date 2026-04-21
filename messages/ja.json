@@ -163,17 +163,22 @@
     "login": "ログイン",
     "settings": "設定",
     "myPage": "マイページ",
-    "heading": "どんな1日でしたか？",
-    "subheading": "話すだけで、日記になる。",
-    "diary": {
-      "title": "日記を始める",
-      "desc": "今日あったことを、AI と話しながら振り返る。話した内容は、あとで読めるかたちで残ります。"
-    },
-    "viewHistory": "過去の日記を読む",
     "guestStatusBefore": "ゲストとして体験中（",
     "guestStatusLogin": "ログイン",
     "guestStatusAfter": "で日記が保存できます）",
-    "loggedIn": "ログイン中"
+    "chapter": {
+      "greetingMorning": "おはようございます、",
+      "greetingAfternoon": "こんにちは、",
+      "greetingEvening": "こんばんは、",
+      "greetingNight": "ゆっくりと、",
+      "subline": "今日の問いが、そっと待っています。",
+      "promptLabel": "今日の問い",
+      "promptBody": "今日いちばん、心が動いたのはいつでしたか。",
+      "beginLabel": "話しはじめる",
+      "streakLabel": "ここ 7 日",
+      "streakCount": "{count} / 7",
+      "noName": "あなた"
+    }
   },
   "footer": {
     "terms": "利用規約",
@@ -374,6 +379,10 @@
       "idle": "録音開始"
     },
     "hint": "「終わり」と言うか、右上のボタンで日記になります",
+    "chapter": {
+      "liveLabel": "Live · いま話していること",
+      "quietVoice": "ききて · Quiet voice"
+    },
     "errors": {
       "bootstrap": "AI の準備に失敗しました。もう一度お試しください。",
       "bootstrapShort": "AI の準備に失敗しました。",
@@ -407,13 +416,40 @@
       "title": "日記の履歴",
       "new": "新しく話す",
       "loading": "読み込み中…",
-      "empty": "まだ日記がありません",
       "emptyCta": "最初の日記を話す",
-      "loadFailed": "読み込みに失敗しました"
+      "loadFailed": "読み込みに失敗しました",
+      "chapter": {
+        "archiveLabel": "Archive · 記録",
+        "titleLead": "静かな",
+        "titleItalic": "余白",
+        "titleTail": "の記録。",
+        "countSuffix": "件の日記",
+        "emptyLead": "まだ、なにも",
+        "emptyItalic": "語られて",
+        "emptyTail": "いません。"
+      }
+    },
+    "insights": {
+      "cap": "Insights · 気づき",
+      "headingLead": "4 月の、",
+      "headingItalic": "かたち",
+      "headingTail": "。",
+      "stats": "17 件の日記 · 計 4 時間 12 分 · 平均 14 分",
+      "dummyNotice": "※ 仮の値です。実データ表示は近日公開予定",
+      "warmthLabel": "Warmth · あたたかさの推移",
+      "tonesLabel": "Tones · 色調",
+      "tones": {
+        "still": "Still · 静けさ",
+        "tender": "Tender · やさしさ",
+        "bright": "Bright · あかるさ",
+        "heavy": "Heavy · 重いもの",
+        "anxious": "Anxious · 不安"
+      },
+      "quietReadingLabel": "Quiet reading · 読みとり",
+      "quietReadingBody": "朝のあなたが一番しずか。ていねいなことばは 22 時すぎに届きます。"
     },
     "detail": {
       "back": "履歴",
-      "title": "日記",
       "loading": "読み込み中…",
       "notFound": "見つかりませんでした",
       "loadFailed": "読み込みに失敗しました",
@@ -421,15 +457,18 @@
       "playing": "再生中…",
       "delete": "削除",
       "deleting": "削除中…",
-      "showTranscript": "元の会話を読む",
-      "hideTranscript": "元の会話を隠す",
       "deleteConfirm": {
         "title": "この日記を削除しますか？",
         "desc": "削除すると元には戻せません。",
         "confirm": "削除する",
         "cancel": "やめる"
       },
-      "deleteFailed": "削除に失敗しました"
+      "deleteFailed": "削除に失敗しました",
+      "chapter": {
+        "summaryLabel": "Summary · まとめ",
+        "transcriptLabel": "Transcript · 話したこと",
+        "quietVoice": "ききて · Quiet voice"
+      }
     }
   }
 }
