@@ -1,8 +1,9 @@
 "use client";
 
+import { cssVarToRgbChannels, observeThemeChange } from "@/lib/themeColors";
 import { useEffect, useRef } from "react";
 
-// 音声波形をイメージした複数のサイン波 + パーティクルを Canvas で描画する
+// Hero 背景：細いサイン波 2 本 + 漂流する粒。CSS 変数から色を取り theme 切替に追従。
 export default function HeroBg() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -15,15 +16,23 @@ export default function HeroBg() {
     let animId: number;
     let t = 0;
 
-    // サイン波の定義
+    let INK = cssVarToRgbChannels("--fg");
+    let ACCENT = cssVarToRgbChannels("--accent");
+    let isLight = document.documentElement.dataset.theme === "light";
+    const unobserve = observeThemeChange(() => {
+      INK = cssVarToRgbChannels("--fg");
+      ACCENT = cssVarToRgbChannels("--accent");
+      isLight = document.documentElement.dataset.theme === "light";
+    });
+
+    // Light は黒インクが紙上で重く見えるので少し抑える。
+    const alphaScale = () => (isLight ? 0.75 : 1);
+
     const waves = [
-      { color: "rgba(139, 92, 246, 0.35)", freq: 0.012, amp: 60, speed: 0.018, phase: 0 },
-      { color: "rgba(99, 102, 241, 0.28)", freq: 0.018, amp: 40, speed: 0.024, phase: 1.2 },
-      { color: "rgba(79, 70, 229, 0.20)", freq: 0.008, amp: 80, speed: 0.012, phase: 2.5 },
-      { color: "rgba(6, 182, 212, 0.15)", freq: 0.022, amp: 30, speed: 0.03, phase: 0.8 },
+      { palette: "ink" as const, alpha: 0.38, freq: 0.0075, amp: 36, speed: 0.006, phase: 0 },
+      { palette: "accent" as const, alpha: 0.32, freq: 0.011, amp: 22, speed: 0.0045, phase: 1.6 },
     ];
 
-    // パーティクルの定義
     type Particle = {
       x: number;
       y: number;
@@ -31,19 +40,14 @@ export default function HeroBg() {
       vx: number;
       vy: number;
       alpha: number;
-      color: string;
     };
-
-    const PARTICLE_COLORS = ["rgba(139,92,246,", "rgba(99,102,241,", "rgba(6,182,212,"];
-
-    const particles: Particle[] = Array.from({ length: 48 }, () => ({
+    const particles: Particle[] = Array.from({ length: 22 }, () => ({
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
-      r: Math.random() * 1.8 + 0.4,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      alpha: Math.random() * 0.5 + 0.1,
-      color: PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)],
+      r: Math.random() * 1.5 + 0.8,
+      vx: (Math.random() - 0.5) * 0.08,
+      vy: (Math.random() - 0.5) * 0.08,
+      alpha: Math.random() * 0.32 + 0.18,
     }));
 
     const resize = () => {
@@ -57,40 +61,31 @@ export default function HeroBg() {
       const { width, height } = canvas;
       ctx.clearRect(0, 0, width, height);
 
-      const midY = height * 0.55;
+      const midY = height * 0.58;
+      const scale = alphaScale();
 
-      // サイン波を描画
       for (const wave of waves) {
         ctx.beginPath();
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = wave.color;
+        // 0.5px だとサブピクセル滲み。0.75px で細罫印象を保つ。
+        ctx.lineWidth = 0.75;
+        const channels = wave.palette === "accent" ? ACCENT : INK;
+        ctx.strokeStyle = `rgba(${channels}, ${wave.alpha * scale})`;
 
         for (let x = 0; x <= width; x += 2) {
           const y =
             midY +
             Math.sin(x * wave.freq + t * wave.speed + wave.phase) * wave.amp +
-            Math.sin(x * wave.freq * 1.7 + t * wave.speed * 0.6 + wave.phase) * wave.amp * 0.4;
+            Math.sin(x * wave.freq * 1.5 + t * wave.speed * 0.5 + wave.phase) * wave.amp * 0.3;
           if (x === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
         ctx.stroke();
-
-        // 波の下をグラデーションで塗りつぶし
-        const grad = ctx.createLinearGradient(0, midY, 0, height);
-        grad.addColorStop(0, wave.color.replace(/[\d.]+\)$/, "0.08)"));
-        grad.addColorStop(1, "transparent");
-        ctx.lineTo(width, height);
-        ctx.lineTo(0, height);
-        ctx.closePath();
-        ctx.fillStyle = grad;
-        ctx.fill();
       }
 
-      // パーティクルを描画・移動
       for (const p of particles) {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `${p.color}${p.alpha})`;
+        ctx.fillStyle = `rgba(${INK}, ${p.alpha * scale})`;
         ctx.fill();
 
         p.x += p.vx;
@@ -110,6 +105,7 @@ export default function HeroBg() {
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", resize);
+      unobserve();
     };
   }, []);
 

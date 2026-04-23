@@ -8,9 +8,9 @@
     "description": "Talk with AI in any situation and turn what you said into something you can read. A new way to live — out loud."
   },
   "nav": {
-    "ctaStart": "Start talking",
+    "ctaStart": "Coming soon",
     "ctaLogin": "Log in",
-    "ctaHome": "Start talking"
+    "ctaHome": "Coming soon"
   },
   "lp": {
     "hero": {
@@ -22,8 +22,15 @@
       "subCopy2": "Say what happened today, and it turns into a diary you can read later.",
       "ctaStart": "Start talking",
       "ctaLogin": "Log in",
-      "ctaInstall": "Install app",
-      "note": "No signup — free for your first 10 exchanges"
+      "ctaInstall": "Install app"
+    },
+    "proof": {
+      "eyebrow": "Three shapes",
+      "items": {
+        "speak": "Write with your voice.",
+        "question": "Answer one quiet question.",
+        "accumulate": "Let the days settle."
+      }
     },
     "steps": {
       "eyebrow": "How it works",
@@ -40,24 +47,6 @@
         "visualize": {
           "title": "Read it back later to reflect",
           "desc": "Your conversations are summarized and saved as diary entries you can revisit anytime."
-        }
-      }
-    },
-    "features": {
-      "eyebrow": "What you can do",
-      "title": "A new kind of diary — done entirely by voice.",
-      "items": {
-        "voice": {
-          "title": "Voice is all you need",
-          "desc": "Skip the keyboard. Just press the mic and talk. Pick from three calm voices to read your diary back to you."
-        },
-        "conversation": {
-          "title": "Your conversation becomes a diary",
-          "desc": "The AI listens and replies naturally. That back-and-forth is turned into a readable diary entry on its own."
-        },
-        "summary": {
-          "title": "Revisit it on your own time",
-          "desc": "Browse past entries at a glance, or open a single one to reread. A quiet place to meet the thoughts you had, again."
         }
       }
     },
@@ -114,12 +103,18 @@
         }
       }
     },
+    "insights": {
+      "eyebrow": "Coming soon",
+      "title": "Your days, made visible.",
+      "body": "Your voice, mapped as the shape of your days — moods, tones, and patterns.\nA place to meet the self you were, one more time.",
+      "note": "Insights · Analytics · Coming soon"
+    },
     "cta": {
       "titlePart1": "Now,",
       "titlePart2": " talk about your day.",
       "bodyLine1": "No signup — free for your first 10 exchanges.",
       "bodyLine2": "Just start by saying it out loud.",
-      "button": "Start talking"
+      "button": "Coming soon"
     },
     "chatDemo": {
       "conversation": [
@@ -135,34 +130,20 @@
         },
         { "role": "assistant", "text": "Which priority feels right to you?" }
       ],
-      "partner": "Your conversation partner",
-      "online": "Online",
+      "liveLabel": "Live",
+      "quietVoice": "Quiet voice",
+      "headerLabel": "MyVoiceLab",
+      "entryLabel": "Entry N° 001",
       "phase": {
-        "listening": "Listening…",
-        "thinking": "Thinking…",
-        "speaking": "Speaking…",
-        "idle": "Press the mic to talk"
+        "listening": "LISTENING",
+        "thinking": "THINKING",
+        "speaking": "SPEAKING",
+        "idle": "PRESS TO SPEAK"
       }
     },
-    "voiceDemo": {
-      "listening": "Listening…",
-      "idle": "Press the mic to talk"
-    },
-    "conversationDemo": {
-      "bubbles": [
-        { "role": "assistant", "text": "How was your day?" },
-        { "role": "user", "text": "I'm a bit drained." },
-        { "role": "assistant", "text": "What happened?" },
-        { "role": "user", "text": "I couldn't find the words." }
-      ]
-    },
-    "summaryDemo": {
-      "title": "Reflecting on the meeting",
-      "lines": [
-        "We were divided on priorities in the meeting.",
-        "I felt drained — the words wouldn't come out.",
-        "For me, nailing down the experience comes first."
-      ]
+    "theme": {
+      "toggleToLight": "Switch to light mode",
+      "toggleToDark": "Switch to dark mode"
     }
   },
   "hub": {
@@ -443,10 +424,11 @@
       "titleTail": ".",
       "lead": "Try briefly, stay with it, or shape a whole year. Pick from three plans."
     },
+    "provisionalNote": "Final plans coming soon.",
     "plans": {
       "still": {
         "name": "Still",
-        "price": "¥0",
+        "price": "$0",
         "period": "Free",
         "tagline": "Start by saying it out loud.",
         "features": [
@@ -458,7 +440,7 @@
       },
       "quiet": {
         "name": "Quiet",
-        "price": "¥980",
+        "price": "$7",
         "period": "/ month",
         "tagline": "Stay close to your daily rhythm.",
         "features": [
@@ -472,7 +454,7 @@
       },
       "year": {
         "name": "Year",
-        "price": "¥9,800",
+        "price": "$70",
         "period": "/ year",
         "tagline": "Keep a whole year, quietly.",
         "features": [

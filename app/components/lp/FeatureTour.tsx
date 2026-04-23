@@ -1,41 +1,73 @@
 "use client";
 
+import { Cap } from "@/app/components/chapter";
+import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
 import Autoplay from "embla-carousel-autoplay";
 import useEmblaCarousel from "embla-carousel-react";
-import { ArrowLeft, Calendar, ChevronRight, Mic, Play, Plus } from "lucide-react";
+import { ArrowLeft, Mic, Play } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 
-// スライド識別子。自動切替と手動切替の両方で同じキーを使う。
 type SlideId = "recording" | "summary" | "history" | "detail";
 
 const SLIDES: readonly SlideId[] = ["recording", "summary", "history", "detail"] as const;
-// embla-carousel-autoplay のスライド切替間隔
 const AUTOPLAY_DELAY_MS = 4500;
 
-// messages の `lp.chatDemo.conversation` / `lp.tour.mock.history.entries` を
-// そのまま取り出すための型（`t.raw` の戻り値を最小限にキャストする。`any` は使わない）。
 type ChatBubble = { role: "assistant" | "user"; text: string };
 type HistoryEntry = { date: string; title: string; body: string };
 
-// スマホ風の丸角フレーム。中身は absolute inset-0 で縦長画面に収める。
-// モバイル時はカルーセル内で大きく、PC 時は 2×2 グリッドに収まるよう少し抑える。
+// 電話枠：14px 角丸 + 0.5px 罫線、上下に status / home シグナル。
 function PhoneFrame({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto w-full max-w-[340px] sm:max-w-[320px] md:max-w-[360px]">
-      {/* ベゼル（border）とノッチは端末表現のため両テーマで墨色（--phone-bezel）に固定。
-          ChatDemo の .chat-phone-frame と色方針を揃える（Light の紙背景でも電話に見える）。 */}
-      <div className="relative rounded-[2.25rem] border-[8px] border-[var(--phone-bezel)] bg-[var(--bg)] shadow-theme-lg overflow-hidden aspect-[9/17]">
-        {/* スマホのノッチ（上部中央の墨色バー） */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-4 bg-[var(--phone-bezel)] rounded-b-xl z-10" />
-        <div className="absolute inset-0 overflow-hidden">{children}</div>
+      <div
+        className="relative overflow-hidden aspect-[9/17] shadow-theme-md"
+        style={{
+          background: "var(--bg)",
+          border: "0.5px solid var(--border-strong)",
+          borderRadius: 14,
+        }}
+      >
+        <div
+          className="absolute top-0 left-0 right-0 h-5 px-4 flex items-center justify-between text-xs uppercase tracking-[0.14em] text-[var(--fg-muted)] z-10"
+          style={{ fontFamily: MONO_FAMILY }}
+        >
+          <span>9:41</span>
+          <span className="relative inline-block w-[12px] h-[6px] border-[0.5px] border-[var(--fg-muted)]">
+            <span
+              aria-hidden
+              className="absolute"
+              style={{
+                top: 1,
+                left: 1,
+                right: 1,
+                bottom: 1,
+                background: "var(--fg-muted)",
+              }}
+            />
+          </span>
+        </div>
+
+        <div className="absolute inset-0 overflow-hidden pt-5">{children}</div>
+
+        <div className="absolute left-1/2 bottom-[5px] -translate-x-1/2 z-10">
+          <span
+            aria-hidden
+            className="block"
+            style={{
+              width: 56,
+              height: 3,
+              borderRadius: 2,
+              background: "var(--fg)",
+              opacity: 0.3,
+            }}
+          />
+        </div>
       </div>
     </div>
   );
 }
 
-// 各モックに共通のスマホ画面風ヘッダー。
-// left/right が未指定でも min-w スペーサーは残して中央寄せを維持する（レイアウト崩れ防止）。
 function MockHeader({
   left,
   center,
@@ -46,39 +78,37 @@ function MockHeader({
   right?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between pt-8 px-4 pb-3 text-xs tracking-wide text-[var(--fg-subtle)]">
-      <div className="min-w-[56px]">{left}</div>
+    <div className="flex items-center justify-between px-4 pt-2 pb-3 text-xs uppercase tracking-[0.3em] text-[var(--fg-muted)]">
+      <div className="min-w-[40px]">{left}</div>
       <div className="truncate">{center}</div>
-      <div className="min-w-[56px] text-right">{right}</div>
+      <div className="min-w-[40px] text-right">{right}</div>
     </div>
   );
 }
 
-// 録音中画面の再現モック：ヘッダー + 会話バブル + 呼吸するマイク。
-// bubbles は lp.chatDemo.conversation の先頭 3 件（ja/en 両方に整備済）を利用。
 function RecordingMock({
   caption,
   bubbles,
   headerBack,
   headerTitle,
   headerFinish,
+  liveLabel,
+  quietVoice,
 }: {
-  /**
-   * マイク下に表示する短いラベル。PC 2x2 グリッドでは外側に別途 caption を出すため
-   * 重複を避けたいケース（`showCaption={false}`）で undefined にできる。
-   */
   caption?: string;
   bubbles: ChatBubble[];
   headerBack: string;
   headerTitle: string;
   headerFinish: string;
+  liveLabel: string;
+  quietVoice: string;
 }) {
   return (
     <div className="relative w-full h-full flex flex-col">
       <MockHeader
         left={
           <span className="inline-flex items-center gap-1">
-            <ArrowLeft size={10} strokeWidth={1.5} aria-hidden="true" />
+            <ArrowLeft size={9} strokeWidth={1.5} aria-hidden="true" />
             {headerBack}
           </span>
         }
@@ -86,42 +116,58 @@ function RecordingMock({
         right={headerFinish}
       />
 
-      {/* 会話ログ（assistant/user が交互に積まれる） */}
-      <div className="flex-1 flex flex-col gap-1.5 px-3 overflow-hidden">
-        {bubbles.map((b, i) => (
-          <div
-            key={`${b.role}-${i}`}
-            className={`flex ${b.role === "user" ? "justify-end" : "justify-start"}`}
-          >
+      <div
+        className="flex-1 overflow-hidden px-4 pt-2 pb-3 space-y-3"
+        style={{ borderTop: "0.5px solid var(--border)" }}
+      >
+        <div className="text-xs uppercase tracking-[0.3em] text-[var(--fg-muted)]">{liveLabel}</div>
+
+        {bubbles.map((b, i) =>
+          b.role === "user" ? (
             <div
-              className={`max-w-[80%] text-sm leading-relaxed px-2 py-1 rounded-2xl ${
-                b.role === "user"
-                  ? "bg-[var(--accent)] text-white rounded-tr-sm"
-                  : "bg-[var(--bg-elevated)] text-[var(--fg)] rounded-tl-sm"
-              }`}
+              key={`${b.role}-${i}`}
+              className="text-sm leading-[1.6]"
+              style={{ fontFamily: SERIF_FAMILY, color: "var(--fg)" }}
             >
               {b.text}
             </div>
-          </div>
-        ))}
+          ) : (
+            <div
+              key={`${b.role}-${i}`}
+              style={{ borderLeft: "1.5px solid var(--fg)", paddingLeft: 10 }}
+            >
+              <div className="text-xs uppercase tracking-[0.3em] text-[var(--fg-muted)] mb-[2px]">
+                {quietVoice}
+              </div>
+              <div
+                className="text-xs leading-[1.5]"
+                style={{ fontFamily: SERIF_FAMILY, color: "var(--fg)" }}
+              >
+                {b.text}
+              </div>
+            </div>
+          )
+        )}
       </div>
 
-      {/* マイクボタン（呼吸アニメーション）＋キャプション */}
-      <div className="flex flex-col items-center gap-1.5 pb-4">
-        <div className="relative w-12 h-12 rounded-full bg-[var(--accent-subtle)] border border-[var(--accent)] flex items-center justify-center animate-breathe">
-          <Mic
-            className="w-4 h-4 text-[var(--accent-strong)]"
-            strokeWidth={1.5}
-            aria-hidden="true"
-          />
+      <div className="flex flex-col items-center gap-2 pb-6">
+        <div
+          className="relative w-11 h-11 rounded-full flex items-center justify-center animate-breathe"
+          style={{
+            background: "transparent",
+            border: "0.5px solid var(--fg)",
+          }}
+        >
+          <Mic size={16} strokeWidth={1.5} color="var(--fg)" aria-hidden="true" />
         </div>
-        {caption && <p className="text-xs text-[var(--fg-muted)] tracking-wide">{caption}</p>}
+        {caption && (
+          <p className="text-xs uppercase tracking-[0.3em] text-[var(--fg-muted)]">{caption}</p>
+        )}
       </div>
     </div>
   );
 }
 
-// 要約ダイアログの再現モック：背景に会話ログをうっすら、上に紙風モーダル。
 function SummaryMock({
   bubbles,
   headerBack,
@@ -131,6 +177,7 @@ function SummaryMock({
   summaryBody,
   saveLabel,
   discardLabel,
+  quietVoice,
 }: {
   bubbles: ChatBubble[];
   headerBack: string;
@@ -140,57 +187,94 @@ function SummaryMock({
   summaryBody: string;
   saveLabel: string;
   discardLabel: string;
+  quietVoice: string;
 }) {
   return (
     <div className="relative w-full h-full flex flex-col">
       <MockHeader
         left={
           <span className="inline-flex items-center gap-1">
-            <ArrowLeft size={10} strokeWidth={1.5} aria-hidden="true" />
+            <ArrowLeft size={9} strokeWidth={1.5} aria-hidden="true" />
             {headerBack}
           </span>
         }
         center={headerTitle}
       />
 
-      {/* 背景：会話ログが微かに見える */}
-      <div className="flex-1 flex flex-col gap-1.5 px-3 opacity-30 overflow-hidden">
-        {bubbles.slice(0, 2).map((b, i) => (
-          <div
-            key={`${b.role}-${i}`}
-            className={`flex ${b.role === "user" ? "justify-end" : "justify-start"}`}
-          >
+      <div
+        className="flex-1 overflow-hidden px-4 pt-2 pb-3 space-y-3 opacity-35"
+        style={{ borderTop: "0.5px solid var(--border)" }}
+      >
+        {bubbles.slice(0, 2).map((b, i) =>
+          b.role === "user" ? (
             <div
-              className={`max-w-[80%] text-sm px-2 py-1 rounded-2xl ${
-                b.role === "user"
-                  ? "bg-[var(--accent)] text-white"
-                  : "bg-[var(--bg-elevated)] text-[var(--fg)]"
-              }`}
+              key={`${b.role}-${i}`}
+              className="text-xs leading-[1.6]"
+              style={{ fontFamily: SERIF_FAMILY, color: "var(--fg)" }}
             >
               {b.text}
             </div>
-          </div>
-        ))}
+          ) : (
+            <div
+              key={`${b.role}-${i}`}
+              style={{ borderLeft: "1.5px solid var(--fg)", paddingLeft: 8 }}
+            >
+              <div className="text-xs uppercase tracking-[0.3em] text-[var(--fg-muted)] mb-[2px]">
+                {quietVoice}
+              </div>
+              <div
+                className="text-xs leading-[1.5]"
+                style={{ fontFamily: SERIF_FAMILY, color: "var(--fg)" }}
+              >
+                {b.text}
+              </div>
+            </div>
+          )
+        )}
       </div>
 
-      {/* 要約モーダル（中央） */}
-      <div className="absolute inset-0 flex items-center justify-center px-4">
-        <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-3 w-full shadow-theme-md">
-          <p className="text-sm tracking-widest-tabular text-[var(--fg-subtle)] mb-1.5 uppercase">
+      <div className="absolute inset-0 flex items-center justify-center px-5">
+        <div
+          className="w-full p-4"
+          style={{
+            background: "var(--bg)",
+            border: "0.5px solid var(--fg)",
+          }}
+        >
+          <p className="text-xs uppercase tracking-[0.3em] text-[var(--fg-muted)] mb-2">
             {heading}
           </p>
-          <h4 className="font-semibold text-[var(--fg)] text-sm mb-2 leading-snug">
+          <h4
+            className="text-sm leading-[1.3] mb-2"
+            style={{ fontFamily: SERIF_FAMILY, color: "var(--fg)", fontWeight: 400 }}
+          >
             {summaryTitle}
           </h4>
-          <div className="h-px bg-[var(--border)] mb-2" />
-          <p className="text-xs text-[var(--fg)] leading-relaxed mb-3 whitespace-pre-wrap">
+          <div
+            aria-hidden
+            style={{ width: 28, height: 1, background: "var(--fg)", opacity: 0.5 }}
+          />
+          <p
+            className="mt-2 text-xs leading-[1.6] mb-3 whitespace-pre-wrap"
+            style={{ fontFamily: SERIF_FAMILY, color: "var(--fg-muted)" }}
+          >
             {summaryBody}
           </p>
-          <div className="flex gap-1.5">
-            <div className="flex-1 px-2 py-1.5 bg-[var(--accent)] text-white text-xs font-medium rounded-md text-center">
+          <div className="flex gap-2">
+            <div
+              className="flex-1 text-center text-xs uppercase tracking-[0.14em] font-semibold py-2"
+              style={{ background: "var(--fg)", color: "var(--bg)" }}
+            >
               {saveLabel}
             </div>
-            <div className="px-2 py-1.5 bg-transparent border border-[var(--border)] text-[var(--fg-muted)] text-xs rounded-md">
+            <div
+              className="text-xs uppercase tracking-[0.14em] px-4 py-2"
+              style={{
+                background: "transparent",
+                border: "0.5px solid var(--fg)",
+                color: "var(--fg)",
+              }}
+            >
               {discardLabel}
             </div>
           </div>
@@ -200,7 +284,6 @@ function SummaryMock({
   );
 }
 
-// 履歴画面の再現モック：ヘッダー + 大見出し + カード 1 列グリッド。
 function HistoryMock({
   entries,
   headerBack,
@@ -217,53 +300,50 @@ function HistoryMock({
       <MockHeader
         left={
           <span className="inline-flex items-center gap-1">
-            <ArrowLeft size={10} strokeWidth={1.5} aria-hidden="true" />
+            <ArrowLeft size={9} strokeWidth={1.5} aria-hidden="true" />
             {headerBack}
           </span>
         }
-        right={
-          <span className="inline-flex items-center gap-1 text-[var(--accent)]">
-            <Plus size={10} strokeWidth={1.5} aria-hidden="true" />
-            {headerNew}
-          </span>
-        }
+        right={<span>{headerNew}</span>}
       />
 
-      {/* 大見出し */}
-      <div className="px-4 pt-1 pb-2">
-        <h1 className="text-sm font-semibold text-[var(--fg)] leading-snug tracking-wide">
+      <div className="px-4 pt-3 pb-2" style={{ borderTop: "0.5px solid var(--border)" }}>
+        <h1
+          className="text-base leading-[1.2]"
+          style={{ fontFamily: SERIF_FAMILY, color: "var(--fg)", fontWeight: 400 }}
+        >
           {title}
         </h1>
       </div>
 
-      {/* カード 1 列グリッド */}
-      <div className="flex-1 overflow-hidden px-4 pb-4 flex flex-col gap-1.5">
-        {entries.map((e) => (
+      <div className="flex-1 overflow-hidden px-4 pb-4 flex flex-col">
+        {entries.map((e, idx) => (
           <div
             key={e.date}
-            className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-2 flex flex-col gap-0.5"
+            className="py-2 flex flex-col gap-[3px]"
+            style={{
+              borderTop:
+                idx === 0 ? "0.5px solid var(--border-strong)" : "0.5px solid var(--border)",
+            }}
           >
-            <div className="flex items-center gap-1">
-              <Calendar
-                size={8}
-                strokeWidth={1.5}
-                className="text-[var(--fg-subtle)]"
-                aria-hidden="true"
-              />
-              <p className="font-mono-jp text-xs sm:text-sm text-[var(--fg-subtle)] tracking-widest-tabular uppercase">
-                {e.date}
-              </p>
-            </div>
-            <h5 className="font-medium text-xs text-[var(--fg)] leading-snug line-clamp-1">
+            <p
+              className="text-xs uppercase tracking-[0.3em] text-[var(--fg-muted)]"
+              style={{ fontFamily: MONO_FAMILY }}
+            >
+              {e.date}
+            </p>
+            <h5
+              className="text-xs leading-[1.3] line-clamp-1"
+              style={{ fontFamily: SERIF_FAMILY, color: "var(--fg)", fontWeight: 400 }}
+            >
               {e.title}
             </h5>
-            <p className="text-sm text-[var(--fg-muted)] leading-relaxed line-clamp-2">{e.body}</p>
-            <ChevronRight
-              size={8}
-              strokeWidth={1.5}
-              className="self-end text-[var(--fg-subtle)] -mt-0.5"
-              aria-hidden="true"
-            />
+            <p
+              className="text-xs leading-[1.55] line-clamp-2"
+              style={{ fontFamily: SERIF_FAMILY, color: "var(--fg-muted)" }}
+            >
+              {e.body}
+            </p>
           </div>
         ))}
       </div>
@@ -271,7 +351,6 @@ function HistoryMock({
   );
 }
 
-// 個別日記画面の再現モック：日付 → タイトル → 区切り → 本文 → 再生ボタン。
 function DetailMock({
   headerBack,
   dateLine,
@@ -290,28 +369,49 @@ function DetailMock({
       <MockHeader
         left={
           <span className="inline-flex items-center gap-1">
-            <ArrowLeft size={10} strokeWidth={1.5} aria-hidden="true" />
+            <ArrowLeft size={9} strokeWidth={1.5} aria-hidden="true" />
             {headerBack}
           </span>
         }
       />
 
-      <article className="flex-1 px-4 pt-2 pb-4 overflow-hidden">
-        <p className="font-mono-jp text-sm text-[var(--fg-subtle)] tracking-widest-tabular uppercase">
+      <article
+        className="flex-1 px-5 pt-3 pb-4 overflow-hidden"
+        style={{ borderTop: "0.5px solid var(--border)" }}
+      >
+        <p
+          className="text-xs uppercase tracking-[0.3em] text-[var(--fg-muted)]"
+          style={{ fontFamily: MONO_FAMILY }}
+        >
           {dateLine}
         </p>
-        <h4 className="mt-1.5 text-sm font-semibold text-[var(--fg)] leading-tight tracking-wide">
+        <h4
+          className="mt-2 text-base leading-[1.2]"
+          style={{ fontFamily: SERIF_FAMILY, color: "var(--fg)", fontWeight: 400 }}
+        >
           {title}
         </h4>
-        <div className="mt-2 h-px bg-[var(--border)]" />
-        <p className="mt-2 text-xs text-[var(--fg)] leading-relaxed whitespace-pre-wrap line-clamp-6">
+        <div
+          aria-hidden
+          className="mt-3 mb-3"
+          style={{ width: 36, height: 1, background: "var(--fg)", opacity: 0.5 }}
+        />
+        <p
+          className="text-xs leading-[1.7] whitespace-pre-wrap line-clamp-6"
+          style={{ fontFamily: SERIF_FAMILY, color: "var(--fg)" }}
+        >
           {body}
         </p>
 
-        {/* 再生ボタン（「もう一度聞く」） */}
-        <div className="mt-3">
-          <div className="inline-flex items-center gap-1.5 border border-[var(--border-strong)] text-[var(--fg-muted)] px-2.5 py-1 rounded-md text-xs tracking-wide">
-            <Play size={10} strokeWidth={1.5} aria-hidden="true" />
+        <div className="mt-4">
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-xs uppercase tracking-[0.14em]"
+            style={{
+              border: "0.5px solid var(--fg)",
+              color: "var(--fg)",
+            }}
+          >
+            <Play size={9} strokeWidth={1.5} aria-hidden="true" />
             {playLabel}
           </div>
         </div>
@@ -320,22 +420,16 @@ function DetailMock({
   );
 }
 
-// LP「できることツアー」セクション本体。
-// embla-carousel でスワイプ・タップ・自動再生を担保し、全コピーは i18n 経由で引く。
 export default function FeatureTour() {
   const tTour = useTranslations("lp.tour");
   const tChat = useTranslations("lp.chatDemo");
   const tDiary = useTranslations("diary");
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Autoplay プラグイン：ユーザー操作でいったん停止、マウスオーバーでも停止。
-  // ドット操作後は autoplay.play() で自動再生を再開する（UX 意図：触っても止まり続けない）。
-  // ※ reset() は autoplayActive が false だと no-op（embla-carousel-autoplay v8 の実装）なので play() を使う。
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center", skipSnaps: false }, [
     Autoplay({ delay: AUTOPLAY_DELAY_MS, stopOnInteraction: true, stopOnMouseEnter: true }),
   ]);
 
-  // アクティブスライドを embla API と同期
   useEffect(() => {
     if (!emblaApi) return;
     const onSelect = () => setSelectedIndex(emblaApi.selectedScrollSnap());
@@ -350,9 +444,6 @@ export default function FeatureTour() {
     (idx: number) => {
       if (!emblaApi) return;
       emblaApi.scrollTo(idx);
-      // 手動ジャンプ後も自動再生を続けたい。stopOnInteraction / stopOnMouseEnter で既に
-      // autoplayActive=false になっているケースが通常なので、reset() ではなく play() を呼ぶ
-      // （reset は停止中に no-op になる embla-carousel-autoplay v8 の仕様）
       const autoplay = emblaApi.plugins().autoplay;
       autoplay?.play();
     },
@@ -361,15 +452,10 @@ export default function FeatureTour() {
 
   const activeSlide = SLIDES[selectedIndex] ?? "recording";
 
-  // messages から会話バブル・履歴カードを配列で取得（型は最小限にキャスト）
   const conversation = tChat.raw("conversation") as ChatBubble[];
   const historyEntries = tTour.raw("mock.history.entries") as HistoryEntry[];
-  // 先頭 3 件のみ使う（録音モックに 3 バブル並べる用）
   const recordingBubbles = conversation.slice(0, 3);
 
-  // スライド ID に対応するモックを描画。
-  // `showInnerCaption` は PhoneFrame の外側に caption を別途出す PC 2x2 時に false を渡し、
-  // モック内部のキャプションを隠して重複表示を避ける。
   const renderMock = (slide: SlideId, showInnerCaption = true) => {
     if (slide === "recording") {
       return (
@@ -379,6 +465,8 @@ export default function FeatureTour() {
           headerBack={tDiary("header.back")}
           headerTitle={tDiary("header.title")}
           headerFinish={tDiary("header.finish")}
+          liveLabel={tChat("liveLabel")}
+          quietVoice={tChat("quietVoice")}
         />
       );
     }
@@ -393,6 +481,7 @@ export default function FeatureTour() {
           summaryBody={tTour("mock.summary.body")}
           saveLabel={tDiary("summary.save")}
           discardLabel={tDiary("summary.discard")}
+          quietVoice={tChat("quietVoice")}
         />
       );
     }
@@ -418,20 +507,22 @@ export default function FeatureTour() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
-      {/* セクション見出し（PC / モバイル共通） */}
+    <div className="flex flex-col gap-10">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-[var(--fg)] mb-3">{tTour("title")}</h2>
-        <p className="text-[var(--fg-muted)] text-sm sm:text-base leading-relaxed max-w-xl mx-auto">
+        <Cap mb={16}>{tTour("eyebrow")}</Cap>
+        <h2
+          className="text-3xl sm:text-4xl leading-[1.15] tracking-[-0.02em]"
+          style={{ fontFamily: SERIF_FAMILY, fontWeight: 400, color: "var(--fg)" }}
+        >
+          {tTour("title")}
+        </h2>
+        <p className="mt-5 text-[var(--fg-muted)] text-sm sm:text-base leading-relaxed max-w-xl mx-auto">
           {tTour("subtitle")}
         </p>
       </div>
 
-      {/* モバイル（< sm）：embla カルーセル + ドットナビ + アクティブ説明文 */}
-      <div className="flex flex-col gap-8 sm:hidden">
-        {/* embla ビューポート：overflow-hidden + ref */}
+      <div className="flex flex-col gap-6 sm:hidden">
         <div className="overflow-hidden" ref={emblaRef}>
-          {/* コンテナ：flex で横並び。touch-pan-y で縦スクロールと両立 */}
           <div className="flex touch-pan-y">
             {SLIDES.map((slide) => (
               <div key={slide} className="flex-[0_0_100%] min-w-0 px-3 py-2">
@@ -441,13 +532,11 @@ export default function FeatureTour() {
           </div>
         </div>
 
-        {/* キャプション：アクティブなスライドの説明文 */}
         <p className="text-center text-sm text-[var(--fg-muted)] leading-relaxed max-w-xl mx-auto min-h-[4.5rem]">
           {tTour(`slides.${activeSlide}.description`)}
         </p>
 
-        {/* ドットナビ：タップ or クリックでジャンプ。autoplay は play() で再開 */}
-        <div className="flex items-center justify-center gap-2.5">
+        <div className="flex items-center justify-center gap-2">
           {SLIDES.map((slide, idx) => {
             const isActive = idx === selectedIndex;
             return (
@@ -457,25 +546,26 @@ export default function FeatureTour() {
                 onClick={() => scrollTo(idx)}
                 aria-label={tTour(`slides.${slide}.caption`)}
                 aria-current={isActive ? "true" : undefined}
-                className={`h-2 rounded-full transition-all ${
-                  isActive
-                    ? "w-8 bg-[var(--accent)]"
-                    : "w-2 bg-[var(--border-strong)] hover:bg-[var(--fg-subtle)]"
-                }`}
+                className="transition-all"
+                style={{
+                  width: isActive ? 28 : 10,
+                  height: 1,
+                  background: isActive ? "var(--fg)" : "var(--border-strong)",
+                  border: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                }}
               />
             );
           })}
         </div>
       </div>
 
-      {/* PC（>= sm）：2×2 グリッド。4 枚同時表示・スワイプ / 自動再生 / ドットなし。
-          各フレームの下に caption + description を個別に配置する。
-          フレーム外に caption が出るので、モック内のキャプションは showInnerCaption=false で抑制 */}
-      <div className="hidden sm:grid sm:grid-cols-2 sm:gap-8 md:gap-12 max-w-5xl mx-auto">
+      <div className="hidden sm:grid sm:grid-cols-2 sm:gap-10 md:gap-12 max-w-5xl mx-auto">
         {SLIDES.map((slide) => (
-          <div key={slide} className="flex flex-col items-center gap-4">
+          <div key={slide} className="flex flex-col items-center gap-5">
             <PhoneFrame>{renderMock(slide, false)}</PhoneFrame>
-            <p className="text-xs font-medium tracking-widest-tabular uppercase text-[var(--accent)]">
+            <p className="text-xs uppercase tracking-[0.4em] text-[var(--fg-muted)]">
               {tTour(`slides.${slide}.caption`)}
             </p>
             <p className="text-sm text-[var(--fg-muted)] leading-relaxed text-center max-w-xs">

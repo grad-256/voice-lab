@@ -52,17 +52,10 @@ export default async function LocaleLayout({ children, params }: Props) {
           配下すべてのクライアントコンポーネントから useAuth() で参照できるようにする。
           AuthGate は副作用だけを持つヘッドレスコンポーネント、AuthDialog は z-60 のモーダル本体。 */}
       <AuthProvider>
-        {/* LP ルート時のみ children + footer の subtree を `data-theme="dark"` に固定する。
-          これにより、html が `data-theme="light"` でも LP ページ本体と直下 footer が一体でダーク表示になり、
-          LP 下端で紙色 footer に切り替わる視覚的破断を防ぐ。非 LP 時は data-theme 属性を付けない。 */}
-        {/* LocaleShellThemeLock が flex-1 flex flex-col を兼ねる。
-          注：初回表示のフェードインはページ単位（各ページ最上位要素）に付ける方針。
-          ここでラップすると opacity <1 が stacking context を作り、配下の z-index モーダルや
-          トースト等の重なり順序が一時的に崩れる懸念があるため、レイアウト側では付けない。 */}
+        {/* LocaleShellThemeLock は LP / アプリを跨いだ際にテーマキーを読み直す + flex-1 ラッパ。
+            フェードインはここには付けない（stacking context が配下モーダルの重なりを崩す）。 */}
         <LocaleShellThemeLock>
           {children}
-          {/* LocaleFooter はアプリ領域（/app・/diary・/me 配下）では null を返す。
-              表示判定とマークアップは LocaleFooter 側に集約する。 */}
           <LocaleFooter />
         </LocaleShellThemeLock>
         <AuthGate />

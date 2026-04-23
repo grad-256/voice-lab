@@ -1,8 +1,9 @@
 "use client";
 
+import { cssVarToRgbChannels, observeThemeChange } from "@/lib/themeColors";
 import { useEffect, useRef } from "react";
 
-// ランダムに光るドットグリッド（How it works セクション用）
+// How it works セクション背景：40px 方眼の細罫 + 交点の少数ドットが呼吸する。
 export default function GridBg() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -14,6 +15,11 @@ export default function GridBg() {
 
     let animId: number;
 
+    let INK = cssVarToRgbChannels("--fg");
+    const unobserve = observeThemeChange(() => {
+      INK = cssVarToRgbChannels("--fg");
+    });
+
     const SPACING = 40;
     type Dot = { x: number; y: number; alpha: number; target: number; speed: number };
     let dots: Dot[] = [];
@@ -22,18 +28,19 @@ export default function GridBg() {
       canvas.width = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
 
-      // グリッド上のドットを生成
+      // 交点の約 8% だけにドットを配置。
       dots = [];
       const cols = Math.ceil(canvas.width / SPACING) + 1;
       const rows = Math.ceil(canvas.height / SPACING) + 1;
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
+          if (Math.random() > 0.08) continue;
           dots.push({
             x: c * SPACING,
             y: r * SPACING,
-            alpha: Math.random() * 0.3,
-            target: Math.random() * 0.5 + 0.05,
-            speed: Math.random() * 0.008 + 0.003,
+            alpha: Math.random() * 0.12,
+            target: Math.random() * 0.22 + 0.04,
+            speed: Math.random() * 0.004 + 0.0015,
           });
         }
       }
@@ -42,26 +49,41 @@ export default function GridBg() {
     resize();
     window.addEventListener("resize", resize);
 
+    const drawGrid = (width: number, height: number) => {
+      ctx.strokeStyle = `rgba(${INK}, 0.05)`;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      for (let x = 0; x <= width; x += SPACING) {
+        ctx.moveTo(x + 0.5, 0);
+        ctx.lineTo(x + 0.5, height);
+      }
+      for (let y = 0; y <= height; y += SPACING) {
+        ctx.moveTo(0, y + 0.5);
+        ctx.lineTo(width, y + 0.5);
+      }
+      ctx.stroke();
+    };
+
     const draw = () => {
       const { width, height } = canvas;
       ctx.clearRect(0, 0, width, height);
 
+      drawGrid(width, height);
+
       for (const dot of dots) {
-        // alpha をターゲットに近づける
         if (dot.alpha < dot.target) {
           dot.alpha = Math.min(dot.alpha + dot.speed, dot.target);
         } else {
           dot.alpha = Math.max(dot.alpha - dot.speed, dot.target);
         }
-        // ターゲット到達したら次のターゲットをランダムに
-        if (Math.abs(dot.alpha - dot.target) < 0.005) {
-          dot.target = Math.random() * 0.45 + 0.03;
-          dot.speed = Math.random() * 0.008 + 0.002;
+        if (Math.abs(dot.alpha - dot.target) < 0.004) {
+          dot.target = Math.random() * 0.22 + 0.03;
+          dot.speed = Math.random() * 0.004 + 0.001;
         }
 
         ctx.beginPath();
-        ctx.arc(dot.x, dot.y, 1.2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(99,102,241,${dot.alpha})`;
+        ctx.arc(dot.x, dot.y, 1, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${INK}, ${dot.alpha})`;
         ctx.fill();
       }
 
@@ -72,6 +94,7 @@ export default function GridBg() {
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", resize);
+      unobserve();
     };
   }, []);
 

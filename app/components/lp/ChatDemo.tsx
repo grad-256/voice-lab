@@ -1,16 +1,18 @@
 "use client";
 
+import { Cap, Waves } from "@/app/components/chapter";
+import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
+import { Mic } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type Role = "user" | "assistant";
 type Phase = "idle" | "listening" | "thinking" | "speaking";
 
-// 会話の進行に合わせた「AI が話している／聞いている／考えている」状態を演出する。
-// 実際のアプリ（/diary）のステート遷移と同じ語彙を LP で見せることで、使用感をプレビューする。
+// LP 用の録音デモ。/diary の実視覚仕様（user=serif 本文 / assistant=左縦罫+Cap+serif）を
+// 電話モック枠に閉じ込める。
 export default function ChatDemo() {
   const t = useTranslations("lp.chatDemo");
-  // 会話配列は messages JSON にロケール毎で保持し、t.raw で取り出す
   const conversation = useMemo(() => t.raw("conversation") as { role: Role; text: string }[], [t]);
 
   const [visibleCount, setVisibleCount] = useState(0);
@@ -22,7 +24,6 @@ export default function ChatDemo() {
 
     const showNext = (index: number) => {
       if (index >= conversation.length) {
-        // 会話終了：少し余韻を残してループ
         timeout = setTimeout(() => {
           setVisibleCount(0);
           setPhase("idle");
@@ -34,12 +35,10 @@ export default function ChatDemo() {
       const msg = conversation[index];
 
       if (msg.role === "assistant") {
-        // AI：考える → 話す の 2 段階
         setPhase("thinking");
         timeout = setTimeout(() => {
           setPhase("speaking");
           setVisibleCount(index + 1);
-          // 発話時間はテキスト長に応じて調整
           const speakingMs = Math.min(2400, 800 + msg.text.length * 80);
           timeout = setTimeout(() => {
             setPhase("idle");
@@ -47,7 +46,6 @@ export default function ChatDemo() {
           }, speakingMs);
         }, 900);
       } else {
-        // user：聞いている（録音中） → メッセージ出現
         setPhase("listening");
         timeout = setTimeout(() => {
           setVisibleCount(index + 1);
@@ -61,7 +59,6 @@ export default function ChatDemo() {
     return () => clearTimeout(timeout);
   }, [conversation]);
 
-  // visibleCount / phase の更新ごとに末尾へスクロール
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -81,150 +78,166 @@ export default function ChatDemo() {
           ? t("phase.speaking")
           : t("phase.idle");
 
+  // 擬似経過時間（visibleCount 連動）。
+  const fakeElapsedSec = Math.min(59, visibleCount * 7 + (phase === "listening" ? 3 : 0));
+  const elapsedLabel = `00:${String(fakeElapsedSec).padStart(2, "0")}`;
+  const wavesActive = phase === "listening" ? 1 : phase === "speaking" ? 0.7 : 0.25;
+
   return (
     <div
-      // 端末ベゼル（内側 7px の黒）+ テーマ連動のドロップシャドウ。
-      // ベゼルは「電話の筐体」を示す表現なので Light でも黒のまま維持する。
-      // 外側のふわっと広がる影だけ shadow-soft/strong（CSS 変数）で紙との親和性を保つ。
-      className="chat-phone-frame w-full bg-[var(--bg)] rounded-[36px] border border-[var(--border-strong)] overflow-hidden flex flex-col h-[560px]"
+      className="relative w-full overflow-hidden flex flex-col h-[560px] shadow-theme-md"
+      style={{
+        background: "var(--bg)",
+        border: "0.5px solid var(--border-strong)",
+        borderRadius: 14,
+      }}
     >
-      {/* ステータスバー */}
-      <div className="px-5 pt-3 pb-1 flex justify-between items-center text-xs sm:text-sm text-[var(--fg-subtle)]">
+      <div
+        className="px-5 pt-3 pb-2 flex justify-between items-center text-xs uppercase tracking-[0.14em] text-[var(--fg-muted)]"
+        style={{ fontFamily: MONO_FAMILY }}
+      >
         <span>9:41</span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-1 h-1 rounded-full bg-[var(--fg-subtle)]" />
-          <span className="inline-block w-1 h-1 rounded-full bg-[var(--fg-subtle)]" />
-          <span className="inline-block w-1 h-1 rounded-full bg-[var(--fg-subtle)]" />
+        <span className="relative inline-block w-[14px] h-[7px] border-[0.5px] border-[var(--fg-muted)]">
+          <span
+            aria-hidden
+            className="absolute"
+            style={{
+              top: 1,
+              left: 1,
+              right: 1,
+              bottom: 1,
+              background: "var(--fg-muted)",
+            }}
+          />
         </span>
       </div>
 
-      <div className="flex flex-col px-3 pb-5 flex-1 min-h-0">
-        {/* ヘッダー：ブランド名（特定ペルソナ・英会話訴求は廃止） */}
-        <div className="flex items-center gap-2 py-2 border-b border-[var(--border)]">
-          <div className="relative w-7 h-7 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-strong)] flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
-            VL
-            {/* AI が話しているときはアバターの周囲に柔らかい光 */}
-            {phase === "speaking" && (
-              <span className="absolute inset-0 rounded-full ring-2 ring-accent-strong-60 animate-ping" />
-            )}
+      <div className="px-5 pt-2 pb-3 flex items-center justify-between text-xs uppercase tracking-[0.32em] text-[var(--fg-muted)] border-b border-[var(--border)]">
+        <span>{t("headerLabel")}</span>
+        <span>{t("entryLabel")}</span>
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto px-5 pt-4 pb-3 space-y-4 scroll-smooth"
+        style={{ scrollbarWidth: "none" }}
+      >
+        <Cap mb={0}>{t("liveLabel")}</Cap>
+
+        {messages.map((msg, i) =>
+          msg.role === "user" ? (
+            <div
+              key={`${i}-${msg.text}`}
+              className="animate-fadeSlideUp text-base leading-[1.7]"
+              style={{
+                fontFamily: SERIF_FAMILY,
+                color: "var(--fg)",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {msg.text}
+            </div>
+          ) : (
+            <div
+              key={`${i}-${msg.text}`}
+              className="animate-fadeSlideUp"
+              style={{ borderLeft: "1.5px solid var(--fg)", paddingLeft: 12 }}
+            >
+              <div className="text-xs uppercase tracking-[0.3em] text-[var(--fg-muted)] mb-1">
+                {t("quietVoice")}
+              </div>
+              <div
+                className="text-sm leading-[1.55]"
+                style={{
+                  fontFamily: SERIF_FAMILY,
+                  color: "var(--fg)",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {msg.text}
+              </div>
+            </div>
+          )
+        )}
+
+        {phase === "thinking" && (
+          <div
+            className="animate-fadeSlideUp"
+            style={{ borderLeft: "1.5px solid var(--fg)", paddingLeft: 12 }}
+          >
+            <div className="text-xs uppercase tracking-[0.3em] text-[var(--fg-muted)] mb-1">
+              {t("quietVoice")}
+            </div>
+            <div className="flex items-center gap-1 py-[3px]">
+              <span className="w-1 h-1 bg-[var(--fg-muted)] animate-bounce [animation-delay:0ms]" />
+              <span className="w-1 h-1 bg-[var(--fg-muted)] animate-bounce [animation-delay:150ms]" />
+              <span className="w-1 h-1 bg-[var(--fg-muted)] animate-bounce [animation-delay:300ms]" />
+            </div>
           </div>
-          <div className="leading-tight">
-            <p className="text-[var(--fg)] font-semibold text-sm">MyVoiceLab</p>
-            <p className="text-[var(--fg-subtle)] text-xs">{t("partner")}</p>
+        )}
+      </div>
+
+      <div className="px-5 pt-3 pb-4 border-t border-[var(--border)]">
+        <div className="flex items-center gap-3">
+          <span
+            aria-hidden
+            className="inline-block w-[7px] h-[7px] rounded-full"
+            style={{
+              backgroundColor: "var(--fg)",
+              opacity: phase === "listening" ? 1 : 0.35,
+            }}
+          />
+          <span
+            className="text-xs tracking-[0.06em]"
+            style={{ fontFamily: MONO_FAMILY, color: "var(--fg)" }}
+          >
+            {elapsedLabel}
+          </span>
+          <div className="flex-1">
+            <Waves n={28} h={12} active={wavesActive} />
           </div>
-          <span className="ml-auto flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-strong)] animate-pulse" />
-            <span className="text-xs sm:text-sm text-[var(--fg-subtle)]">{t("online")}</span>
+          <span className="text-xs uppercase tracking-[0.3em] text-[var(--fg-muted)]">
+            {phaseLabel}
           </span>
         </div>
 
-        {/* メッセージエリア */}
-        <div
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto py-3 space-y-3.5 scroll-smooth"
-          style={{ scrollbarWidth: "none" }}
-        >
-          {messages.map((msg, i) => (
-            <div
-              key={`${i}-${msg.text}`}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-fadeSlideUp`}
-            >
-              {msg.role === "assistant" && (
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-strong)] flex items-center justify-center text-white text-xs sm:text-sm font-bold flex-shrink-0 mt-1 mr-1.5">
-                  VL
-                </div>
-              )}
-              <div className="max-w-[82%]">
-                <div
-                  className={`text-sm px-3.5 py-2.5 rounded-2xl leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-accent-30 text-[var(--fg)] rounded-tr-sm"
-                      : "bg-[var(--bg-elevated)] text-[var(--fg)] rounded-tl-sm"
-                  }`}
-                >
-                  {msg.text}
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {/* AI が考えている：タイピングインジケーター */}
-          {phase === "thinking" && (
-            <div className="flex justify-start gap-1.5 animate-fadeSlideUp">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-strong)] flex items-center justify-center text-white text-xs sm:text-sm font-bold flex-shrink-0 mt-1">
-                VL
-              </div>
-              <div className="bg-[var(--bg-elevated)] px-3 py-2.5 rounded-2xl rounded-tl-sm flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-[var(--fg-subtle)] rounded-full animate-bounce [animation-delay:0ms]" />
-                <span className="w-1.5 h-1.5 bg-[var(--fg-subtle)] rounded-full animate-bounce [animation-delay:150ms]" />
-                <span className="w-1.5 h-1.5 bg-[var(--fg-subtle)] rounded-full animate-bounce [animation-delay:300ms]" />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* マイク UI ：状態ごとに見た目が変わる */}
-        <div className="flex flex-col items-center gap-2 pt-2">
-          {/* 音声波形ビジュアライザ（listening / speaking 時のみ出す） */}
-          {(phase === "listening" || phase === "speaking") && (
-            <div className="flex items-end gap-[3px] h-4">
-              {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-                <span
-                  key={i}
-                  className={`w-[3px] rounded-full ${
-                    phase === "listening" ? "bg-[var(--accent-strong)]" : "bg-[var(--accent)]"
-                  }`}
-                  style={{
-                    height: `${30 + ((i * 13) % 70)}%`,
-                    animation: `voiceBar 0.9s ease-in-out ${i * 0.08}s infinite alternate`,
-                  }}
-                />
-              ))}
-            </div>
-          )}
-
-          <p
-            className={`text-xs transition-colors ${
-              phase === "listening"
-                ? "text-[var(--accent-strong)]"
-                : phase === "thinking" || phase === "speaking"
-                  ? "text-[var(--accent-strong)]"
-                  : "text-[var(--fg-subtle)]"
-            }`}
-          >
-            {phaseLabel}
-          </p>
-
-          <div className="relative">
-            <div
-              // 冗長な Tailwind `shadow-lg` は削除。影はテーマ連動の `shadow-theme-*` に一本化。
-              className={`relative w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+        <div className="flex items-center justify-center mt-4">
+          <button
+            type="button"
+            aria-hidden
+            tabIndex={-1}
+            className="relative w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+            style={{
+              background: phase === "listening" ? "var(--fg)" : "transparent",
+              border:
                 phase === "listening"
-                  ? "bg-[var(--accent)] scale-105 shadow-theme-lg animate-breathe"
-                  : "bg-[var(--bg-elevated)] shadow-theme-md"
-              }`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                // listening 以外は白背景カード上に乗るので、アイコン色もテーマ連動（Light で白アイコンが消える回帰を防ぐ）
-                className={`w-5 h-5 ${phase === "listening" ? "text-white" : "text-[var(--fg-muted)]"}`}
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21H9v2h6v-2h-2v-2.07A8.001 8.001 0 0 0 20 11h-2a6 6 0 0 1-12 0H4a8.001 8.001 0 0 0 7 7.93z" />
-              </svg>
-            </div>
-          </div>
+                  ? "0.5px solid var(--fg)"
+                  : "0.5px solid var(--border-strong)",
+            }}
+          >
+            <Mic
+              size={18}
+              strokeWidth={1.5}
+              color={phase === "listening" ? "var(--bg)" : "var(--fg-muted)"}
+              aria-hidden
+            />
+          </button>
         </div>
       </div>
 
-      <style jsx>{`
-        @keyframes voiceBar {
-          0% { transform: scaleY(0.4); }
-          100% { transform: scaleY(1); }
-        }
-      `}</style>
+      <div className="absolute left-1/2 bottom-[6px] -translate-x-1/2">
+        <span
+          aria-hidden
+          className="block"
+          style={{
+            width: 64,
+            height: 3,
+            borderRadius: 2,
+            background: "var(--fg)",
+            opacity: 0.35,
+          }}
+        />
+      </div>
     </div>
   );
 }

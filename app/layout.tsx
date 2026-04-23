@@ -2,6 +2,7 @@
 // ルートレイアウトに宣言して root 経由のルートにも確実に行き渡らせる。
 export const runtime = "edge";
 
+import { PWA_REDIRECT_SCRIPT } from "@/lib/pwaRedirect";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import type { Metadata, Viewport } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -104,6 +105,11 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-[var(--bg)] text-[var(--fg)] antialiased flex flex-col">
+        {/* PWA 起動時に `/` に到達したら `/app` へ退避する同期スクリプト。
+            LP のちらつきを避けるため hydration より前に実行する。 */}
+        <Script id="pwa-redirect" strategy="beforeInteractive">
+          {PWA_REDIRECT_SCRIPT}
+        </Script>
         {/* FOUC 防止：React hydration より前に html の data-theme を同期適用する。
             beforeInteractive は root layout でのみ有効（Next.js 15 App Router の制約）。
             スクリプト本体は lib/theme.ts で定義され、localStorage と OS 設定を読む。 */}

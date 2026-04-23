@@ -96,8 +96,9 @@
   --grad-title-via: #2d4a63;
   --grad-title-to: #4a7a9c;
 
-  /* violet/indigo の Canvas は紙上では浮くので、Light モードではかなり抑える。 */
-  --lp-canvas-opacity: 0.25;
+  /* 旧 violet/indigo 時代は紙上で浮くので 0.25 に抑えていたが、Canvas パレットが
+     `--fg` / `--accent` に切り替わった現状では Light でも素直に見えて問題なし。1 のまま。 */
+  --lp-canvas-opacity: 1;
 
   --background: var(--bg);
   --foreground: var(--fg);

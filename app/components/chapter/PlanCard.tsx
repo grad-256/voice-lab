@@ -15,14 +15,16 @@ type PlanCardProps = {
   period: string;
   tagline: string;
   features: readonly string[];
-  ctaLabel: string;
+  /** CTA ラベル。undefined のときは CTA ボタン自体を表示しない（LP で料金 "見せるだけ" の用途）。 */
+  ctaLabel?: string;
   /** "人気" 等のバッジ。undefined のときは表示しない。 */
   badge?: string;
   /** 視覚的に 1 段強調する（枠線を濃く・Cap を反転） */
   highlighted?: boolean;
   /** CTA 下に表示する補助ノート（stripePendingNote 等） */
   footnote?: ReactNode;
-  onSelect: () => void;
+  /** CTA 選択時のハンドラ。ctaLabel と対で省略可能。 */
+  onSelect?: () => void;
 };
 
 export function PlanCard({
@@ -37,6 +39,7 @@ export function PlanCard({
   footnote,
   onSelect,
 }: PlanCardProps) {
+  const hasCta = ctaLabel !== undefined && onSelect !== undefined;
   const cardStyle: CSSProperties = {
     border: highlighted ? "1px solid var(--fg)" : "0.5px solid var(--border)",
     padding: "22px 20px 20px",
@@ -123,9 +126,11 @@ export function PlanCard({
         ))}
       </ul>
 
-      <button type="button" onClick={onSelect} className="text-xs sm:text-sm" style={ctaStyle}>
-        {ctaLabel}
-      </button>
+      {hasCta && (
+        <button type="button" onClick={onSelect} className="text-xs sm:text-sm" style={ctaStyle}>
+          {ctaLabel}
+        </button>
+      )}
 
       {footnote && (
         <div className="text-xs sm:text-sm text-[var(--fg-muted)] text-center mt-2 leading-[1.5]">
