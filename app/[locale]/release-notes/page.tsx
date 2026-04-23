@@ -21,7 +21,7 @@ export default function ReleaseNotesPage() {
     <main className="flex-1 w-full max-w-md mx-auto flex flex-col px-7 pt-14 pb-14 animate-fadeIn">
       <PageHeader
         left={
-          <Link href="/" style={backLink} className="hover:text-[var(--fg)] transition-colors">
+          <Link href="/app" style={backLink} className="hover:text-[var(--fg)] transition-colors">
             ← MyVoiceLab
           </Link>
         }

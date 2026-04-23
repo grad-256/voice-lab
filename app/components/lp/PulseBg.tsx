@@ -1,8 +1,9 @@
 "use client";
 
+import { cssVarToRgbChannels, observeThemeChange } from "@/lib/themeColors";
 import { useEffect, useRef } from "react";
 
-// 中心から広がる同心円パルス（CTA セクション用）
+// CTA セクション背景：墨青の細い同心円 2 本 + 中央の radial glow。
 export default function PulseBg() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -14,15 +15,19 @@ export default function PulseBg() {
 
     let animId: number;
 
+    let ACCENT = cssVarToRgbChannels("--accent");
+    const unobserve = observeThemeChange(() => {
+      ACCENT = cssVarToRgbChannels("--accent");
+    });
+
     type Ring = { r: number; alpha: number };
     const rings: Ring[] = [
-      { r: 0, alpha: 0.5 },
-      { r: 80, alpha: 0.35 },
-      { r: 160, alpha: 0.2 },
+      { r: 0, alpha: 0.28 },
+      { r: 140, alpha: 0.16 },
     ];
 
-    const MAX_R = 400;
-    const SPEED = 1.2;
+    const MAX_R = 360;
+    const SPEED = 0.4;
 
     const resize = () => {
       canvas.width = canvas.offsetWidth;
@@ -42,20 +47,19 @@ export default function PulseBg() {
         const alpha = ring.alpha * (1 - ring.r / MAX_R);
         ctx.beginPath();
         ctx.arc(cx, cy, ring.r, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(99,102,241,${Math.max(0, alpha)})`;
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = `rgba(${ACCENT}, ${Math.max(0, alpha)})`;
+        ctx.lineWidth = 0.75;
         ctx.stroke();
 
         ring.r += SPEED;
         if (ring.r > MAX_R) ring.r = 0;
       }
 
-      // 中心のグロー
-      const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 120);
-      glow.addColorStop(0, "rgba(139,92,246,0.12)");
-      glow.addColorStop(1, "rgba(139,92,246,0)");
+      const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 160);
+      glow.addColorStop(0, `rgba(${ACCENT}, 0.08)`);
+      glow.addColorStop(1, `rgba(${ACCENT}, 0)`);
       ctx.beginPath();
-      ctx.arc(cx, cy, 120, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 160, 0, Math.PI * 2);
       ctx.fillStyle = glow;
       ctx.fill();
 
@@ -66,6 +70,7 @@ export default function PulseBg() {
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", resize);
+      unobserve();
     };
   }, []);
 

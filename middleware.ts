@@ -6,9 +6,7 @@ import { type NextRequest, NextResponse } from "next/server";
 // next-intl のロケール判定ミドルウェア（URL 書き換え / locale cookie 設定）
 const intlMiddleware = createIntlMiddleware(routing);
 
-// AuthDialog 導入後は、middleware で /login に強制リダイレクトしない方針。
-// 保護ページは AuthGate（クライアント側）でダイアログ自動オープン → 閉じたら /app へ退避する。
-// middleware は「/login 直アクセス → /app」の正規化と、ロケール処理・Supabase セッション更新に絞る。
+// middleware の責務：ロケール処理・Supabase セッション更新・/login 正規化・非 LP に noindex。
 
 function stripLocale(pathname: string): string {
   const segments = pathname.split("/").filter(Boolean);
@@ -29,30 +27,14 @@ function getLocaleSegment(pathname: string): string {
 }
 
 export async function middleware(request: NextRequest) {
-  // 0) EN 本格翻訳（Track C：LP / UI / システムプロンプト等）が未完了のため、
-  //    /en/* アクセスを JA デフォルトに寄せる。
-  //    NEXT_LOCALE cookie も ja に書き戻しておき、次リクエストでの再リダイレクトを防ぐ。
-  //    Track C 完了時に本ブロックと layout の LocaleSwitcher コメントアウトを同時解除する。
-  const pathname = request.nextUrl.pathname;
-  if (pathname === "/en" || pathname.startsWith("/en/")) {
-    const url = request.nextUrl.clone();
-    url.pathname = pathname === "/en" ? "/" : pathname.slice(3);
-    const redirectResponse = NextResponse.redirect(url);
-    redirectResponse.cookies.set("NEXT_LOCALE", "ja", { path: "/" });
-    return redirectResponse;
-  }
-
-  // 1) まず next-intl にロケール処理を委ねる。
-  //    戻り値は「rewrite or redirect を含んだ」レスポンス。以降ここに cookie を重ねる。
+  // next-intl にロケール処理を委ねる。以降ここに cookie を重ねる。
   const response = intlMiddleware(request);
 
-  // next-intl が明示的に redirect した場合（例：デフォルトロケールへの正規化）は即返す
   if (response.status >= 300 && response.status < 400) {
     return response;
   }
 
-  // 2) Supabase セッションを更新する（cookie 書き換えは response に積む）。
-  //    next-intl が付与した rewrite / cookie を失わないよう、response を直接使う。
+  // Supabase セッションのトークンリフレッシュと cookie 更新。
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key",
@@ -73,23 +55,36 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // getUser() は毎回サーバー検証する。戻り値自体は middleware では使わないが、
-  // ここで Supabase のトークンリフレッシュと cookie 更新（setAll 経由）が走るので呼び出し必須。
+  // getAll/setAll の cookie 同期を発火させるため毎回呼ぶ。
   await supabase.auth.getUser();
 
   const bare = stripLocale(request.nextUrl.pathname);
   const localeSegment = getLocaleSegment(request.nextUrl.pathname);
 
-  // 3) /login は廃止方針（AuthDialog が全ページで代替）。直アクセスされたら常に /app へ寄せる。
-  //    ログイン状態を問わず /app にリダイレクトする（未ログインなら /app で AuthGate が発火）。
+  // /login は廃止（AuthDialog が代替）。直アクセスは /app に正規化。
   if (bare === "/login") {
     const url = request.nextUrl.clone();
     url.pathname = `${localeSegment}/app`;
     return NextResponse.redirect(url);
   }
 
-  // 参考：未ログインで保護ページにアクセスした場合は middleware では何もしない。
-  //       AuthGate（クライアント）がダイアログを自動オープンし、閉じたら /app に退避する。
+  // アルファ公開前：LP 以外に noindex, nofollow ヘッダ。robots.ts の二重防御。
+  const NON_INDEXED_PREFIXES = [
+    "/app",
+    "/diary",
+    "/me",
+    "/pricing",
+    "/faq",
+    "/release-notes",
+    "/reset-password",
+    "/login",
+  ];
+  const isNonIndexed = NON_INDEXED_PREFIXES.some(
+    (prefix) => bare === prefix || bare.startsWith(`${prefix}/`)
+  );
+  if (isNonIndexed) {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
 
   return response;
 }

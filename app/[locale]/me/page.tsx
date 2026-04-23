@@ -16,7 +16,7 @@ import { NoteIcon } from "@/app/components/icons/note-icon";
 import { XIcon } from "@/app/components/icons/x-icon";
 import { useRouter } from "@/i18n/routing";
 import { formatMemberSince } from "@/lib/chapterDate";
-import { LEGAL_URLS } from "@/lib/legalUrls";
+import { getLegalUrls } from "@/lib/legalUrls";
 import { createClient } from "@/lib/supabase/client";
 import {
   type ThemePreference,
@@ -41,10 +41,10 @@ const THEME_OPTIONS: readonly { value: ThemePreference; Icon: typeof Monitor }[]
 
 export default function MePage() {
   const t = useTranslations("me");
-  // footer 相当の法務 / SNS リンクを /me 末尾に集約するため、footer ネームスペースも読む。
-  // layout の LocaleFooter は /me 配下で非表示になる（Issue #75）。
+  // footer 相当の法務 / SNS リンクを /me 末尾に集約する。
   const tFooter = useTranslations("footer");
   const locale = useLocale();
+  const legal = getLegalUrls(locale);
   const router = useRouter();
   // 破壊的操作（signOut / delete）用に supabase クライアントは保持する。
   // user 情報は AuthContext から取り、重複 getUser() は行わない。
@@ -276,7 +276,7 @@ export default function MePage() {
           style={{ fontFamily: MONO_FAMILY }}
         >
           <a
-            href={LEGAL_URLS.terms}
+            href={legal.terms}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[var(--fg)] transition-colors"
@@ -284,7 +284,7 @@ export default function MePage() {
             {tFooter("terms")}
           </a>
           <a
-            href={LEGAL_URLS.privacy}
+            href={legal.privacy}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[var(--fg)] transition-colors"

@@ -8,9 +8,9 @@
     "description": "AI と様々なシチュエーションで話し、話した内容を可視化する。声で生活する、新しいかたち。"
   },
   "nav": {
-    "ctaStart": "話しはじめる",
+    "ctaStart": "Coming soon",
     "ctaLogin": "ログイン",
-    "ctaHome": "話しはじめる"
+    "ctaHome": "Coming soon"
   },
   "lp": {
     "hero": {
@@ -22,11 +22,18 @@
       "subCopy2": "今日を話すだけで、あとで読める日記になります。",
       "ctaStart": "話しはじめる",
       "ctaLogin": "ログイン",
-      "ctaInstall": "インストール",
-      "note": "登録不要・10往復まで無料"
+      "ctaInstall": "インストール"
+    },
+    "proof": {
+      "eyebrow": "Three shapes",
+      "items": {
+        "speak": "声で書き留める。",
+        "question": "ひとつの問いに応える。",
+        "accumulate": "静かに積み重なる。"
+      }
     },
     "steps": {
-      "eyebrow": "使いかた",
+      "eyebrow": "How it works",
       "title": "話すだけで、日記になる。",
       "items": {
         "talk": {
@@ -43,26 +50,8 @@
         }
       }
     },
-    "features": {
-      "eyebrow": "できること",
-      "title": "声だけで完結する、新しい日記のかたち。",
-      "items": {
-        "voice": {
-          "title": "声だけで完結",
-          "desc": "キーボードは要りません。マイクを押して話すだけ。落ち着いた 3 つの声から、好きな読み上げ音声を選べます。"
-        },
-        "conversation": {
-          "title": "会話が日記になる",
-          "desc": "あなたが話したことを AI が受け止め、自然に返します。そのやりとりがそのまま、読める日記として整理されます。"
-        },
-        "summary": {
-          "title": "時間をかけて振り返る",
-          "desc": "過去の日記は一覧でも、1 つずつでも読み返せます。あのとき考えていたことに、もう一度会いに行ける場所です。"
-        }
-      }
-    },
     "tour": {
-      "eyebrow": "実際の画面",
+      "eyebrow": "Actual screens",
       "title": "声で話して、読み返せる日記になる。",
       "subtitle": "実際のアプリの画面を、少しだけお見せします。",
       "slides": {
@@ -114,12 +103,18 @@
         }
       }
     },
+    "insights": {
+      "eyebrow": "Coming soon",
+      "title": "積み重ねが、見えてくる。",
+      "body": "日々の声が、感情の波やトーンの変化として読み返せる場所。\nある朝の自分に、もう一度会いに行けます。",
+      "note": "Insights · Analytics · Coming soon"
+    },
     "cta": {
       "titlePart1": "さあ、",
       "titlePart2": "今日のことを話そう。",
       "bodyLine1": "登録不要・10往復まで無料。",
       "bodyLine2": "まずは、声に出してみる。",
-      "button": "話しはじめる"
+      "button": "Coming soon"
     },
     "chatDemo": {
       "conversation": [
@@ -129,34 +124,20 @@
         { "role": "user", "text": "新機能の優先度で意見が割れてて、言葉が出なかった。" },
         { "role": "assistant", "text": "どの優先度がしっくりきそう？" }
       ],
-      "partner": "対話パートナー",
-      "online": "オンライン",
+      "liveLabel": "Live",
+      "quietVoice": "Quiet voice",
+      "headerLabel": "MyVoiceLab",
+      "entryLabel": "Entry N° 001",
       "phase": {
-        "listening": "聞いています…",
-        "thinking": "考えています…",
-        "speaking": "話しています…",
-        "idle": "マイクを押して話す"
+        "listening": "LISTENING",
+        "thinking": "THINKING",
+        "speaking": "SPEAKING",
+        "idle": "PRESS TO SPEAK"
       }
     },
-    "voiceDemo": {
-      "listening": "聞いています…",
-      "idle": "マイクを押して話す"
-    },
-    "conversationDemo": {
-      "bubbles": [
-        { "role": "assistant", "text": "今日どうだった？" },
-        { "role": "user", "text": "ちょっと疲れた。" },
-        { "role": "assistant", "text": "何があったの？" },
-        { "role": "user", "text": "言葉が出なくて。" }
-      ]
-    },
-    "summaryDemo": {
-      "title": "打ち合わせの振り返り",
-      "lines": [
-        "打ち合わせで優先度の意見が割れた。",
-        "言葉がうまく出ずに疲れを感じた。",
-        "自分の優先度は、体験を先に固めたい。"
-      ]
+    "theme": {
+      "toggleToLight": "ライトモードに切り替える",
+      "toggleToDark": "ダークモードに切り替える"
     }
   },
   "hub": {
@@ -432,11 +413,12 @@
   "pricing": {
     "chapter": {
       "cap": "Pricing",
-      "titleLead": "At your pace, ",
-      "titleAccent": "keep going",
-      "titleTail": ".",
+      "titleLead": "あなたのペースで、",
+      "titleAccent": "続けられる",
+      "titleTail": "。",
       "lead": "短く試す、じっくり続ける、一年を描く。3 つのプランから選べます。"
     },
+    "provisionalNote": "正式版は近日公開予定。",
     "plans": {
       "still": {
         "name": "Still",
