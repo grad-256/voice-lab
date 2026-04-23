@@ -1,21 +1,17 @@
 export const runtime = "edge";
 
 import LocaleSwitcher from "@/app/components/LocaleSwitcher";
-import { OpenAuthButton } from "@/app/components/auth/OpenAuthButton";
 import { Cap, Rule } from "@/app/components/chapter";
 import ChatDemo from "@/app/components/lp/ChatDemo";
 import FeatureTour from "@/app/components/lp/FeatureTour";
 import GridBg from "@/app/components/lp/GridBg";
 import HeroBg from "@/app/components/lp/HeroBg";
-import { InstallPromptButton } from "@/app/components/lp/InstallPromptButton";
 import { LpPricingGrid } from "@/app/components/lp/LpPricingGrid";
 import { LpThemeToggle } from "@/app/components/lp/LpThemeToggle";
 import PulseBg from "@/app/components/lp/PulseBg";
 import ScrollReveal from "@/app/components/lp/ScrollReveal";
 import { Link } from "@/i18n/routing";
-import { createClient } from "@/lib/supabase/server";
 import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
-import { Download } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 const PROOF_ITEMS = ["speak", "question", "accumulate"] as const;
@@ -27,12 +23,6 @@ const STEPS = [
 ] as const;
 
 export default async function LandingPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const isAuthenticated = !!user;
-
   const tNav = await getTranslations("nav");
   const tHero = await getTranslations("lp.hero");
   const tProof = await getTranslations("lp.proof");
@@ -54,36 +44,14 @@ export default async function LandingPage() {
           >
             MyVoiceLab
           </Link>
-          <div className="flex items-center gap-4">
-            {isAuthenticated ? (
-              <span
-                aria-disabled="true"
-                className="uppercase tracking-[0.14em] text-xs font-semibold text-[var(--fg)] cursor-default select-none"
-              >
-                {tNav("ctaHome")}
-              </span>
-            ) : (
-              <>
-                <OpenAuthButton
-                  mode="login"
-                  className="uppercase tracking-[0.14em] text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
-                >
-                  {tNav("ctaLogin")}
-                </OpenAuthButton>
-                <span
-                  aria-disabled="true"
-                  className="uppercase tracking-[0.14em] text-xs font-semibold text-[var(--bg)] bg-[var(--fg)] px-4 py-2 cursor-default select-none"
-                >
-                  {tNav("ctaStart")}
-                </span>
-              </>
-            )}
-            <InstallPromptButton
-              label={<Download className="w-4 h-4" aria-hidden="true" />}
-              ariaLabel={tHero("ctaInstall")}
-              posthogPlacement="navbar"
-              className="flex items-center justify-center h-[34px] w-[34px] border-[0.5px] border-[var(--fg)] text-[var(--fg)] hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-colors"
-            />
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Coming soon 状態：LOGIN / ログイン誘導・auth 分岐を撤去。sm 以上で飾りの ink ピル。 */}
+            <span
+              aria-disabled="true"
+              className="hidden sm:inline-block uppercase tracking-[0.14em] text-xs font-semibold text-[var(--bg)] bg-[var(--fg)] px-4 py-2 cursor-default select-none whitespace-nowrap"
+            >
+              {tNav("ctaStart")}
+            </span>
             <LpThemeToggle />
             <LocaleSwitcher />
           </div>
@@ -283,19 +251,13 @@ export default async function LandingPage() {
                 <br />
                 {tCta("bodyLine2")}
               </p>
-              <div className="flex items-center justify-center gap-3">
+              <div className="flex items-center justify-center">
                 <span
                   aria-disabled="true"
                   className="inline-block px-10 py-5 bg-[var(--fg)] text-[var(--bg)] font-semibold uppercase tracking-[0.14em] text-xs sm:text-sm cursor-default select-none"
                 >
                   {tCta("button")}
                 </span>
-                <InstallPromptButton
-                  label={<Download className="w-5 h-5" aria-hidden="true" />}
-                  ariaLabel={tHero("ctaInstall")}
-                  posthogPlacement="cta"
-                  className="flex items-center justify-center h-[60px] w-[60px] border-[0.5px] border-[var(--fg)] text-[var(--fg)] hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-colors"
-                />
               </div>
             </ScrollReveal>
           </div>
