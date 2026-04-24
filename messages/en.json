@@ -579,9 +579,8 @@
     "header": {
       "back": "Back",
       "title": "Voice diary",
-      "finish": "Finish"
+      "finish": "Save as diary"
     },
-    "guestRemaining": "{remaining} / {total} left (guest)",
     "prompt": {
       "body": "Allow microphone access, and the AI will start the conversation.",
       "start": "Start",
@@ -598,7 +597,7 @@
       "recording": "Stop recording",
       "idle": "Start recording"
     },
-    "hint": "Say \"end\" or tap the button above to turn this into a diary entry",
+    "hint": "Say \"thank you\" or tap the button to save as a diary entry",
     "chapter": {
       "liveLabel": "Live",
       "quietVoice": "Quiet voice"
@@ -613,7 +612,8 @@
       "transcribe": "Couldn't transcribe your audio.",
       "process": "Something went wrong while processing.",
       "tooShort": "Please speak a little longer (at least 1.5 seconds)",
-      "saveFailed": "Couldn't save. Please try again."
+      "saveFailed": "Couldn't save. Please try again.",
+      "turnLimitExceeded": "You've reached the 5-turn limit for today. Come back tomorrow."
     },
     "summary": {
       "heading": "Today's diary",
@@ -626,7 +626,7 @@
       "discard": "Discard"
     },
     "guestLimitModal": {
-      "title": "Thanks for talking {limit} times",
+      "title": "Thanks for chatting today",
       "desc": "From here on, signing up lets you keep talking and save your diary. Sign-up takes 30 seconds.",
       "signup": "Sign up",
       "later": "Later"

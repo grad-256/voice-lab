@@ -1,33 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDiarySystemPrompt, buildSystemPrompt, parseClaudeResponse } from "./chat";
-
-// -------------------------------------------------------
-// buildSystemPrompt
-// -------------------------------------------------------
-describe("buildSystemPrompt", () => {
-  it("ベースプロンプトに JSON 返答指示が付加される", () => {
-    const result = buildSystemPrompt("You are Emma.");
-    expect(result).toContain("You are Emma.");
-    expect(result).toContain('"reply"');
-    expect(result).toContain('"translation"');
-  });
-
-  it("空文字を渡しても JSON 指示だけ含まれる", () => {
-    const result = buildSystemPrompt("");
-    expect(result).toContain('"reply"');
-  });
-
-  it("locale=en では translation を null 固定にする指示になる", () => {
-    const result = buildSystemPrompt("You are Emma.", "intermediate", "en");
-    expect(result).toContain('"translation": null');
-    expect(result).not.toContain("Japanese translation of your reply");
-  });
-
-  it("locale=ja では日本語訳を要求する指示が維持される", () => {
-    const result = buildSystemPrompt("You are Emma.", "intermediate", "ja");
-    expect(result).toContain("Japanese translation of your reply");
-  });
-});
+import { buildDiarySystemPrompt, parseClaudeResponse } from "./chat";
 
 // -------------------------------------------------------
 // buildDiarySystemPrompt

@@ -3,63 +3,10 @@
  * Edge Runtime に依存しないロジックを切り出してテスト可能にする
  */
 
-export type ConversationLevel = "beginner" | "intermediate" | "advanced";
-
-// i18n 対応（Track C-4）：システムプロンプトを UI ロケールと連動させる。
-// - ja: 従来どおり「英訳 + 日本語訳」の JSON を返す英会話パートナー
-// - en: 日本語訳は不要（`translation` は null）。日記モードの挨拶も英語化する
+// i18n 対応：システムプロンプトを UI ロケールと連動させる。
+// - ja: 日本語オープナー
+// - en: 英語オープナー（translation は null）
 export type ChatLocale = "ja" | "en";
-
-const LEVEL_INSTRUCTIONS: Record<ConversationLevel, string> = {
-  beginner: `\
-=== STRICT LEVEL RULE: BEGINNER (A1-A2) ===
-You MUST follow these rules. No exceptions.
-1. Your reply MUST be ONE sentence only. Never write two sentences.
-2. Use ONLY the simplest everyday words a child would know.
-3. NEVER use idioms, phrasal verbs, or complex grammar.
-4. If you want to ask something, keep it to a single yes/no question.
-Violating any of these rules is not allowed.
-===========================================`,
-  intermediate: `\
-=== STRICT LEVEL RULE: INTERMEDIATE (B1-B2) ===
-You MUST follow these rules. No exceptions.
-1. Your reply MUST be 1-2 sentences only. Never write three or more sentences.
-2. Use natural everyday expressions and common idioms.
-3. Ask at most one question per reply.
-Violating any of these rules is not allowed.
-===============================================`,
-  advanced: `\
-=== STRICT LEVEL RULE: ADVANCED (C1) ===
-You MUST follow these rules. No exceptions.
-1. Your reply MUST be 2-3 sentences only. Never exceed three sentences.
-2. Use rich, varied vocabulary and natural complex expressions.
-3. Include idioms or nuanced phrasing where appropriate.
-Violating any of these rules is not allowed.
-========================================`,
-};
-
-// JSON 返答の指示をシステムプロンプトに付加する（レベル指示を先頭に置く）
-// locale === "en" のときは翻訳フィールドを要求しない（英語話者に日本語訳は不要）。
-export function buildSystemPrompt(
-  base: string,
-  level: ConversationLevel = "intermediate",
-  locale: ChatLocale = "ja"
-): string {
-  const outputFormat =
-    locale === "en"
-      ? `OUTPUT FORMAT — THIS OVERRIDES EVERYTHING ELSE:
-You MUST respond with ONLY a JSON object. No text before or after it. No code fences.
-{"reply": "<your English response>", "translation": null}`
-      : `OUTPUT FORMAT — THIS OVERRIDES EVERYTHING ELSE:
-You MUST respond with ONLY a JSON object. No text before or after it. No code fences.
-{"reply": "<your English response>", "translation": "<Japanese translation of your reply>"}`;
-
-  return `${LEVEL_INSTRUCTIONS[level]}
-
-${base}
-
-${outputFormat}`;
-}
 
 // 日記モード用のシステムプロンプト
 // - 雑談ベースの友人トーン。抽象的な話題で深掘りに切り替える

@@ -19,9 +19,64 @@ function mockAnthropicResponse(text: string) {
   };
 }
 
+// Supabase サーバークライアントのモック（デフォルト：ログイン済ユーザーを返す）
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn(),
+}));
+
+// Supabase 管理クライアントのモック
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: vi.fn(),
+}));
+
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+
+/** 認証済みユーザーを返す Supabase モックを設定する */
+function setupAuthenticatedUser(
+  userId = "test-user-id",
+  usageData: { turns: number } | null = null
+) {
+  const maybeSingleMock = vi.fn().mockResolvedValue({ data: usageData });
+  const eqDateMock = vi.fn().mockReturnValue({ maybeSingle: maybeSingleMock });
+  const eqUserMock = vi.fn().mockReturnValue({ eq: eqDateMock });
+  const selectMock = vi.fn().mockReturnValue({ eq: eqUserMock });
+  const upsertMock = vi.fn().mockResolvedValue({ error: null });
+  const fromMock = vi.fn().mockReturnValue({ select: selectMock, upsert: upsertMock });
+
+  (createClient as ReturnType<typeof vi.fn>).mockResolvedValue({
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: { id: userId } } }),
+    },
+    from: fromMock,
+  });
+}
+
+/** ゲストユーザー（未認証）を返す Supabase モックを設定する */
+function setupGuestUser(usageData: { turns: number } | null = null) {
+  (createClient as ReturnType<typeof vi.fn>).mockResolvedValue({
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+    },
+    from: vi.fn(),
+  });
+
+  const maybeSingleMock = vi.fn().mockResolvedValue({ data: usageData });
+  const eqDateMock = vi.fn().mockReturnValue({ maybeSingle: maybeSingleMock });
+  const eqGuestMock = vi.fn().mockReturnValue({ eq: eqDateMock });
+  const selectMock = vi.fn().mockReturnValue({ eq: eqGuestMock });
+  const upsertMock = vi.fn().mockResolvedValue({ error: null });
+  const fromMock = vi.fn().mockReturnValue({ select: selectMock, upsert: upsertMock });
+
+  (createAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({
+    from: fromMock,
+  });
+}
+
 describe("POST /api/chat", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    setupAuthenticatedUser("test-user-id", null);
   });
 
   it("正常なリクエストで reply と translation を返す", async () => {
@@ -90,6 +145,7 @@ describe("POST /api/chat", () => {
       "fetch",
       vi.fn().mockResolvedValue({
         ok: false,
+        status: 500,
         text: () => Promise.resolve("Internal Server Error"),
       })
     );
@@ -151,7 +207,7 @@ describe("POST /api/chat", () => {
     expect(callBody.system).toContain('"translation": null');
   });
 
-  it("locale=en + mode=diary のとき system prompt が英語オープナー指示になる", async () => {
+  it("locale=en のとき system prompt が英語オープナー指示になる", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValue(mockAnthropicResponse('{"reply": "Hey!", "translation": null}'));
@@ -162,7 +218,6 @@ describe("POST /api/chat", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         history: [],
-        mode: "diary",
         assistantFirst: true,
         locale: "en",
       }),
@@ -178,7 +233,7 @@ describe("POST /api/chat", () => {
   // Claude の LANGUAGE: Mirror the user's language ルールは、具体的なユーザー発話（日本語の
   // セッションマーカー）に引きずられて OPENING の英語指示を上書きしてしまう。セッションマーカー自体を
   // UI ロケールに合わせた英語にしておくことで、EN UI で日本語オープナーが返ってしまうバグを防ぐ。
-  it("locale=en + mode=diary + assistantFirst のとき session marker が英語になる", async () => {
+  it("locale=en + assistantFirst のとき session marker が英語になる", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValue(mockAnthropicResponse('{"reply": "Hey!", "translation": null}'));
@@ -189,7 +244,6 @@ describe("POST /api/chat", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         history: [],
-        mode: "diary",
         assistantFirst: true,
         locale: "en",
       }),
@@ -201,7 +255,7 @@ describe("POST /api/chat", () => {
     expect(callBody.messages).toEqual([{ role: "user", content: "(session start)" }]);
   });
 
-  it("locale=ja + mode=diary + assistantFirst のとき session marker は日本語のまま", async () => {
+  it("locale=ja + assistantFirst のとき session marker は日本語のまま", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValue(mockAnthropicResponse('{"reply": "こんにちは", "translation": null}'));
@@ -212,7 +266,6 @@ describe("POST /api/chat", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         history: [],
-        mode: "diary",
         assistantFirst: true,
         locale: "ja",
       }),
@@ -222,5 +275,54 @@ describe("POST /api/chat", () => {
 
     const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(callBody.messages).toEqual([{ role: "user", content: "（セッション開始）" }]);
+  });
+
+  // -------------------------------------------------------
+  // フリープラン利用制限テスト
+  // -------------------------------------------------------
+
+  it("ログイン済ユーザーがターン上限に達したとき 403 + TURN_LIMIT_EXCEEDED を返す", async () => {
+    // turns=5（上限 5 に達した状態）で設定
+    setupAuthenticatedUser("test-user-id", { turns: 5 });
+
+    const req = new Request("http://localhost/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        // history に既存メッセージあり = セッション継続中のターン
+        history: [{ role: "assistant", content: "こんにちは" }],
+        message: "今日は疲れました",
+        locale: "ja",
+      }),
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(data.error).toBe("TURN_LIMIT_EXCEEDED");
+  });
+
+  it("ゲストユーザーがターン上限に達したとき 403 + TURN_LIMIT_EXCEEDED を返す", async () => {
+    setupGuestUser({ turns: 5 });
+
+    const req = new Request("http://localhost/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: "vl_guest_id=existing-guest-uuid",
+      },
+      body: JSON.stringify({
+        history: [{ role: "assistant", content: "こんにちは" }],
+        message: "今日は疲れました",
+        locale: "ja",
+      }),
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(data.error).toBe("TURN_LIMIT_EXCEEDED");
   });
 });
