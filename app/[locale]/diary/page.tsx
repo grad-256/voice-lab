@@ -127,15 +127,17 @@ export default function DiaryPage() {
     };
   }, []);
 
-  // ログイン済のとき、過去日記 3 件の要約を取得して文脈継承に使う
+  // ログイン済のとき、直近日記の要約（最大3件）を取得して文脈継承に使う。
+  // API は常に直近5件を返すため、ここで先頭3件に絞る。
   useEffect(() => {
     if (authStatus !== "authed") return;
     let aborted = false;
-    fetch("/api/diary?limit=3")
+    fetch("/api/diary")
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { items?: { summary?: string }[] } | null) => {
         if (aborted || !mountedRef.current || !data?.items) return;
         const summaries = data.items
+          .slice(0, 3)
           .map((i) => (typeof i.summary === "string" ? i.summary : null))
           .filter((s): s is string => s !== null);
         setPastSummaries(summaries);

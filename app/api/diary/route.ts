@@ -16,8 +16,7 @@ interface PostBody {
   message_count?: unknown;
 }
 
-const LIST_DEFAULT_LIMIT = 50;
-const LIST_MAX_LIMIT = 100;
+const FREE_HISTORY_LIMIT = 5;
 const MAX_TITLE_LENGTH = 160;
 const MAX_SUMMARY_LENGTH = 4000;
 const MAX_TRANSCRIPT_LENGTH = 500; // 1 会話あたり最大ターン数（現実的な上限）
@@ -83,7 +82,7 @@ export async function POST(req: Request) {
   return Response.json({ id: data.id, created_at: data.created_at });
 }
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -94,18 +93,14 @@ export async function GET(req: Request) {
     return Response.json({ error: "認証が必要です" }, { status: 401 });
   }
 
-  const url = new URL(req.url);
-  const limitParam = url.searchParams.get("limit");
-  const parsedLimit = limitParam ? Number.parseInt(limitParam, 10) : Number.NaN;
-  const limit = Number.isFinite(parsedLimit)
-    ? Math.min(LIST_MAX_LIMIT, Math.max(1, parsedLimit))
-    : LIST_DEFAULT_LIMIT;
-
+  // 現在は全ユーザーにフリープラン制限を適用。
+  // 有料プラン導入時は user_metadata またはDBのプランカラムで分岐し、
+  // 有料ユーザーは limit を引数の値に戻すこと。
   const { data, error } = await supabase
     .from("diary_entries")
     .select("id, title, summary, language, message_count, created_at")
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(FREE_HISTORY_LIMIT);
 
   if (error) {
     console.error("diary list error:", error);

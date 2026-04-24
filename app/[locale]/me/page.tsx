@@ -234,6 +234,21 @@ export default function MePage() {
         />
       </div>
 
+      {/* ── Insights への動線（フリーアルファリリース時点では未準備のためコメントアウト）
+          準備ができたらコメントを外してリリースする。
+          参照: diary/insights ページ（未実装）
+      <Cap mb={6}>{t("insights.sectionCap")}</Cap>
+      <div className="mb-4">
+        <SettingRow
+          href="/diary/insights"
+          label={t("insights.rowTitle")}
+          sub={t("insights.rowSubtitle")}
+          value="→"
+          last
+        />
+      </div>
+      ── */}
+
       {/* Privacy セクション：Logout / Delete account */}
       <Cap mb={6}>{t("chapter.privacySection")}</Cap>
       <div>

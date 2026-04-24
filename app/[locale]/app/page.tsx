@@ -84,15 +84,16 @@ export default function HubPage() {
     setNow(new Date());
   }, []);
 
-  // ログイン済みのとき、直近 7 日の streak 表示用にエントリ一覧を取得する。
-  // /api/diary?limit=100 で十分（7 日分の判定なら 1 日 10 件でも間に合う）。
+  // ログイン済みのとき、streak 表示用にエントリ一覧を取得する。
+  // API はフリープランの制限で直近5件のみ返す。
+  // 有料プラン導入後は件数が増えるため、streak 精度も向上する。
   useEffect(() => {
     if (!isAuthed) {
       setEntries([]);
       return;
     }
     let aborted = false;
-    fetch("/api/diary?limit=100")
+    fetch("/api/diary")
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { items?: RawDiaryItem[] } | null) => {
         if (aborted || !data?.items) return;
