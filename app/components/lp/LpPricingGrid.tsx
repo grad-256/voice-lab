@@ -3,17 +3,19 @@
 import { PlanCard } from "@/app/components/chapter";
 import { useTranslations } from "next-intl";
 
-// LP 内料金セクション用の wrapper。PlanCard は useTranslations 要件で server component から
-// 直接使えないためここで閉じ込める。LP では ctaLabel/onSelect を渡さず CTA 非表示。
-const PLAN_KEYS = ["still", "quiet", "year"] as const;
+const ACTIVE_PLAN_KEYS = ["still", "quiet", "year"] as const;
 
 export function LpPricingGrid() {
   const t = useTranslations("pricing");
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-4 md:gap-5">
-      {PLAN_KEYS.map((key) => {
-        const features = t.raw(`plans.${key}.features`) as readonly string[];
+      {ACTIVE_PLAN_KEYS.map((key) => {
+        const limitsRaw = (t.raw(`plans.${key}.limits`) ?? {}) as Record<string, number>;
+        const featuresRaw = t.raw(`plans.${key}.features`) as Record<string, string>;
+        const features = Object.keys(featuresRaw).map((fk) =>
+          t(`plans.${key}.features.${fk}`, limitsRaw)
+        );
         const badge = key === "quiet" ? t("plans.quiet.badge") : undefined;
         return (
           <PlanCard

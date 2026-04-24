@@ -112,23 +112,32 @@
     "cta": {
       "titlePart1": "Now,",
       "titlePart2": " talk about your day.",
-      "bodyLine1": "No signup — free for your first 10 exchanges.",
+      "bodyLine1": "No signup — free for your first session.",
       "bodyLine2": "Just start by saying it out loud.",
       "button": "Coming soon"
     },
     "chatDemo": {
       "conversation": [
-        { "role": "assistant", "text": "How was your day?" },
+        {
+          "role": "assistant",
+          "text": "How was your day?"
+        },
         {
           "role": "user",
           "text": "I couldn't say what I wanted in a meeting — I'm a bit drained."
         },
-        { "role": "assistant", "text": "What part was tough?" },
+        {
+          "role": "assistant",
+          "text": "What part was tough?"
+        },
         {
           "role": "user",
           "text": "We were split over priorities for a new feature, and I couldn't find the words."
         },
-        { "role": "assistant", "text": "Which priority feels right to you?" }
+        {
+          "role": "assistant",
+          "text": "Which priority feels right to you?"
+        }
       ],
       "liveLabel": "Live",
       "quietVoice": "Quiet voice",
@@ -221,9 +230,9 @@
     },
     "guestDialog": {
       "orSeparator": "or",
-      "trigger": "Try without signing in (10 exchanges free)",
+      "trigger": "Try without signing in (free for your first session)",
       "title": "Try as a guest",
-      "item1": "Up to 10 exchanges, free",
+      "item1": "Free for your first session",
       "item2": "Your conversation won't be saved",
       "item3": "You'll need an account to keep using it",
       "confirm": "Try as a guest",
@@ -431,39 +440,63 @@
         "price": "$0",
         "period": "Free",
         "tagline": "Start by saying it out loud.",
-        "features": [
-          "Up to 10 exchanges per day",
-          "1 default voice",
-          "History for the last 7 days"
-        ],
-        "cta": "Stay on Still"
+        "features": {
+          "f1": "{sessionsPerDay} session/day · up to {turnsPerSession} exchanges",
+          "f2": "History for the last {historyDays} days"
+        },
+        "cta": "Stay on Still",
+        "limits": {
+          "sessionsPerDay": 1,
+          "turnsPerSession": 5,
+          "historyDays": 7
+        }
       },
       "quiet": {
         "name": "Quiet",
         "price": "$7",
         "period": "/ month",
         "tagline": "Stay close to your daily rhythm.",
-        "features": [
-          "Unlimited diary exchanges",
-          "3 voices to choose from",
-          "Full history and Insights",
-          "Monthly summary reports"
-        ],
+        "features": {
+          "f1": "{sessionsPerDay} sessions/day · up to {turnsPerSession} exchanges",
+          "f2": "Weekly voice recap",
+          "f3": "Full history"
+        },
         "cta": "Choose Quiet",
-        "badge": "Popular"
+        "badge": "Popular",
+        "limits": {
+          "sessionsPerDay": 3,
+          "turnsPerSession": 10,
+          "weeklyRecaps": 1
+        }
+      },
+      "premium": {
+        "name": "Premium",
+        "price": "Coming soon",
+        "period": "",
+        "tagline": "Hands-free journaling, in your own voice.",
+        "features": [
+          "AI responds with voice",
+          "Hands-free journaling",
+          "Text + audio diary entries"
+        ],
+        "badge": "Coming soon"
       },
       "year": {
         "name": "Year",
         "price": "$70",
         "period": "/ year",
         "tagline": "Keep a whole year, quietly.",
-        "features": [
-          "Everything in Quiet",
-          "Save 17% (2 months off)",
-          "Year-end archive export",
-          "Priority support"
-        ],
-        "cta": "Choose Year"
+        "features": {
+          "f1": "Everything in Quiet",
+          "f2": "Save {savingPercent}% ({savingMonths} months off)",
+          "f3": "Year-end archive export",
+          "f4": "Priority support"
+        },
+        "cta": "Choose Year",
+        "limits": {
+          "savingPercent": 17,
+          "savingMonths": 2
+        }
       }
     },
     "note": "Cancel anytime. Billing stops from the next charge date.",

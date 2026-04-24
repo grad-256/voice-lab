@@ -1,10 +1,5 @@
 "use client";
 
-// `/pricing` — Still / Quiet / Year の 3 プランを縦積みで比較する UI。
-// Stripe 連携は Issue #55 で別 PR 実装。本ページは CTA が押されても console.warn のみで、
-// サインアップ・決済フローは起動しない。Chapter 系譜の静けさを維持しつつ、Quiet プランだけ
-// 視覚的に 1 段強調する（枠線 1px + Cap 反転）。
-
 export const runtime = "edge";
 
 import { Cap, PageHeader, PlanCard, Rule } from "@/app/components/chapter";
@@ -19,8 +14,6 @@ export default function PricingPage() {
   const t = useTranslations("pricing");
 
   const handleSelect = (plan: (typeof PLAN_KEYS)[number]) => {
-    // Stripe 実装は Issue #55。本 PR では何も起こさず、開発者向けに警告だけ残す。
-    // 本番ユーザー向けのメッセージは stripePendingNote として画面下部に常設されている。
     console.warn(`[P3] Stripe connection pending (#55). Selected plan: ${plan}`);
   };
 
@@ -36,7 +29,6 @@ export default function PricingPage() {
         }
       />
 
-      {/* 章題 */}
       <div className="mt-6">
         <Cap mb={8}>{t("chapter.cap")}</Cap>
         <div
@@ -54,10 +46,13 @@ export default function PricingPage() {
 
       <Rule mv={22} />
 
-      {/* 3 プランを縦積み。Quiet のみ highlighted */}
       <div className="space-y-6">
         {PLAN_KEYS.map((key) => {
-          const features = t.raw(`plans.${key}.features`) as readonly string[];
+          const limitsRaw = (t.raw(`plans.${key}.limits`) ?? {}) as Record<string, number>;
+          const featuresRaw = t.raw(`plans.${key}.features`) as Record<string, string>;
+          const features = Object.keys(featuresRaw).map((fk) =>
+            t(`plans.${key}.features.${fk}`, limitsRaw)
+          );
           const badgeRaw = key === "quiet" ? t("plans.quiet.badge") : undefined;
           return (
             <PlanCard
@@ -76,7 +71,6 @@ export default function PricingPage() {
         })}
       </div>
 
-      {/* フッターノート */}
       <div className="mt-8 space-y-2 text-center">
         <p className="text-xs sm:text-sm text-[var(--fg-muted)] leading-[1.6]">{t("note")}</p>
         <p className="text-xs sm:text-sm text-[var(--fg-muted)] leading-[1.6]">
