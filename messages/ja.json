@@ -441,14 +441,13 @@
         "period": "無料",
         "tagline": "まず、声に出してみる。",
         "features": {
-          "f1": "{sessionsPerDay}日{sessionsPerDay}回・{turnsPerSession}往復までの日記",
-          "f2": "過去{historyDays}日分の履歴"
+          "f1": "1日{turnsPerDay}往復まで、好きなタイミングで",
+          "f2": "直近{historyCount}件の履歴（データは保持、アップグレードで復活）"
         },
         "cta": "このまま続ける",
         "limits": {
-          "sessionsPerDay": 1,
-          "turnsPerSession": 5,
-          "historyDays": 7
+          "turnsPerDay": 5,
+          "historyCount": 5
         }
       },
       "quiet": {
@@ -457,15 +456,14 @@
         "period": "/ 月",
         "tagline": "毎日のリズムに、深く寄り添う。",
         "features": {
-          "f1": "1日{sessionsPerDay}回・{turnsPerSession}往復までの日記",
+          "f1": "1日{turnsPerDay}往復まで、好きなタイミングで",
           "f2": "週{weeklyRecaps}回、声で振り返る週間レポート",
-          "f3": "全期間の履歴"
+          "f3": "全期間の履歴・無制限保存"
         },
         "cta": "Quiet を選ぶ",
         "badge": "人気",
         "limits": {
-          "sessionsPerDay": 3,
-          "turnsPerSession": 10,
+          "turnsPerDay": 30,
           "weeklyRecaps": 1
         }
       },
@@ -634,6 +632,7 @@
       "loading": "読み込み中…",
       "emptyCta": "最初の日記を話す",
       "loadFailed": "読み込みに失敗しました",
+      "freePlanNote": "フリープランでは直近5件の日記が表示されます",
       "chapter": {
         "archiveLabel": "Archive",
         "titleLead": "A small",
@@ -643,6 +642,31 @@
         "emptyLead": "Nothing",
         "emptyAccent": "spoken",
         "emptyTail": "yet."
+      },
+      "recap": {
+        "cap": "今週のふりかえり",
+        "empty": "まだ今週の振り返りはありません",
+        "generate": "振り返りを生成する",
+        "generating": "生成中…",
+        "done": "今週の振り返りを生成しました",
+        "viewRecaps": "Recaps で読む",
+        "generateError": "生成に失敗しました。もう一度お試しください。"
+      }
+    },
+    "recaps": {
+      "back": "戻る",
+      "loading": "読み込み中…",
+      "loadFailed": "読み込みに失敗しました",
+      "empty": "まだ週間振り返りがありません",
+      "play": "音声で聞く",
+      "playing": "再生中…",
+      "playError": "音声の再生に失敗しました。もう一度お試しください。",
+      "chapter": {
+        "archiveLabel": "Archive",
+        "titleLead": "Weekly",
+        "titleAccent": "reflections",
+        "titleTail": ".",
+        "countSuffix": "件の振り返り"
       }
     },
     "insights": {

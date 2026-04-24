@@ -16,10 +16,11 @@ const DEFAULT_MODEL: AllowedModel = "eleven_multilingual_v2";
 
 export async function POST(req: Request) {
   try {
-    const { text, voiceId, modelId } = (await req.json()) as {
+    const { text, voiceId, modelId, speed } = (await req.json()) as {
       text: string;
       voiceId?: string;
       modelId?: string;
+      speed?: number;
     };
 
     if (!text) {
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
           style: 0.3,
           use_speaker_boost: true,
         },
-        speed: 0.75, // 1.0が標準、0.75でゆっくり（語学学習向け）
+        speed: typeof speed === "number" && speed > 0 && speed <= 4 ? speed : 0.75,
       }),
     });
 

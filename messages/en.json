@@ -441,14 +441,13 @@
         "period": "Free",
         "tagline": "Start by saying it out loud.",
         "features": {
-          "f1": "{sessionsPerDay} session/day · up to {turnsPerSession} exchanges",
-          "f2": "History for the last {historyDays} days"
+          "f1": "Up to {turnsPerDay} exchanges/day, anytime you like",
+          "f2": "Your {historyCount} most recent entries (data kept — upgrades restore all)"
         },
         "cta": "Stay on Still",
         "limits": {
-          "sessionsPerDay": 1,
-          "turnsPerSession": 5,
-          "historyDays": 7
+          "turnsPerDay": 5,
+          "historyCount": 5
         }
       },
       "quiet": {
@@ -457,15 +456,14 @@
         "period": "/ month",
         "tagline": "Stay close to your daily rhythm.",
         "features": {
-          "f1": "{sessionsPerDay} sessions/day · up to {turnsPerSession} exchanges",
+          "f1": "Up to {turnsPerDay} exchanges/day, anytime you like",
           "f2": "Weekly voice recap",
-          "f3": "Full history"
+          "f3": "Full history, unlimited"
         },
         "cta": "Choose Quiet",
         "badge": "Popular",
         "limits": {
-          "sessionsPerDay": 3,
-          "turnsPerSession": 10,
+          "turnsPerDay": 30,
           "weeklyRecaps": 1
         }
       },
@@ -638,6 +636,7 @@
       "loading": "Loading…",
       "emptyCta": "Start your first entry",
       "loadFailed": "Couldn't load.",
+      "freePlanNote": "Free plan shows your 5 most recent entries",
       "chapter": {
         "archiveLabel": "Archive",
         "titleLead": "A small",
@@ -647,6 +646,31 @@
         "emptyLead": "Nothing",
         "emptyAccent": "spoken",
         "emptyTail": "yet."
+      },
+      "recap": {
+        "cap": "This Week",
+        "empty": "No recap for this week yet",
+        "generate": "Generate recap",
+        "generating": "Generating…",
+        "done": "This week's recap is ready",
+        "viewRecaps": "View in Recaps",
+        "generateError": "Couldn't generate. Please try again."
+      }
+    },
+    "recaps": {
+      "back": "Back",
+      "loading": "Loading…",
+      "loadFailed": "Couldn't load.",
+      "empty": "No weekly recaps yet",
+      "play": "Listen",
+      "playing": "Playing…",
+      "playError": "Couldn't play audio. Please try again.",
+      "chapter": {
+        "archiveLabel": "Archive",
+        "titleLead": "Weekly",
+        "titleAccent": "reflections",
+        "titleTail": ".",
+        "countSuffix": "recaps"
       }
     },
     "insights": {
