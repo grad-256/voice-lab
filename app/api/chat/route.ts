@@ -1,114 +1,116 @@
 export const runtime = "edge";
 
-import { anthropicEndpoint, gatewayAuthHeaders } from "@/lib/aiGateway";
+import type { ChatLocale } from "@/lib/chat";
 import {
-  type ChatLocale,
-  type ConversationLevel,
-  buildDiarySystemPrompt,
-  buildSystemPrompt,
-  parseClaudeResponse,
-} from "@/lib/chat";
-
-// デフォルトのシステムプロンプト（英会話モード・キャラ未設定時のフォールバック）
-const DEFAULT_SYSTEM_PROMPT = `
-You are Emma, a friendly English conversation partner from Canada.
-
-Rules:
-- Keep every reply to 1-2 sentences maximum. Short and natural.
-- Ask at most ONE question per reply (not multiple).
-- Gently correct mistakes inline, briefly. Example: "Nice! (tip: say 'went' not 'goed') So what happened next?"
-- If the user says "bye" or "goodbye", reply with a warm farewell and end the conversation naturally.
-- Always respond in English only.
-`.trim();
-
-type Message = {
-  role: "user" | "assistant";
-  content: string;
-};
-
-type RequestBody = {
-  message?: string;
-  history: Message[];
-  systemPrompt?: string;
-  level?: ConversationLevel;
-  mode?: "english" | "diary";
-  assistantFirst?: boolean;
-  pastSummaries?: string[];
-  locale?: ChatLocale;
-};
+  FREE_TURN_LIMIT,
+  GUEST_COOKIE_NAME,
+  checkTurnLimit,
+  parseCookieValue,
+} from "@/lib/freePlanUsage";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { callLLM } from "./_lib/llm";
+import type { RequestBody, UsageRow } from "./_lib/types";
+import { buildGuestResponse, updateGuestUsage, updateUserUsage } from "./_lib/usage";
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as RequestBody;
-    const { message, history, systemPrompt, level, mode, assistantFirst, pastSummaries, locale } =
-      body;
-    const isDiary = mode === "diary";
+    const { message, history, assistantFirst, pastSummaries, locale } = body;
     const safeLocale: ChatLocale = locale === "en" ? "en" : "ja";
 
-    // 英会話モード（既存）は message 必須。日記モードは assistant-first で message 空を許容する
-    if (!isDiary && !message) {
-      return Response.json({ error: "メッセージが空です" }, { status: 400 });
+    const today = new Date().toISOString().split("T")[0];
+    const isUserTurn = Boolean(message);
+
+    let user: { id: string } | null = null;
+    try {
+      const supabase = await createClient();
+      const { data } = await supabase.auth.getUser();
+      user = data.user;
+    } catch {
+      // 認証エラーはゲスト扱いで続行
     }
 
-    // Anthropic API は空 messages を拒否するため、日記の assistant-first 起動時はダミー user を入れて挨拶を誘導する。
-    // LANGUAGE: Mirror the user's language を優先する Claude に対して、セッションマーカーを
-    // UI ロケールと同言語にすることで OPENING の言語指示と矛盾させない。
-    const sessionMarker = safeLocale === "en" ? "(session start)" : "（セッション開始）";
-    let messages: Message[];
-    if (message) {
-      messages = [...history, { role: "user", content: message }];
-    } else if (isDiary && assistantFirst && history.length === 0) {
-      messages = [{ role: "user", content: sessionMarker }];
-    } else {
-      messages = [...history];
-    }
-
-    // 空 messages で Anthropic に到達させない防御
-    if (messages.length === 0) {
-      return Response.json({ error: "メッセージが空です" }, { status: 400 });
-    }
-
-    const systemStr = isDiary
-      ? buildDiarySystemPrompt({ pastSummaries, locale: safeLocale })
-      : buildSystemPrompt(
-          systemPrompt ?? DEFAULT_SYSTEM_PROMPT,
-          level ?? "intermediate",
-          safeLocale
-        );
-
-    const response = await fetch(anthropicEndpoint("messages"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
-        "anthropic-version": "2023-06-01",
-        ...gatewayAuthHeaders(),
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 512,
-        system: systemStr,
-        messages,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error("Claude API error:", error);
-      if (response.status === 429 || response.status === 529) {
-        return Response.json({ error: "SERVICE_QUOTA_EXCEEDED" }, { status: 429 });
+    if (user) {
+      let usage: UsageRow = null;
+      try {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+          .from("daily_usage")
+          .select("turns")
+          .eq("user_id", user.id)
+          .eq("date", today)
+          .maybeSingle();
+        if (error) console.error("daily_usage read error:", error);
+        usage = data as UsageRow;
+      } catch (e) {
+        console.error("daily_usage read exception:", e);
       }
-      return Response.json({ error: "AI 応答の取得に失敗しました" }, { status: 500 });
+
+      const check = checkTurnLimit(usage);
+      if (!check.allowed) return Response.json({ error: check.reason }, { status: 403 });
+
+      const isLastTurn = isUserTurn && (usage?.turns ?? 0) === FREE_TURN_LIMIT - 1;
+      const llm = await callLLM({
+        message,
+        history,
+        assistantFirst,
+        pastSummaries,
+        safeLocale,
+        isLastTurn,
+      });
+      if (llm.error) return llm.error;
+
+      updateUserUsage(user.id, today, usage, isUserTurn).catch((e) =>
+        console.error("daily_usage upsert error:", e)
+      );
+      return llm.response;
     }
 
-    const data = (await response.json()) as {
-      content: { type: string; text: string }[];
-    };
+    // ゲストユーザー
+    const cookieHeader = req.headers.get("cookie");
+    let guestId = parseCookieValue(cookieHeader, GUEST_COOKIE_NAME);
+    const isNewGuest = !guestId;
+    if (!guestId) guestId = crypto.randomUUID();
 
-    const raw = data.content[0]?.text ?? "";
+    const adminClient = createAdminClient();
+    let usage: UsageRow = null;
+    try {
+      const { data, error } = await adminClient
+        .from("guest_usage")
+        .select("turns")
+        .eq("guest_id", guestId)
+        .eq("date", today)
+        .maybeSingle();
+      if (error) console.error("guest_usage read error:", error);
+      usage = data as UsageRow;
+    } catch (e) {
+      console.error("guest_usage read exception:", e);
+    }
 
-    const { reply, translation } = parseClaudeResponse(raw);
-    return Response.json({ text: reply, translation });
+    const check = checkTurnLimit(usage);
+    if (!check.allowed)
+      return buildGuestResponse(
+        Response.json({ error: check.reason }, { status: 403 }),
+        guestId,
+        isNewGuest
+      );
+
+    const isLastTurn = isUserTurn && (usage?.turns ?? 0) === FREE_TURN_LIMIT - 1;
+    const llm = await callLLM({
+      message,
+      history,
+      assistantFirst,
+      pastSummaries,
+      safeLocale,
+      isLastTurn,
+    });
+    if (llm.error) return llm.error;
+
+    updateGuestUsage(adminClient, guestId, today, usage, isUserTurn).catch((e) =>
+      console.error("guest_usage upsert error:", e)
+    );
+    return buildGuestResponse(llm.response, guestId, isNewGuest);
   } catch (err) {
     console.error("chat error:", err);
     return Response.json({ error: "サーバーエラーが発生しました" }, { status: 500 });

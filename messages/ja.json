@@ -575,9 +575,8 @@
     "header": {
       "back": "戻る",
       "title": "声の日記",
-      "finish": "終わる"
+      "finish": "日記にする"
     },
-    "guestRemaining": "残り {remaining} / {total} 回（ゲスト）",
     "prompt": {
       "body": "マイクを許可すると、AI から話しかけます。",
       "start": "はじめる",
@@ -594,22 +593,23 @@
       "recording": "録音停止",
       "idle": "録音開始"
     },
-    "hint": "「終わり」と言うか、右上のボタンで日記になります",
+    "hint": "「ありがとう」と言うか、右上のボタンをタップして日記になります",
     "chapter": {
       "liveLabel": "Live",
       "quietVoice": "Quiet voice"
     },
     "errors": {
       "bootstrap": "AI の準備に失敗しました。もう一度お試しください。",
-      "bootstrapShort": "AI の準備に失敗しました。",
+      "bootstrapShort": "AI の準備に失敗しました。もう一度お試しください。",
       "quotaExceeded": "AI の上限に達しました。少し時間をおいてお試しください。",
       "summarize": "要約の生成に失敗しました。もう一度お試しください。",
-      "summarizeShort": "要約の生成に失敗しました。",
-      "chatFetch": "AI 応答の取得に失敗しました。",
+      "summarizeShort": "要約の生成に失敗しました。もう一度お試しください。",
+      "chatFetch": "AI 応答の取得に失敗しました。もう一度お試しください。",
       "transcribe": "音声の文字起こしに失敗しました。",
       "process": "処理中にエラーが発生しました。",
       "tooShort": "もう少し長く話してください（1.5秒以上）",
-      "saveFailed": "保存に失敗しました。もう一度お試しください。"
+      "saveFailed": "保存に失敗しました。もう一度お試しください。",
+      "turnLimitExceeded": "5往復の上限に達しました。明日またお話しましょう。"
     },
     "summary": {
       "heading": "今日の日記",
@@ -622,7 +622,7 @@
       "discard": "捨てる"
     },
     "guestLimitModal": {
-      "title": "{limit} 回話してくれてありがとう",
+      "title": "話してくれてありがとう",
       "desc": "ここから先は、登録すると続きが話せて、日記として保存できます。登録は 30 秒で終わります。",
       "signup": "登録する",
       "later": "あとで"

@@ -7,12 +7,7 @@ import { useAuth } from "@/app/components/auth/AuthContext";
 import { BtnGhost, BtnPrimary, Cap, PageHeader, Rule, Waves } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
 import { formatElapsedMs } from "@/lib/formatDuration";
-import {
-  GUEST_LIMIT,
-  getGuestCount,
-  incrementGuestCount,
-  isGuestLimitReached,
-} from "@/lib/guestUsage";
+
 import { mapGetUserMediaError, pickBrowserMimeType } from "@/lib/recordingMime";
 import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
 import { useMountedRef } from "@/lib/useMountedRef";
@@ -42,19 +37,17 @@ type SummaryResult = {
 
 const MIN_RECORDING_MS = 1500;
 
-// 「終わり」音声コマンド候補。Whisper 出力を小文字化・句読点除去した上で、
+// 終了音声コマンド候補。Whisper 出力を小文字化・句読点除去した上で、
 // 単独発話（またはこれ + 軽い語尾）のときだけマッチさせる。
 const END_KEYWORDS = [
-  "終わり",
-  "終わる",
-  "終了",
-  "おしまい",
-  "おわり",
+  "ありがとう",
+  "ありがとね",
+  "またね",
+  "じゃあね",
+  "thank you",
+  "thanks",
   "bye",
   "goodbye",
-  "end",
-  "finish",
-  "that's all",
 ] as const;
 
 // 終了コマンドの末尾に付く軽い語尾。「かな」は思案形なので除外。
@@ -64,7 +57,7 @@ function uid() {
   return Math.random().toString(36).slice(2);
 }
 
-// 発話全体が終了コマンドとみなせるか。単独発話以外は誤検知の元なので弾く。
+// 終了コマンドとみなすか判定。合言葉の完全一致のみ（語尾付きも許容）。
 function isEndCommand(text: string): boolean {
   const normalized = text
     .trim()
@@ -99,8 +92,8 @@ export default function DiaryPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [guestCount, setGuestCount] = useState(0);
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [isLimitReached, setIsLimitReached] = useState(false);
   const [pastSummaries, setPastSummaries] = useState<string[]>([]);
   const [summaryResult, setSummaryResult] = useState<SummaryResult | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -132,11 +125,6 @@ export default function DiaryPage() {
         currentAudioRef.current = null;
       }
     };
-  }, []);
-
-  // ゲスト回数のみローカルから復元。authStatus は AuthContext から派生しているので副作用不要。
-  useEffect(() => {
-    setGuestCount(getGuestCount());
   }, []);
 
   // ログイン済のとき、過去日記 3 件の要約を取得して文脈継承に使う
@@ -239,11 +227,6 @@ export default function DiaryPage() {
   const handleStart = useCallback(async () => {
     if (startingRef.current) return;
 
-    if (isGuest && isGuestLimitReached()) {
-      setShowLimitModal(true);
-      return;
-    }
-
     startingRef.current = true;
     setIsStarted(true);
     setStatus("processing");
@@ -256,7 +239,6 @@ export default function DiaryPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           history: [],
-          mode: "diary",
           assistantFirst: true,
           pastSummaries,
           locale,
@@ -264,9 +246,16 @@ export default function DiaryPage() {
       });
       if (!mountedRef.current) return;
       if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
         setStatus("idle");
-        setErrorMsg(t("errors.bootstrap"));
         setIsStarted(false);
+        const isLimitError = err.error === "TURN_LIMIT_EXCEEDED";
+        if (isLimitError) setIsLimitReached(true);
+        if (isGuest && isLimitError) {
+          setShowLimitModal(true);
+        } else {
+          setErrorMsg(isLimitError ? t("errors.turnLimitExceeded") : t("errors.bootstrap"));
+        }
         return;
       }
       const data = (await res.json()) as { text?: string; error?: string };
@@ -296,7 +285,8 @@ export default function DiaryPage() {
     const currentMessages = messages;
     const userTurns = currentMessages.filter((m) => m.role === "user").length;
     if (userTurns === 0) {
-      router.push("/app");
+      setIsStarted(false);
+      setMessages([]);
       return;
     }
     finalizingRef.current = true;
@@ -332,7 +322,7 @@ export default function DiaryPage() {
     } finally {
       finalizingRef.current = false;
     }
-  }, [messages, router, t]);
+  }, [messages, t]);
 
   // 要約を保存（ログイン済のみ）→ 履歴ページへ遷移
   const handleSaveSummary = useCallback(async () => {
@@ -403,23 +393,8 @@ export default function DiaryPage() {
           return;
         }
 
-        // ゲスト上限チェック（ユーザー発話を messages に追加する前に実施）
-        // 上限到達でモーダルを出すが、中途半端な「AI 返答なしターン」を履歴に残さない
-        if (isGuest) {
-          if (isGuestLimitReached()) {
-            setShowLimitModal(true);
-            setStatus("idle");
-            return;
-          }
-        }
-
         const userMsg: Message = { id: uid(), role: "user", text: userText };
         setMessages((prev) => [...prev, userMsg]);
-
-        if (isGuest) {
-          const next = incrementGuestCount("chat");
-          setGuestCount(next);
-        }
 
         const history = messages.map((m) => ({ role: m.role, content: m.text }));
         const chatRes = await fetch("/api/chat", {
@@ -428,7 +403,6 @@ export default function DiaryPage() {
           body: JSON.stringify({
             message: userText,
             history,
-            mode: "diary",
             pastSummaries,
             locale,
           }),
@@ -437,11 +411,22 @@ export default function DiaryPage() {
         if (!chatRes.ok) {
           setStatus("idle");
           const err = (await chatRes.json().catch(() => ({}))) as { error?: string };
-          setErrorMsg(
-            err.error === "SERVICE_QUOTA_EXCEEDED"
-              ? t("errors.quotaExceeded")
-              : t("errors.chatFetch")
-          );
+          const isLimitError = err.error === "TURN_LIMIT_EXCEEDED";
+          if (isLimitError) {
+            setIsLimitReached(true);
+            setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
+          }
+          if (isGuest && isLimitError) {
+            setShowLimitModal(true);
+          } else {
+            setErrorMsg(
+              isLimitError
+                ? t("errors.turnLimitExceeded")
+                : err.error === "SERVICE_QUOTA_EXCEEDED"
+                  ? t("errors.quotaExceeded")
+                  : t("errors.chatFetch")
+            );
+          }
           return;
         }
         const chatData = (await chatRes.json()) as { text?: string };
@@ -476,12 +461,11 @@ export default function DiaryPage() {
 
   // 録音開始
   const startRecording = useCallback(async () => {
-    setErrorMsg(null);
-
-    if (isGuest && isGuestLimitReached()) {
+    if (isLimitReached) {
       setShowLimitModal(true);
       return;
     }
+    setErrorMsg(null);
 
     ensureAudioContext();
 
@@ -524,7 +508,7 @@ export default function DiaryPage() {
       setErrorMsg(mapGetUserMediaError(err));
       setStatus("idle");
     }
-  }, [isGuest, ensureAudioContext, t]);
+  }, [isLimitReached, ensureAudioContext, t]);
 
   const stopRecording = useCallback(() => {
     const recorder = recorderRef.current;
@@ -601,14 +585,6 @@ export default function DiaryPage() {
 
       {!isStarted ? (
         <div className="flex-1 flex flex-col items-stretch gap-5 animate-fadeIn">
-          {isGuest && (
-            <Cap mb={0}>
-              {t("guestRemaining", {
-                remaining: Math.max(0, GUEST_LIMIT - guestCount),
-                total: GUEST_LIMIT,
-              })}
-            </Cap>
-          )}
           <p className="text-xs sm:text-sm text-[var(--fg-muted)] leading-relaxed">
             {t("prompt.body")}
           </p>
@@ -635,17 +611,6 @@ export default function DiaryPage() {
         </div>
       ) : (
         <>
-          {isGuest && !summaryResult && (
-            <div className="mb-2">
-              <Cap mb={0}>
-                {t("guestRemaining", {
-                  remaining: Math.max(0, GUEST_LIMIT - guestCount),
-                  total: GUEST_LIMIT,
-                })}
-              </Cap>
-            </div>
-          )}
-
           {/* 流れるトランスクリプト：user は Fraunces の本文、assistant は
              「ききて」として左縦罫の引用。バブルを捨て、活字のリズムで階層を作る。 */}
           <div className="flex-1 overflow-y-auto pt-2 pb-4 space-y-5">
@@ -725,7 +690,7 @@ export default function DiaryPage() {
                 <button
                   type="button"
                   onClick={handleMicClick}
-                  disabled={isBusy}
+                  disabled={isBusy || isLimitReached}
                   className="relative w-16 h-16 rounded-full flex items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
                     background: isRecording ? "var(--fg)" : "transparent",
@@ -842,7 +807,7 @@ export default function DiaryPage() {
               className="mb-3 text-xl sm:text-2xl leading-tight tracking-tight"
               style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
             >
-              {t("guestLimitModal.title", { limit: GUEST_LIMIT })}
+              {t("guestLimitModal.title")}
             </h2>
             <p
               className="text-xs sm:text-sm leading-relaxed mb-5"
