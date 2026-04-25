@@ -6,8 +6,9 @@ export const runtime = "edge";
 import { useAuth } from "@/app/components/auth/AuthContext";
 import {
   BottomTab,
+  BtnGhost,
+  BtnPrimary,
   Cap,
-  ConfirmDialog,
   PageHeader,
   Rule,
   SettingRow,
@@ -331,37 +332,104 @@ export default function MePage() {
 
       {/* ログアウト確認モーダル */}
       {showLogoutConfirm && (
-        <ConfirmDialog
-          titleId="logout-confirm-title"
-          cap={t("chapter.confirmCap")}
-          title={t("logoutConfirm.title")}
-          desc={t("logoutConfirm.desc")}
-          errorMsg={errorMsg}
-          cancelLabel={t("logoutConfirm.cancel")}
-          confirmLabel={t("logoutConfirm.confirm")}
-          isProcessing={signingOut}
-          onCancel={() => {
-            setErrorMsg(null);
-            setShowLogoutConfirm(false);
-          }}
-          onConfirm={handleSignOut}
-        />
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-overlay)] p-4 animate-fadeIn"
+          onClick={() => { if (!signingOut) { setErrorMsg(null); setShowLogoutConfirm(false); } }}
+          onKeyDown={(e) => { if (e.key === "Escape" && !signingOut) { setErrorMsg(null); setShowLogoutConfirm(false); } }}
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-sm p-6 rounded-xl shadow-2xl bg-[var(--bg)] text-[var(--fg)]"
+            style={{ border: "0.5px solid var(--border)" }}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <Cap mb={0}>{t("chapter.confirmCap")}</Cap>
+              <button
+                type="button"
+                onClick={() => { setErrorMsg(null); setShowLogoutConfirm(false); }}
+                disabled={signingOut}
+                className="text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors bg-transparent border-0 cursor-pointer p-0 leading-none"
+                aria-label="閉じる"
+              >
+                ✕
+              </button>
+            </div>
+            <h2 className="mb-3 text-2xl sm:text-3xl font-semibold leading-tight">
+              {t("logoutConfirm.title")}
+            </h2>
+            <p className="text-xs sm:text-sm leading-relaxed mb-5" style={{ color: "var(--fg-muted)" }}>
+              {t("logoutConfirm.desc")}
+            </p>
+            {errorMsg && (
+              <p className="text-xs sm:text-sm text-[var(--error)] mb-4">{errorMsg}</p>
+            )}
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <BtnGhost full onClick={() => { setErrorMsg(null); setShowLogoutConfirm(false); }} disabled={signingOut}>
+                  {t("logoutConfirm.cancel")}
+                </BtnGhost>
+              </div>
+              <div className="flex-1">
+                <BtnPrimary full onClick={handleSignOut} disabled={signingOut}>
+                  {t("logoutConfirm.confirm")}
+                </BtnPrimary>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* アカウント削除確認モーダル */}
       {showDeleteConfirm && (
-        <ConfirmDialog
-          titleId="delete-confirm-title"
-          cap={t("chapter.confirmCap")}
-          title={t("deleteConfirm.title")}
-          desc={t("deleteConfirm.desc")}
-          errorMsg={errorMsg}
-          cancelLabel={t("deleteConfirm.cancel")}
-          confirmLabel={t("deleteConfirm.confirm")}
-          isProcessing={deleting}
-          onCancel={() => setShowDeleteConfirm(false)}
-          onConfirm={handleDeleteAccount}
-        />
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-overlay)] p-4 animate-fadeIn"
+          onClick={() => { if (!deleting) setShowDeleteConfirm(false); }}
+          onKeyDown={(e) => { if (e.key === "Escape" && !deleting) setShowDeleteConfirm(false); }}
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-sm p-6 rounded-xl shadow-2xl bg-[var(--bg)] text-[var(--fg)]"
+            style={{ border: "0.5px solid var(--border)" }}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <Cap mb={0}>{t("chapter.confirmCap")}</Cap>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors bg-transparent border-0 cursor-pointer p-0 leading-none"
+                aria-label="閉じる"
+              >
+                ✕
+              </button>
+            </div>
+            <h2 className="mb-3 text-2xl sm:text-3xl font-semibold leading-tight">
+              {t("deleteConfirm.title")}
+            </h2>
+            <p className="text-xs sm:text-sm leading-relaxed mb-5" style={{ color: "var(--fg-muted)" }}>
+              {t("deleteConfirm.desc")}
+            </p>
+            {errorMsg && (
+              <p className="text-xs sm:text-sm text-[var(--error)] mb-4">{errorMsg}</p>
+            )}
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <BtnGhost full onClick={() => { setErrorMsg(null); setShowDeleteConfirm(false); }} disabled={deleting}>
+                  {t("deleteConfirm.cancel")}
+                </BtnGhost>
+              </div>
+              <div className="flex-1">
+                <BtnPrimary full onClick={handleDeleteAccount} disabled={deleting}>
+                  {t("deleteConfirm.confirm")}
+                </BtnPrimary>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );

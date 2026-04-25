@@ -274,35 +274,53 @@ export default function DiaryDetailPage({
         </article>
       )}
 
-      {/* 削除確認モーダル（Chapter 系の 0.5px 罫 + Fraunces） */}
       {showDeleteConfirm && entry && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-overlay)] p-4 animate-fadeIn">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-overlay)] p-4 animate-fadeIn"
+          onClick={() => { if (!deleting) setShowDeleteConfirm(false); }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && !deleting) setShowDeleteConfirm(false);
+          }}
+          role="presentation"
+        >
           <div
-            className="w-full max-w-sm p-6 bg-[var(--bg)] text-[var(--fg)]"
-            style={{ border: "0.5px solid var(--fg)" }}
+            className="w-full max-w-sm p-6 rounded-xl shadow-2xl bg-[var(--bg)] text-[var(--fg)]"
+            style={{ border: "0.5px solid var(--border)" }}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
           >
-            <Cap mb={6}>{t("chapter.summaryLabel")}</Cap>
-            <h2
-              className="mb-3 text-xl sm:text-2xl md:text-3xl leading-tight tracking-tight"
-              style={{ fontWeight: 400 }}
-            >
+            <div className="flex items-center justify-between mb-6">
+              <Cap mb={0}>{t("chapter.summaryLabel")}</Cap>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors bg-transparent border-0 cursor-pointer p-0 leading-none"
+                aria-label="閉じる"
+              >
+                ✕
+              </button>
+            </div>
+            <h2 className="mb-3 text-2xl sm:text-3xl font-semibold leading-tight">
               {t("deleteConfirm.title")}
             </h2>
             <p
-              className="text-xs sm:text-sm md:text-base leading-relaxed mb-5"
+              className="text-xs sm:text-sm leading-relaxed mb-5"
               style={{ color: "var(--fg-muted)" }}
             >
               {t("deleteConfirm.desc")}
             </p>
             <div className="flex gap-2">
               <div className="flex-1">
+                <BtnGhost full onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
+                  {t("deleteConfirm.cancel")}
+                </BtnGhost>
+              </div>
+              <div className="flex-1">
                 <BtnPrimary full onClick={handleDelete} disabled={deleting}>
                   {deleting ? t("deleting") : t("deleteConfirm.confirm")}
                 </BtnPrimary>
               </div>
-              <BtnGhost onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
-                {t("deleteConfirm.cancel")}
-              </BtnGhost>
             </div>
           </div>
         </div>

@@ -22,28 +22,7 @@ export async function DELETE(_req: Request) {
       apikey: serviceRoleKey,
     };
 
-    // 1. conversation ID を取得
-    const { data: convs, error: convsError } = await supabase
-      .from("conversations")
-      .select("id")
-      .eq("user_id", user.id);
-    if (convsError) throw convsError;
-
-    // 2. messages を削除
-    const convIds = (convs ?? []).map((c: { id: string }) => c.id);
-    if (convIds.length > 0) {
-      const { error } = await supabase.from("messages").delete().in("conversation_id", convIds);
-      if (error) throw error;
-    }
-
-    // 3. conversations を削除
-    const { error: delConvsError } = await supabase
-      .from("conversations")
-      .delete()
-      .eq("user_id", user.id);
-    if (delConvsError) throw delConvsError;
-
-    // 4. ユーザーを削除（最後に実行）
+    // ユーザーを削除（Supabase Admin API 経由。RLS 対象外のため service role key を使用）
     const response = await fetch(`${supabaseUrl}/auth/v1/admin/users/${user.id}`, {
       method: "DELETE",
       headers: adminHeaders,

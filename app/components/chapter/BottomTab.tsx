@@ -1,13 +1,13 @@
 "use client";
 
 // Chapter 系譜の下部タブバー。Home / Record / Archive / Me の 4 タブ。
-// 全タブで同じ sans family を保ち、アクティブはサイズ・ウェイト・色で差をつける
-// （以前はアクティブだけ Fraunces italic に切り替えていたが、JA 副ラベルは sans のままで
-// 「Me / じぶん」のペアの声が揃わなかったため撤去）。
+// アイコン＋ラベルの組み合わせで表示。アクティブはアイコン色・ウェイトで差をつける。
 // 未対応パスでは active を渡さないことで全タブが非アクティブ表示になる（LP など）。
 
 import { Link, usePathname } from "@/i18n/routing";
 import { SANS_FAMILY } from "@/lib/typography";
+import { Archive, BookOpen, House, UserRound } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 type TabKey = "home" | "record" | "archive" | "me";
 
@@ -15,16 +15,18 @@ type TabItem = {
   key: TabKey;
   label: string;
   href: string;
+  icon: LucideIcon;
   /** アクティブ判定に使う path のプレフィックス。最も長いマッチ優先。 */
   match: string[];
 };
 
 const TABS: readonly TabItem[] = [
-  { key: "home", label: "Home", href: "/app", match: ["/app"] },
+  { key: "home", label: "Home", href: "/app", icon: House, match: ["/app"] },
   {
     key: "record",
-    label: "Record",
+    label: "Diary",
     href: "/diary",
+    icon: BookOpen,
     // /diary は完全一致、/diary/history や /diary/insights は archive 側が拾う
     match: ["/diary"],
   },
@@ -32,9 +34,10 @@ const TABS: readonly TabItem[] = [
     key: "archive",
     label: "Archive",
     href: "/diary/history",
+    icon: Archive,
     match: ["/diary/history", "/diary/insights"],
   },
-  { key: "me", label: "Me", href: "/me", match: ["/me"] },
+  { key: "me", label: "Me", href: "/me", icon: UserRound, match: ["/me"] },
 ] as const;
 
 // 最長一致を優先したいので、match の最大長で事前ソート。
@@ -76,19 +79,20 @@ export function BottomTab() {
       <div className="grid grid-cols-4 max-w-md mx-auto px-7 pt-[10px] pb-[10px]">
         {TABS.map((tab) => {
           const isActive = tab.key === active;
+          const Icon = tab.icon;
           return (
             <Link
               key={tab.key}
               href={tab.href}
-              className="flex flex-col items-center gap-[2px] no-underline"
+              className="flex flex-col items-center gap-[3px] no-underline"
               style={{ color: isActive ? "var(--fg)" : "var(--fg-muted)" }}
             >
+              <Icon
+                size={22}
+                strokeWidth={isActive ? 2 : 1.5}
+              />
               <span
-                className={
-                  isActive
-                    ? "text-sm sm:text-base tracking-tight"
-                    : "text-xs sm:text-sm tracking-tight"
-                }
+                className="text-[10px] tracking-tight leading-none"
                 style={{
                   fontFamily: SANS_FAMILY,
                   fontWeight: isActive ? 600 : 400,

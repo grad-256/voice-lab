@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
 import { useAuth } from "@/app/components/auth/AuthContext";
-import { BtnGhost, BtnPrimary, Cap, PageHeader, Rule, Waves } from "@/app/components/chapter";
+import { BottomTab, BtnGhost, BtnPrimary, Cap, PageHeader, Rule, Waves } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
 import { formatElapsedMs } from "@/lib/formatDuration";
 
@@ -661,7 +661,7 @@ export default function DiaryPage() {
   // アイドル：全バー暗い（色なし）
 
   return (
-    <main className="flex flex-col h-screen w-full max-w-md mx-auto px-7 pt-14 pb-6 overflow-hidden">
+    <main className={`flex flex-col h-screen w-full max-w-md mx-auto px-7 pt-14 overflow-hidden ${isStarted ? "pb-6" : "pb-24"}`}>
       <PageHeader
         center={
           isStarted ? (
@@ -1038,7 +1038,6 @@ export default function DiaryPage() {
                   accent
                   full
                   onClick={() => {
-                    // ゲスト上限モーダルを閉じてからサインアップダイアログを開く（モーダル二重表示回避）
                     setShowLimitModal(false);
                     openDialog("signup");
                   }}
@@ -1118,6 +1117,7 @@ export default function DiaryPage() {
           </div>
         </div>
       )}
+      {!isStarted && <BottomTab />}
     </main>
   );
 }
