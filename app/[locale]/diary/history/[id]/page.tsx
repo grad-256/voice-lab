@@ -277,9 +277,9 @@ export default function DiaryDetailPage({
       {showDeleteConfirm && entry && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-overlay)] p-4 animate-fadeIn"
-          onClick={() => setShowDeleteConfirm(false)}
+          onClick={() => { if (!deleting) setShowDeleteConfirm(false); }}
           onKeyDown={(e) => {
-            if (e.key === "Escape") setShowDeleteConfirm(false);
+            if (e.key === "Escape" && !deleting) setShowDeleteConfirm(false);
           }}
           role="presentation"
         >

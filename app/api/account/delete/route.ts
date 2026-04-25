@@ -22,7 +22,7 @@ export async function DELETE(_req: Request) {
       apikey: serviceRoleKey,
     };
 
-    // 4. ユーザーを削除（最後に実行）
+    // ユーザーを削除（Supabase Admin API 経由。RLS 対象外のため service role key を使用）
     const response = await fetch(`${supabaseUrl}/auth/v1/admin/users/${user.id}`, {
       method: "DELETE",
       headers: adminHeaders,
