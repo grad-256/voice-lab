@@ -5,6 +5,7 @@ export const runtime = "edge";
 
 import { BottomTab, Cap, PageHeader, Rule } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
+import { ELEVENLABS_V3 } from "@/lib/models";
 import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -100,7 +101,7 @@ export default function DiaryRecapsPage() {
       const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, locale, modelId: "eleven_v3", speed: 1.0 }),
+        body: JSON.stringify({ text, locale, modelId: ELEVENLABS_V3, speed: 1.0 }),
       });
       if (!res.ok) throw new Error("speak failed");
       const buffer = await res.arrayBuffer();
@@ -237,10 +238,7 @@ export default function DiaryRecapsPage() {
                     </div>
 
                     {/* 折りたたみ：先頭40文字 / 展開：全文 */}
-                    <div
-                      className="text-sm sm:text-base leading-relaxed text-[var(--fg)]"
-                      style={{ fontFamily: SERIF_FAMILY }}
-                    >
+                    <div className="text-sm sm:text-base leading-relaxed text-[var(--fg)]">
                       {isExpanded ? item.summary : preview}
                     </div>
 

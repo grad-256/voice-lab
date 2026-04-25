@@ -15,7 +15,8 @@ import {
 } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
 import { formatMonoDateTime } from "@/lib/chapterDate";
-import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
+import { ELEVENLABS_MULTILINGUAL } from "@/lib/models";
+import { MONO_FAMILY } from "@/lib/typography";
 import { useMountedRef } from "@/lib/useMountedRef";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
@@ -89,14 +90,13 @@ export default function DiaryDetailPage({
   }, [id, router, t]);
 
   // 要約の TTS Blob を取得する。AudioPlayer が再生・進捗表示・停止を管理する。
-  // 日記要約は長文・じっくり聞き返せる用途のため、表現力重視の eleven_v3 を使う。
   const fetchSummaryAudio = useCallback(async (): Promise<Blob | null> => {
     if (!entry) return null;
     try {
       const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: entry.summary, modelId: "eleven_v3" }),
+        body: JSON.stringify({ text: entry.summary, modelId: ELEVENLABS_MULTILINGUAL }),
       });
       if (!res.ok) return null;
       return await res.blob();
@@ -165,7 +165,7 @@ export default function DiaryDetailPage({
           {/* 本文タイトル：Fraunces で大きく。折り返しは CSS 任せ（italic 強調はデータに頼れないため割愛）。 */}
           <h2
             className="mt-2 text-3xl sm:text-4xl tracking-tight text-[var(--fg)]"
-            style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
+            style={{ fontWeight: 400 }}
           >
             {entry.title}
           </h2>
@@ -187,7 +187,6 @@ export default function DiaryDetailPage({
             <div
               className="text-sm sm:text-base md:text-lg leading-relaxed"
               style={{
-                fontFamily: SERIF_FAMILY,
                 color: "var(--fg)",
                 whiteSpace: "pre-wrap",
               }}
@@ -225,7 +224,6 @@ export default function DiaryDetailPage({
                         key={`${item.role}-${i}-${item.text.slice(0, 20)}`}
                         className="text-sm sm:text-base md:text-lg leading-loose"
                         style={{
-                          fontFamily: SERIF_FAMILY,
                           color: "var(--fg)",
                           whiteSpace: "pre-wrap",
                         }}
@@ -243,7 +241,6 @@ export default function DiaryDetailPage({
                         <div
                           className="text-sm sm:text-base leading-normal"
                           style={{
-                            fontFamily: SERIF_FAMILY,
                             color: "var(--fg)",
                             whiteSpace: "pre-wrap",
                           }}
@@ -287,7 +284,7 @@ export default function DiaryDetailPage({
             <Cap mb={6}>{t("chapter.summaryLabel")}</Cap>
             <h2
               className="mb-3 text-xl sm:text-2xl md:text-3xl leading-tight tracking-tight"
-              style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
+              style={{ fontWeight: 400 }}
             >
               {t("deleteConfirm.title")}
             </h2>

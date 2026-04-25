@@ -135,7 +135,7 @@ export default function DiaryHistoryPage() {
         </div>
         <div
           className="text-3xl sm:text-4xl md:text-5xl tracking-tight"
-          style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
+          style={{ fontWeight: 400 }}
         >
           {t("chapter.titleLead")} <span>{t("chapter.titleAccent")}</span>
           <br />
@@ -221,10 +221,7 @@ export default function DiaryHistoryPage() {
       {/* 空状態：3 行の静かな活字で不在を告げる。Begin で /diary へ */}
       {items !== null && items.length === 0 && (
         <div className="flex-1 flex flex-col items-start justify-start pt-8 gap-6">
-          <div
-            className="text-3xl sm:text-4xl tracking-tight"
-            style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
-          >
+          <div className="text-3xl sm:text-4xl tracking-tight" style={{ fontWeight: 400 }}>
             {t("chapter.emptyLead")} <span>{t("chapter.emptyAccent")}</span>
             <br />
             {t("chapter.emptyTail")}
@@ -272,10 +269,7 @@ export default function DiaryHistoryPage() {
                       </div>
                     </div>
                     <div className="min-w-0">
-                      <div
-                        style={{ fontFamily: SERIF_FAMILY }}
-                        className="text-base sm:text-lg leading-tight tracking-tight line-clamp-2 text-[var(--fg)]"
-                      >
+                      <div className="text-base sm:text-lg leading-tight tracking-tight line-clamp-2 text-[var(--fg)]">
                         {item.title}
                       </div>
                       <div className="flex gap-[10px] mt-1 text-xs sm:text-sm uppercase tracking-[0.14em] text-[var(--fg-muted)]">

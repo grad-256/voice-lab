@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 // POST : 今週の recap がなければ Sonnet 4.6 で生成して保存。既存なら即返す
 // ────────────────────────────────────────────────
 
-const SONNET_MODEL = "claude-sonnet-4-6";
+import { CLAUDE_SONNET } from "@/lib/models";
 
 type Locale = "ja" | "en";
 
@@ -113,7 +113,7 @@ async function generateSummary(entries: DiaryEntry[], locale: Locale): Promise<s
       ...gatewayAuthHeaders(),
     },
     body: JSON.stringify({
-      model: SONNET_MODEL,
+      model: CLAUDE_SONNET,
       max_tokens: 1024,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],

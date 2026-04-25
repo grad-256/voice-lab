@@ -579,6 +579,11 @@
       "title": "Voice diary",
       "finish": "Save as diary"
     },
+    "leaveModal": {
+      "title": "Save your diary?",
+      "desc": "Would you like to create a diary entry from this conversation, or discard it and go back?",
+      "discard": "Discard & go back"
+    },
     "prompt": {
       "body": "Allow microphone access, and the AI will start the conversation.",
       "start": "Start",
@@ -594,6 +599,12 @@
     "micAria": {
       "recording": "Stop recording",
       "idle": "Start recording"
+    },
+    "textInput": {
+      "placeholder": "",
+      "send": "Send",
+      "switchToVoice": "Back to voice",
+      "switchToText": "Type instead"
     },
     "hint": "Say \"thank you\" or tap the button to save as a diary entry",
     "chapter": {
