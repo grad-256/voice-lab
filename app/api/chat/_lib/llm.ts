@@ -1,5 +1,6 @@
 import { anthropicEndpoint, gatewayAuthHeaders } from "@/lib/aiGateway";
 import { type ChatLocale, buildDiarySystemPrompt, parseClaudeResponse } from "@/lib/chat";
+import { CLAUDE_HAIKU } from "@/lib/models";
 import type { Message } from "./types";
 
 type LLMParams = {
@@ -49,7 +50,7 @@ export async function callLLM(params: LLMParams): Promise<LLMResult> {
       ...gatewayAuthHeaders(),
     },
     body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
+      model: CLAUDE_HAIKU,
       max_tokens: 512,
       system: systemStr,
       messages,

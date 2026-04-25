@@ -575,6 +575,11 @@
       "title": "声の日記",
       "finish": "日記にする"
     },
+    "leaveModal": {
+      "title": "日記を作りますか？",
+      "desc": "やり取りをもとに日記を作るか、破棄して戻るかを選んでください。",
+      "discard": "破棄して戻る"
+    },
     "prompt": {
       "body": "マイクを許可すると、AI から話しかけます。",
       "start": "はじめる",
@@ -590,6 +595,12 @@
     "micAria": {
       "recording": "録音停止",
       "idle": "録音開始"
+    },
+    "textInput": {
+      "placeholder": "",
+      "send": "送信",
+      "switchToVoice": "声に戻る",
+      "switchToText": "文字で入力"
     },
     "hint": "「ありがとう」と言うか、右上のボタンをタップして日記になります",
     "chapter": {
