@@ -1,6 +1,6 @@
 import { ALLOWED_MODELS, type AllowedModel, DEFAULT_MODEL, type RequestBody } from "./types";
 
-const VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? "hmVgSRXAUU4D4E9yl5iw";
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? "7YpYEZAtPEQCOfimVIZ4";
 
 type TTSResult = { response: Response; error: null } | { response: null; error: Response };
 

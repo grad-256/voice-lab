@@ -21,7 +21,7 @@ export interface PresetVoice {
 export const PRESET_VOICES: readonly PresetVoice[] = [
   {
     id: "ethan",
-    voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID_ETHAN ?? "hmVgSRXAUU4D4E9yl5iw",
+    voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID_ETHAN ?? "7YpYEZAtPEQCOfimVIZ4",
   },
   {
     id: "sarah",

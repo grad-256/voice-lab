@@ -1,0 +1,8 @@
+[mcp_servers.miro]
+url = "https://mcp.miro.com"
+
+[shell_environment_policy]
+inherit = "core"
+
+[shell_environment_policy.set]
+CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"

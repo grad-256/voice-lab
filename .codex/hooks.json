@@ -1,0 +1,55 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); b=$(basename \"$f\"); case \"$b\" in .env|.env.local|.env.production|.env.development|.env.staging) echo '【安全網】.env 系ファイルへのアクセスはブロックされています。APIキー流出防止のため Claude からは参照・編集できません。構造を確認したい場合は .env.local.example を見てください。内容を変更したい場合は Masaru さん自身のエディタで直接編集してください。' >&2; exit 2 ;; esac; exit 0"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/uclab/study/voice-lab/.codex/hooks/check-commit-ascii.sh'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *.ts|*.tsx) case \"$f\" in */app/*|*/components/*|*/lib/*) mkdir -p \"${CLAUDE_PROJECT_DIR:-.}/.claude/flags\" && touch \"${CLAUDE_PROJECT_DIR:-.}/.claude/flags/evaluator-pending\" ;; esac ;; esac; exit 0"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rm -f \"${CLAUDE_PROJECT_DIR:-.}/.claude/flags/evaluator-running\"; exit 0"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/uclab/study/voice-lab/.codex/hooks/stop-evaluator-guard.sh'"
+          }
+        ]
+      }
+    ]
+  }
+}
