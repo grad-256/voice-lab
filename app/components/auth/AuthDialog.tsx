@@ -27,11 +27,11 @@ export function AuthDialog() {
   const router = useRouter();
   const supabase = createClient();
 
-  // LP（/）からログイン / サインアップした場合のみ、成功後に /app へ遷移する。
+  // LP（/）からログイン / サインアップした場合のみ、成功後に /diary へ遷移する。
   // 他のページ（/diary、/me 等）ではその場に留まる仕様（書きかけ文脈を壊さないため）。
   const redirectToAppIfOnLP = () => {
     if (pathname === "/") {
-      router.push("/app");
+      router.push("/diary");
     }
   };
 

@@ -4,24 +4,16 @@ export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
 import { useAuth } from "@/app/components/auth/AuthContext";
-import {
-  BottomTab,
-  BtnGhost,
-  BtnPrimary,
-  Cap,
-  PageHeader,
-  Rule,
-  Waves,
-} from "@/app/components/chapter";
+import { BottomTab, BtnGhost, BtnPrimary, Cap, PageHeader, Waves } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
 import { formatElapsedMs } from "@/lib/formatDuration";
 
 import { ELEVENLABS_MULTILINGUAL } from "@/lib/models";
 import { mapGetUserMediaError, pickBrowserMimeType } from "@/lib/recordingMime";
-import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
+import { MONO_FAMILY } from "@/lib/typography";
 import { useMountedRef } from "@/lib/useMountedRef";
 import { getSelectedVoice } from "@/lib/voicePreferences";
-import { Keyboard, Mic, Send, Square } from "lucide-react";
+import { Keyboard, Mic, Plus, Send, Square } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -92,8 +84,6 @@ export default function DiaryPage() {
   // UI ロケール（ja/en）。Whisper の language ヒントと chat ルートのシステムプロンプトへ渡す。
   const locale = useLocale();
   const t = useTranslations("diary");
-  // プロンプト見出しは /app と共用するため hub.chapter 側の訳を使う。
-  const tHub = useTranslations("hub.chapter");
 
   // AuthContext の user / loading から authStatus を派生。AuthContext が
   // 初回 getUser() を 1 回済ませているので、重複呼び出しはしない。
@@ -702,45 +692,44 @@ export default function DiaryPage() {
         }
       />
 
-      {/* プロンプト柱：/app と同じ「今日の問い」を Fraunces italic で静かに再掲する。
-         /app から Begin で来た流れを断ち切らないため、視覚の連続性を優先。 */}
-      <div className="mt-6">
-        <Cap mb={10}>{tHub("promptLabel")}</Cap>
-        <div
-          className="text-xl sm:text-2xl leading-tight tracking-tight"
-          style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
-        >
-          {tHub("promptBody")}
-        </div>
-      </div>
-
-      <Rule mv={18} />
-
       {!isStarted ? (
-        <div className="flex-1 flex flex-col items-stretch gap-5 animate-fadeIn">
-          <p className="text-xs sm:text-sm text-[var(--fg-muted)] leading-relaxed">
-            {t("prompt.body")}
-          </p>
-          {errorMsg && <div className="text-xs sm:text-sm text-[var(--error)]">{errorMsg}</div>}
-          <div className="mt-1">
-            <BtnPrimary
-              big
-              full
+        <div className="flex-1 flex flex-col items-center justify-between pb-4 animate-fadeIn">
+          {/* 中央：アイコン + タイトル + サブコピー */}
+          <div className="flex-1 flex flex-col items-center justify-center text-center gap-3">
+            <p className="text-xs sm:text-sm text-[var(--fg-muted)] leading-relaxed max-w-[220px]">
+              {t("prompt.body")}
+            </p>
+            {errorMsg && <div className="mt-1 text-xs text-[var(--error)]">{errorMsg}</div>}
+          </div>
+
+          {/* 下部：大きい丸ボタン + 履歴リンク */}
+          <div className="flex flex-col items-center gap-4">
+            <button
+              type="button"
               onClick={handleStart}
               disabled={status === "processing" || status === "speaking"}
+              aria-label={t("prompt.start")}
+              className="w-16 h-16 rounded-full flex items-center justify-center transition-opacity disabled:opacity-50"
+              style={{ background: "var(--fg)" }}
             >
-              {status === "processing" ? t("prompt.starting") : t("prompt.start")}
-            </BtnPrimary>
+              {status === "processing" ? (
+                <div
+                  className="w-5 h-5 rounded-full border-2 animate-spin"
+                  style={{ borderColor: "var(--bg-subtle)", borderTopColor: "var(--bg)" }}
+                />
+              ) : (
+                <Plus size={22} strokeWidth={1.2} style={{ color: "var(--bg)" }} aria-hidden />
+              )}
+            </button>
+            {authStatus === "authed" && (
+              <Link
+                href="/diary/history"
+                className="uppercase text-xs tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
+              >
+                {t("prompt.viewHistory")} →
+              </Link>
+            )}
           </div>
-          {authStatus === "authed" && (
-            <Link
-              href="/diary/history"
-              className="uppercase text-xs sm:text-sm tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors self-start"
-            >
-              {t("prompt.viewHistory")} →
-            </Link>
-          )}
-          <div className="flex-1" />
         </div>
       ) : (
         <>
