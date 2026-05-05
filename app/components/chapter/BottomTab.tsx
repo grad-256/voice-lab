@@ -87,10 +87,7 @@ export function BottomTab() {
               className="flex flex-col items-center gap-[3px] no-underline"
               style={{ color: isActive ? "var(--fg)" : "var(--fg-muted)" }}
             >
-              <Icon
-                size={22}
-                strokeWidth={isActive ? 2 : 1.5}
-              />
+              <Icon size={22} strokeWidth={isActive ? 2 : 1.5} />
               <span
                 className="text-[10px] tracking-tight leading-none"
                 style={{

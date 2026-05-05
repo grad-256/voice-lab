@@ -135,7 +135,7 @@ export default function DiaryHistoryPage() {
         </div>
         <div
           className="text-3xl sm:text-4xl md:text-5xl tracking-tight"
-          style={{ fontWeight: 400 }}
+          style={{ fontFamily: SERIF_FAMILY, fontWeight: 400 }}
         >
           {t("chapter.titleLead")} <span>{t("chapter.titleAccent")}</span>
           <br />
