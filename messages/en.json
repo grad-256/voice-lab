@@ -422,7 +422,8 @@
         "changePlanSub": "Upgrade or downgrade",
         "cancelPlanSub": "Stops from the next charge date"
       },
-      "stripePendingToast": "Payments are coming soon"
+      "stripePendingToast": "Payments are coming soon",
+      "comingSoon": "Coming soon"
     }
   },
   "pricing": {
@@ -458,7 +459,7 @@
         "features": {
           "f1": "Up to {turnsPerDay} exchanges/day, anytime you like",
           "f2": "Weekly voice recap",
-          "f3": "Full history, unlimited"
+          "f3": "Full history — all your entries saved"
         },
         "cta": "Choose Quiet",
         "badge": "Popular",
@@ -675,6 +676,7 @@
       "empty": "No weekly recaps yet",
       "play": "Listen",
       "playing": "Playing…",
+      "pause": "Pause",
       "playError": "Couldn't play audio. Please try again.",
       "chapter": {
         "archiveLabel": "Archive",

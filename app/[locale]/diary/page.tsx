@@ -4,7 +4,15 @@ export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
 import { useAuth } from "@/app/components/auth/AuthContext";
-import { BottomTab, BtnGhost, BtnPrimary, Cap, PageHeader, Rule, Waves } from "@/app/components/chapter";
+import {
+  BottomTab,
+  BtnGhost,
+  BtnPrimary,
+  Cap,
+  PageHeader,
+  Rule,
+  Waves,
+} from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
 import { formatElapsedMs } from "@/lib/formatDuration";
 
@@ -12,6 +20,7 @@ import { ELEVENLABS_MULTILINGUAL } from "@/lib/models";
 import { mapGetUserMediaError, pickBrowserMimeType } from "@/lib/recordingMime";
 import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
 import { useMountedRef } from "@/lib/useMountedRef";
+import { getSelectedVoice } from "@/lib/voicePreferences";
 import { Keyboard, Mic, Send, Square } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -212,7 +221,11 @@ export default function DiaryPage() {
       const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, modelId: ELEVENLABS_MULTILINGUAL }),
+        body: JSON.stringify({
+          text,
+          voiceId: getSelectedVoice().voiceId,
+          modelId: ELEVENLABS_MULTILINGUAL,
+        }),
       });
       if (!mountedRef.current) return;
       if (!res.ok) {
@@ -661,7 +674,9 @@ export default function DiaryPage() {
   // アイドル：全バー暗い（色なし）
 
   return (
-    <main className={`flex flex-col h-screen w-full max-w-md mx-auto px-7 pt-14 overflow-hidden ${isStarted ? "pb-6" : "pb-24"}`}>
+    <main
+      className={`flex flex-col h-screen w-full max-w-md mx-auto px-7 pt-14 overflow-hidden ${isStarted ? "pb-6" : "pb-24"}`}
+    >
       <PageHeader
         center={
           isStarted ? (

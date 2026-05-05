@@ -422,7 +422,8 @@
         "changePlanSub": "アップグレード・ダウングレード",
         "cancelPlanSub": "次回請求日から停止します"
       },
-      "stripePendingToast": "決済機能は近日公開予定です"
+      "stripePendingToast": "決済機能は近日公開予定です",
+      "comingSoon": "Coming soon"
     }
   },
   "pricing": {
@@ -458,7 +459,7 @@
         "features": {
           "f1": "1日{turnsPerDay}往復まで、好きなタイミングで",
           "f2": "週{weeklyRecaps}回、声で振り返る週間レポート",
-          "f3": "全期間の履歴・無制限保存"
+          "f3": "全期間の履歴をすべて保存"
         },
         "cta": "Quiet を選ぶ",
         "badge": "人気",
@@ -671,6 +672,7 @@
       "empty": "まだ週間振り返りがありません",
       "play": "音声で聞く",
       "playing": "再生中…",
+      "pause": "一時停止",
       "playError": "音声の再生に失敗しました。もう一度お試しください。",
       "chapter": {
         "archiveLabel": "Archive",
