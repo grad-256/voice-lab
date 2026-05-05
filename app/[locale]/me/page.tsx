@@ -223,16 +223,28 @@ export default function MePage() {
         />
       </div>
 
-      {/* Billing セクション：請求情報への導線（UI のみ・Stripe は #55） */}
+      {/* Billing セクション：Stripe 実装（#120）まで Coming soon で非活性表示 */}
       <Cap mb={6}>{t("billing.sectionCap")}</Cap>
       <div className="mb-4">
-        <SettingRow
-          href="/me/billing"
-          label={t("billing.rowTitle")}
-          sub={t("billing.rowSubtitle")}
-          value="→"
-          last
-        />
+        <div
+          className="grid grid-cols-[1fr_auto] gap-3 py-[14px] items-center opacity-40"
+          style={{ borderBottom: "0.5px solid var(--border)" }}
+        >
+          <div className="min-w-0">
+            <div className="text-sm sm:text-base font-medium tracking-[-0.005em] text-[var(--fg)]">
+              {t("billing.rowTitle")}
+            </div>
+            <div className="text-xs sm:text-sm text-[var(--fg-muted)] mt-[2px]">
+              {t("billing.rowSubtitle")}
+            </div>
+          </div>
+          <span
+            className="text-xs uppercase tracking-[0.18em] text-[var(--fg-muted)]"
+            style={{ fontFamily: "var(--font-mono, monospace)" }}
+          >
+            {t("billing.comingSoon")}
+          </span>
+        </div>
       </div>
 
       {/* ── Insights への動線（フリーアルファリリース時点では未準備のためコメントアウト）
@@ -334,8 +346,18 @@ export default function MePage() {
       {showLogoutConfirm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-overlay)] p-4 animate-fadeIn"
-          onClick={() => { if (!signingOut) { setErrorMsg(null); setShowLogoutConfirm(false); } }}
-          onKeyDown={(e) => { if (e.key === "Escape" && !signingOut) { setErrorMsg(null); setShowLogoutConfirm(false); } }}
+          onClick={() => {
+            if (!signingOut) {
+              setErrorMsg(null);
+              setShowLogoutConfirm(false);
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && !signingOut) {
+              setErrorMsg(null);
+              setShowLogoutConfirm(false);
+            }
+          }}
           role="presentation"
         >
           <div
@@ -348,7 +370,10 @@ export default function MePage() {
               <Cap mb={0}>{t("chapter.confirmCap")}</Cap>
               <button
                 type="button"
-                onClick={() => { setErrorMsg(null); setShowLogoutConfirm(false); }}
+                onClick={() => {
+                  setErrorMsg(null);
+                  setShowLogoutConfirm(false);
+                }}
                 disabled={signingOut}
                 className="text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors bg-transparent border-0 cursor-pointer p-0 leading-none"
                 aria-label="閉じる"
@@ -359,15 +384,23 @@ export default function MePage() {
             <h2 className="mb-3 text-2xl sm:text-3xl font-semibold leading-tight">
               {t("logoutConfirm.title")}
             </h2>
-            <p className="text-xs sm:text-sm leading-relaxed mb-5" style={{ color: "var(--fg-muted)" }}>
+            <p
+              className="text-xs sm:text-sm leading-relaxed mb-5"
+              style={{ color: "var(--fg-muted)" }}
+            >
               {t("logoutConfirm.desc")}
             </p>
-            {errorMsg && (
-              <p className="text-xs sm:text-sm text-[var(--error)] mb-4">{errorMsg}</p>
-            )}
+            {errorMsg && <p className="text-xs sm:text-sm text-[var(--error)] mb-4">{errorMsg}</p>}
             <div className="flex gap-2">
               <div className="flex-1">
-                <BtnGhost full onClick={() => { setErrorMsg(null); setShowLogoutConfirm(false); }} disabled={signingOut}>
+                <BtnGhost
+                  full
+                  onClick={() => {
+                    setErrorMsg(null);
+                    setShowLogoutConfirm(false);
+                  }}
+                  disabled={signingOut}
+                >
                   {t("logoutConfirm.cancel")}
                 </BtnGhost>
               </div>
@@ -385,8 +418,12 @@ export default function MePage() {
       {showDeleteConfirm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-overlay)] p-4 animate-fadeIn"
-          onClick={() => { if (!deleting) setShowDeleteConfirm(false); }}
-          onKeyDown={(e) => { if (e.key === "Escape" && !deleting) setShowDeleteConfirm(false); }}
+          onClick={() => {
+            if (!deleting) setShowDeleteConfirm(false);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && !deleting) setShowDeleteConfirm(false);
+          }}
           role="presentation"
         >
           <div
@@ -410,15 +447,23 @@ export default function MePage() {
             <h2 className="mb-3 text-2xl sm:text-3xl font-semibold leading-tight">
               {t("deleteConfirm.title")}
             </h2>
-            <p className="text-xs sm:text-sm leading-relaxed mb-5" style={{ color: "var(--fg-muted)" }}>
+            <p
+              className="text-xs sm:text-sm leading-relaxed mb-5"
+              style={{ color: "var(--fg-muted)" }}
+            >
               {t("deleteConfirm.desc")}
             </p>
-            {errorMsg && (
-              <p className="text-xs sm:text-sm text-[var(--error)] mb-4">{errorMsg}</p>
-            )}
+            {errorMsg && <p className="text-xs sm:text-sm text-[var(--error)] mb-4">{errorMsg}</p>}
             <div className="flex gap-2">
               <div className="flex-1">
-                <BtnGhost full onClick={() => { setErrorMsg(null); setShowDeleteConfirm(false); }} disabled={deleting}>
+                <BtnGhost
+                  full
+                  onClick={() => {
+                    setErrorMsg(null);
+                    setShowDeleteConfirm(false);
+                  }}
+                  disabled={deleting}
+                >
                   {t("deleteConfirm.cancel")}
                 </BtnGhost>
               </div>

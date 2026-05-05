@@ -7,8 +7,10 @@ import { BottomTab, Cap, PageHeader, Rule } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
 import { ELEVENLABS_V3 } from "@/lib/models";
 import { MONO_FAMILY, SERIF_FAMILY } from "@/lib/typography";
+import { getSelectedVoice } from "@/lib/voicePreferences";
+import { Pause, Play } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // APIレスポンス型
 type WeeklyRecap = {
@@ -59,8 +61,25 @@ export default function DiaryRecapsPage() {
   const [recaps, setRecaps] = useState<WeeklyRecap[] | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [recapLoading, setRecapLoading] = useState(false);
   const [recapPlaying, setRecapPlaying] = useState(false);
   const [playError, setPlayError] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
+
+  // ページ離脱時に音声を停止・リソースを解放する
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+    };
+  }, []);
 
   // 振り返り一覧を取得する（aborted パターンでクリーンアップ）
   useEffect(() => {
@@ -91,34 +110,59 @@ export default function DiaryRecapsPage() {
     };
   }, [router, t]);
 
-  // 音声再生ハンドラ
-  const playRecap = async (text: string) => {
-    if (recapPlaying) return;
-    setRecapPlaying(true);
+  // 音声再生・一時停止ハンドラ
+  const handlePlayPause = async (text: string) => {
+    if (recapLoading) return;
+
+    // 再生中なら一時停止
+    if (recapPlaying && audioRef.current) {
+      audioRef.current.pause();
+      setRecapPlaying(false);
+      return;
+    }
+
+    // 一時停止中（音声ロード済み）なら再開
+    if (!recapPlaying && audioRef.current && audioRef.current.duration > 0) {
+      await audioRef.current.play();
+      setRecapPlaying(true);
+      return;
+    }
+
+    // 初回：fetch → HTMLAudioElement で再生
+    setRecapLoading(true);
     setPlayError(null);
-    let ctx: AudioContext | null = null;
     try {
       const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, locale, modelId: ELEVENLABS_V3, speed: 1.0 }),
+        body: JSON.stringify({
+          text,
+          locale,
+          voiceId: getSelectedVoice().voiceId,
+          modelId: ELEVENLABS_V3,
+          speed: 1.0,
+        }),
       });
       if (!res.ok) throw new Error("speak failed");
-      const buffer = await res.arrayBuffer();
-      ctx = new AudioContext();
-      const decoded = await ctx.decodeAudioData(buffer);
-      const src = ctx.createBufferSource();
-      src.buffer = decoded;
-      src.connect(ctx.destination);
-      src.onended = () => {
+      const blob = await res.blob();
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+      const url = URL.createObjectURL(blob);
+      objectUrlRef.current = url;
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => setRecapPlaying(false);
+      audio.onerror = () => {
         setRecapPlaying(false);
-        ctx?.close();
+        setRecapLoading(false);
+        setPlayError(t("playError"));
       };
-      src.start();
+      setRecapLoading(false);
+      setRecapPlaying(true);
+      await audio.play();
     } catch {
+      setRecapLoading(false);
       setRecapPlaying(false);
       setPlayError(t("playError"));
-      ctx?.close();
     }
   };
 
@@ -249,13 +293,46 @@ export default function DiaryRecapsPage() {
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            playRecap(item.summary);
+                            handlePlayPause(item.summary);
                           }}
-                          disabled={recapPlaying}
-                          className="text-xs sm:text-sm uppercase tracking-[0.32em] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors disabled:opacity-60"
-                          style={{ fontFamily: MONO_FAMILY }}
+                          disabled={recapLoading}
+                          aria-label={recapPlaying ? t("pause") : t("play")}
+                          className="shrink-0 rounded-full flex items-center justify-center transition-opacity hover:opacity-70 disabled:opacity-40"
+                          style={{
+                            width: 40,
+                            height: 40,
+                            backgroundColor: "var(--fg)",
+                            color: "var(--bg)",
+                            border: "none",
+                            cursor: recapLoading ? "wait" : "pointer",
+                          }}
                         >
-                          {recapPlaying ? t("playing") : `${t("play")} →`}
+                          {recapLoading ? (
+                            <span className="flex items-center gap-[3px]" aria-hidden>
+                              {[0, 1, 2].map((i) => (
+                                <span
+                                  key={i}
+                                  style={{
+                                    display: "inline-block",
+                                    width: 3,
+                                    height: 3,
+                                    borderRadius: "50%",
+                                    backgroundColor: "currentColor",
+                                    animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+                                  }}
+                                />
+                              ))}
+                            </span>
+                          ) : recapPlaying ? (
+                            <Pause size={14} strokeWidth={1.5} aria-hidden />
+                          ) : (
+                            <Play
+                              size={14}
+                              strokeWidth={1.5}
+                              style={{ marginLeft: 2 }}
+                              aria-hidden
+                            />
+                          )}
                         </button>
                       </div>
                     )}

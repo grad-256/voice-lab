@@ -15,9 +15,10 @@ import {
 } from "@/app/components/chapter";
 import { Link, useRouter } from "@/i18n/routing";
 import { formatMonoDateTime } from "@/lib/chapterDate";
-import { ELEVENLABS_MULTILINGUAL } from "@/lib/models";
+import { ELEVENLABS_MULTILINGUAL, ELEVENLABS_V3 } from "@/lib/models";
 import { MONO_FAMILY } from "@/lib/typography";
 import { useMountedRef } from "@/lib/useMountedRef";
+import { getSelectedVoice } from "@/lib/voicePreferences";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 
@@ -96,7 +97,12 @@ export default function DiaryDetailPage({
       const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: entry.summary, modelId: ELEVENLABS_MULTILINGUAL }),
+        body: JSON.stringify({
+          text: entry.summary,
+          voiceId: getSelectedVoice().voiceId,
+          modelId: ELEVENLABS_V3,
+          speed: 1.0,
+        }),
       });
       if (!res.ok) return null;
       return await res.blob();
@@ -277,7 +283,9 @@ export default function DiaryDetailPage({
       {showDeleteConfirm && entry && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-overlay)] p-4 animate-fadeIn"
-          onClick={() => { if (!deleting) setShowDeleteConfirm(false); }}
+          onClick={() => {
+            if (!deleting) setShowDeleteConfirm(false);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Escape" && !deleting) setShowDeleteConfirm(false);
           }}

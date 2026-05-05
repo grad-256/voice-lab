@@ -146,7 +146,24 @@ export function AudioPlayer({ onFetchAudio, playLabel, pauseLabel }: AudioPlayer
           border: "none",
         }}
       >
-        {isPlaying ? (
+        {isLoading ? (
+          // 取得中：3点ドット（アニメーション）
+          <span className="flex items-center gap-[3px]" aria-hidden>
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                style={{
+                  display: "inline-block",
+                  width: 4,
+                  height: 4,
+                  borderRadius: "50%",
+                  backgroundColor: "currentColor",
+                  animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+                }}
+              />
+            ))}
+          </span>
+        ) : isPlaying ? (
           // ポーズ：2 本線（bg 色）
           <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5" fill="currentColor">
             <title>{pauseLabel}</title>
