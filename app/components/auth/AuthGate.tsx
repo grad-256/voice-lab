@@ -35,7 +35,7 @@ export function AuthGate() {
   useEffect(() => {
     if (prevIsOpen.current === true && isOpen === false) {
       if (!user && isProtectedPath(pathname)) {
-        router.replace("/app");
+        router.replace("/diary");
       }
     }
     prevIsOpen.current = isOpen;

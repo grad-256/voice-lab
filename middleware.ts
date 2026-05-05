@@ -61,10 +61,10 @@ export async function middleware(request: NextRequest) {
   const bare = stripLocale(request.nextUrl.pathname);
   const localeSegment = getLocaleSegment(request.nextUrl.pathname);
 
-  // /login は廃止（AuthDialog が代替）。直アクセスは /app に正規化。
+  // /login は廃止（AuthDialog が代替）。直アクセスは /diary に正規化。
   if (bare === "/login") {
     const url = request.nextUrl.clone();
-    url.pathname = `${localeSegment}/app`;
+    url.pathname = `${localeSegment}/diary`;
     return NextResponse.redirect(url);
   }
 
