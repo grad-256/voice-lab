@@ -59,41 +59,32 @@ You MUST respond with ONLY a JSON object. No text before or after it. No code fe
 {"reply": "<your response in the user's language>", "translation": null}`;
 }
 
-// Claude の返答（コードフェンス付き・途中混在の場合あり）を JSON にパースする
+// Claude の返答（コードフェンス付き・シングルクォート形式あり）を JSON にパースする
 export function parseClaudeResponse(raw: string): {
   reply: string;
   translation: string | null;
 } {
+  // コードフェンスを除去し、{} ブロックを抽出
+  const stripped = raw.replace(/```(?:json)?\s*([\s\S]*?)```/i, "$1").trim();
+  const jsonStr = stripped.match(/\{[\s\S]*\}/)?.[0] ?? stripped;
+
   const tryParse = (s: string) => {
-    const parsed = JSON.parse(s) as { reply?: string; translation?: string };
-    if (typeof parsed.reply === "string") return parsed;
-    return null;
+    const parsed = JSON.parse(s) as { reply?: string; translation?: string | null };
+    return typeof parsed.reply === "string" ? parsed : null;
   };
 
-  // 1. そのまま JSON としてパース
+  // ダブルクォート形式（通常ケース）
   try {
-    const result = tryParse(raw.trim());
-    if (result) return { reply: result.reply ?? raw, translation: result.translation ?? null };
+    const result = tryParse(jsonStr);
+    if (result) return { reply: result.reply as string, translation: result.translation ?? null };
   } catch {}
 
-  // 2. コードフェンス内の JSON を抽出（文字列のどこにあっても対応）
-  const fenceMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fenceMatch) {
-    try {
-      const result = tryParse(fenceMatch[1].trim());
-      if (result) return { reply: result.reply ?? raw, translation: result.translation ?? null };
-    } catch {}
-  }
+  // シングルクォート形式（Claude が稀に返す Python dict スタイル）
+  // reply 内にアポストロフィがある場合は失敗してフォールバックへ
+  try {
+    const result = tryParse(jsonStr.replace(/'/g, '"'));
+    if (result) return { reply: result.reply as string, translation: result.translation ?? null };
+  } catch {}
 
-  // 3. { } で囲まれた JSON オブジェクトを抽出
-  const braceMatch = raw.match(/\{[\s\S]*\}/);
-  if (braceMatch) {
-    try {
-      const result = tryParse(braceMatch[0]);
-      if (result) return { reply: result.reply ?? raw, translation: result.translation ?? null };
-    } catch {}
-  }
-
-  // 4. パース完全失敗時はそのまま返す
   return { reply: raw, translation: null };
 }
