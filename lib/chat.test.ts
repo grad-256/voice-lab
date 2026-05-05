@@ -66,4 +66,18 @@ describe("parseClaudeResponse", () => {
     // reply キーがないので raw をそのまま返す
     expect(result.reply).toBe(raw);
   });
+
+  it("シングルクォート形式（Python dict スタイル）をパースできる", () => {
+    const raw = "{'reply': 'リーガルオン一択って感じなんだ。', 'translation': null}";
+    const result = parseClaudeResponse(raw);
+    expect(result.reply).toBe("リーガルオン一択って感じなんだ。");
+    expect(result.translation).toBeNull();
+  });
+
+  it("シングルクォート形式（英語）をパースできる", () => {
+    const raw = "{'reply': 'Sounds good!', 'translation': null}";
+    const result = parseClaudeResponse(raw);
+    expect(result.reply).toBe("Sounds good!");
+    expect(result.translation).toBeNull();
+  });
 });
