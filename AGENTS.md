@@ -7,11 +7,16 @@
 
 ## プロジェクト概要
 
-**ビジュアルを起点に、声と性格を持つ"対話キャラクター"を生成し、テキスト・音声でコミュニケーションできる AI サービス**
+**話すだけで、日記になる。AI と声で話して、残す音声日記サービス**
 
-現在のターゲット：**語学学習者**（話す練習相手がいない・人間相手だと緊張する）
+マイクを押してその日のことを話すと、AI が音声で相槌を返し、会話を日記として保存する。
+あとから読み返したり、週次リキャップを音声で聞き返せる。
 
-ChatGPT との差別化：「AI と話す」ではなく「AI で作った"他者"と話す」。対話相手を生成・管理・切り替えられる点がコアバリュー。
+- 現在の主軸：**音声日記**（`/diary`）。`/api/chat` を呼ぶ画面は日記画面のみ
+- 当初構想：「声と性格を持つ AI キャラクターと英語で話す練習相手」（語学学習者向け）。
+  MVP 検討で「声で残す日記」へピボットした。経緯は `docs/mvp-scope.md`
+- キャラクター生成・切替の UI は現時点で存在しない（`personas` テーブルは残存）
+- 有料プラン・Stripe 連携は未着手（Issue #55）。料金・請求ページはダミー表示
 
 ---
 
@@ -25,7 +30,7 @@ ChatGPT との差別化：「AI と話す」ではなく「AI で作った"他�
 | Linter/Formatter | Biome | `biome.json` 参照 |
 | 認証 | Supabase Auth | メール/パスワード認証 |
 | STT | OpenAI Whisper（`whisper-1`） | 音声 → テキスト |
-| 対話AI | Codex Haiku（`Codex-haiku-4-5-20251001`） | テキスト → 返答 |
+| 対話AI | Claude Haiku（`claude-haiku-4-5-20251001`） | テキスト → 返答 |
 | TTS | ElevenLabs（既定 `eleven_multilingual_v2` / 日記要約・学習再生は `eleven_v3`） | テキスト → 音声。`/api/speak` の `modelId` で切替 |
 | ホスティング | Cloudflare Pages（予定） | `@cloudflare/next-on-pages` |
 | リポジトリ構成 | **pnpm workspaces モノレポ** | `apps/web` / `apps/api` / `packages/shared`（Phase 2 で再編）。詳細は `docs/monorepo-structure.md` |
@@ -40,7 +45,7 @@ voice-lab/
 ├── app/
 │   ├── api/
 │   │   ├── transcribe/route.ts   # Whisper：音声 → テキスト
-│   │   ├── chat/route.ts         # Codex Haiku：テキスト → 返答
+│   │   ├── chat/route.ts         # Claude Haiku：テキスト → 返答
 │   │   └── speak/route.ts        # ElevenLabs：テキスト → 音声
 │   ├── globals.css
 │   ├── layout.tsx
@@ -72,7 +77,7 @@ pnpm pages:deploy  # Cloudflare Pages にデプロイ
 
 ```env
 OPENAI_API_KEY=sk-...          # Whisper 音声認識
-ANTHROPIC_API_KEY=sk-ant-...   # Codex Haiku 対話AI
+ANTHROPIC_API_KEY=sk-ant-...   # Claude Haiku 対話AI
 ELEVENLABS_API_KEY=...         # ElevenLabs 音声生成
 ELEVENLABS_VOICE_ID=...        # 省略時は 7YpYEZAtPEQCOfimVIZ4
 
@@ -128,12 +133,12 @@ Cloudflare Pages の API は日本語などのマルチバイト文字を含む�
 
 | Phase | 内容 | 状態 |
 |---|---|---|
-| **Phase 0** | 最小 AI 音声アプリ（Whisper → Codex → ElevenLabs） | ✅ **完了** |
-| **Phase 1** | 語学学習者向け製品完成（認証・キャラ設定・UI仕上げ） | ✅ **完了** |
-| **Phase 1.5** | ゲストモード＋フリーミアム導線（ログイン不要で利用開始 → 制限 → 認証 → 有料版） | 🔄 **進行中** |
+| **Phase 0** | 最小 AI 音声アプリ（Whisper → Claude → ElevenLabs） | ✅ **完了** |
+| **Phase 1** | 認証・声の設定・UI仕上げ | ✅ **完了** |
+| **Phase 1.5** | ゲストモード＋フリーミアム導線（ログイン不要で利用開始 → 制限 → 認証 → 有料版。決済連携は未着手） | 🔄 **進行中** |
 | Phase 2 | AWS インフラ学習（Hono / Docker / Terraform / CI/CD）+ MCP Client | 待機中 |
 | Phase 3 | MCP サーバー作成・公開 | 待機中 |
-| Phase 4 | 収益化（Freemium・決済・MCP B2B 展開） | 待機中 |P
+| Phase 4 | 収益化（Freemium・決済・MCP B2B 展開） | 待機中 |
 
 ---
 
@@ -184,7 +189,7 @@ Anthropic Labs の研究（[Harness design for long-running application developm
 - ユーザーが迷わず操作できるか（録音→返答→再生のフローが直感的か）
 
 ### 音声フロー品質（MyVoiceLab 固有）
-- Whisper → Codex Haiku → ElevenLabs のパイプラインが途切れなく繋がっているか
+- Whisper → Claude Haiku → ElevenLabs のパイプラインが途切れなく繋がっているか
 - 録音が `MIN_RECORDING_MS = 1500` 以上確保されているか
 - ブラウザごとの音声フォーマット（Chrome/Safari/Firefox）が正しく切り替わるか
 
@@ -195,7 +200,7 @@ Anthropic Labs の研究（[Harness design for long-running application developm
 
 ## エージェントチーム構成
 
-`.Codex/agents/` に以下のエージェントが定義されている。
+`.claude/agents/` に以下のエージェントが定義されている。
 
 | エージェント | 役割 | 主な用途 |
 |---|---|---|
@@ -213,8 +218,8 @@ Anthropic Labs の研究（[Harness design for long-running application developm
 - **実装タスク**：`planner` → `frontend` / `backend` / `infrastructure` → `evaluator`
 - **プロダクト判断**：`pdm` + `marketer` → `planner` で仕様統合
 - **フルチーム**：`pdm` → `planner` → `frontend` + `backend` + `infrastructure`（並行） → `evaluator`
-- `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`（`.Codex/settings.json`）で有効化済み
-- チーム起動は `/launch-team` スキルで自動化（`.Codex/skills/launch-team/SKILL.md`）
+- `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`（`.claude/settings.json`）で有効化済み
+- チーム起動は `/launch-team` スキルで自動化（`.claude/skills/launch-team/SKILL.md`）
 
 ---
 
