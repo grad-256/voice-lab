@@ -3,7 +3,7 @@
 **話すだけで、日記になる。AI と声で話して、残す音声日記サービス。**
 
 マイクを押してその日のことを話すと、AI が音声で受け止めて相槌を返し、
-会話の内容を日記の形に整えて保存します。あとから読み返したり、週ごとの要約を音声で聞き返せます。
+会話の内容を日記の形に整えて保存します。あとから読み返したり、週次リキャップ（直近の日記の要約）を音声で聞き返せます。
 
 当初は「声と性格を持つ AI キャラクターと英語で話す練習相手」として開発を始め、
 MVP 検討の過程で「声で残す日記」へ軸足を移しました（経緯は `docs/mvp-scope.md`）。
@@ -19,7 +19,7 @@ MVP 検討の過程で「声で残す日記」へ軸足を移しました（経�
 |---|---|
 | 音声日記 | 録音 → 文字起こし → AI 応答 → 音声合成 を 1 ターンで往復。AI は直近の日記の要約を踏まえて返す |
 | 日記の保存・履歴 | 会話を要約して日記として保存。一覧・詳細から読み返せる |
-| 週次リキャップ | 1 週間分の日記を AI が要約し、音声で聞き返せる |
+| 週次リキャップ | 直近 5 件の日記を AI が週ごとに要約し、音声で聞き返せる（無料プランの件数上限） |
 | 声の選択 | ElevenLabs のプリセット音声から、話し相手の声を選べる |
 | ゲストモード | ログイン不要で体験開始。無料ターン上限を超えたら会員登録を案内（有料プランは準備中） |
 | 多言語 UI | 日本語 / 英語（next-intl） |
@@ -35,9 +35,9 @@ MVP 検討の過程で「声で残す日記」へ軸足を移しました（経�
    ▼
 Next.js API Routes（Edge Runtime, Cloudflare Pages）
    │
-   ├─ /api/transcribe ── OpenAI Whisper ─────┐
-   ├─ /api/chat ──────── Claude Haiku ───────┤ Cloudflare AI Gateway 経由
-   ├─ /api/speak ─────── ElevenLabs TTS ─────┘
+   ├─ /api/transcribe ── OpenAI Whisper ─────┐ Cloudflare AI Gateway 経由
+   ├─ /api/chat ──────── Claude Haiku ───────┘
+   ├─ /api/speak ─────── ElevenLabs TTS（直接呼び出し）
    ├─ /api/diary, /api/summarize, /api/weekly-recap
    └─ Supabase（Auth / Postgres / RLS）
 ```
